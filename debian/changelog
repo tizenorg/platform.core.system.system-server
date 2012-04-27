@@ -1,0 +1,1663 @@
+system-server (0.1.51-67) unstable; urgency=low
+
+  * support battery err check
+  * Git: slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-67
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 19 Mar 2012 11:00:59 +0900
+
+system-server (0.1.51-59) unstable; urgency=low
+
+  * Fix bug: Change init value of ret 
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-59
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Tue, 17 Jan 2012 17:34:11 +0900
+
+system-server (0.1.51-58) unstable; urgency=low
+
+  * Modify code not to set vconf when battery state not changed.
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-58
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Tue, 17 Jan 2012 10:51:20 +0900
+
+system-server (0.1.51-57) unstable; urgency=low
+
+  * Change showing blue-screen binary name (blue-screen -> crash-worker)
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-57
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Tue, 13 Dec 2011 11:29:23 +0900
+
+system-server (0.1.51-56) unstable; urgency=low
+
+  * remove dependency with libslp-sysman-internal-dev
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-56
+ 
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 05 Dec 2011 23:20:44 +0900
+  
+system-server (0.1.51-55) unstable; urgency=low
+
+  * Implements max/min cpu frequency list manager
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-55
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Mon, 05 Dec 2011 12:40:44 +0900
+
+system-server (0.1.51-54) unstable; urgency=low
+
+  * Add APIs to set cpu min/max frequency
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-54
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 23 Nov 2011 14:34:51 +0900
+ 
+system-server (0.1.51-53) unstable; urgency=low
+
+  * Add include header file(dirent.h) for build break
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-53
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 17 Nov 2011 09:44:51 +0900
+   
+system-server (0.1.51-52) unstable; urgency=low
+
+  * Add to launch app without sysman APIS
+  * remove to check battery level which is not used by apps
+  * move check the tesmode for popup to system-popup module
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-52
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 14 Nov 2011 17:18:51 +0900
+   
+system-server (0.1.51-51) unstable; urgency=low
+
+  * Add heynoti publsh for power off start
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-51
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 09 Nov 2011 14:18:51 +0900
+   
+system-server (0.1.51-50) unstable; urgency=low
+
+  * Add SMACK code for security policy
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-50
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Mon, 07 Nov 2011 11:18:51 +0900
+
+system-server (0.1.51-49) unstable; urgency=low
+
+  * fix the bug for read() err(EINTR)
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-49
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 31 Oct 2011 15:13:25 +0900
+   
+system-server (0.1.51-48) unstable; urgency=low
+
+  * add log for debug
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-48
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 26 Oct 2011 20:13:25 +0900
+   
+system-server (0.1.51-47) unstable; urgency=low
+
+  * fix the bug for lowbat, wrong logging, and socket exception
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-47
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 24 Oct 2011 12:43:25 +0900
+   
+system-server (0.1.51-46) unstable; urgency=low
+
+  * change the scenario for check battery
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-46
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 18 Oct 2011 14:43:25 +0900
+   
+system-server (0.1.51-45) unstable; urgency=low
+
+  * add check for launching popup
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-45
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 17 Oct 2011 14:53:25 +0900
+   
+system-server (0.1.51-44) unstable; urgency=low
+
+  * add bttery full notification
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-44
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 17 Oct 2011 10:53:25 +0900
+ 
+system-server (0.1.51-43) unstable; urgency=low
+
+  * Fix to set CRITICAL LOW at bootup
+  * Fix to support only vfat filesystem
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-43
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Fri, 14 Oct 2011 10:53:25 +0900
+
+system-server (0.1.51-42) unstable; urgency=low
+
+  * Fix for prevent
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-42
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Fri, 07 Oct 2011 17:29:59 +0900
+
+system-server (0.1.51-41) unstable; urgency=low
+
+  * change the value for oom_adj
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-41
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Thu, 06 Oct 2011 15:47:52 +0900
+
+system-server (0.1.51-40) unstable; urgency=low
+
+  * Modify to check symbolic link of MMC card node
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-40
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Wed, 05 Oct 2011 21:48:09 +0900
+
+system-server (0.1.51-39) unstable; urgency=low
+
+  * Change memory threshold of OOM policy.
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-39
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Wed, 05 Oct 2011 14:56:06 +0900
+
+system-server (0.1.51-38) unstable; urgency=low
+
+  * remove dependency with tapi-priv
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-38
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 04 Oct 2011 17:00:02 +0900
+   
+system-server (0.1.51-37) unstable; urgency=low
+
+  * remove dependency with tapi-priv
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-37
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 29 Sep 2011 14:20:02 +0900
+   
+system-server (0.1.51-36) unstable; urgency=low
+
+  * guarantee to display power-off animation
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-36
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 15 Sep 2011 16:10:02 +0900
+   
+system-server (0.1.51-35) unstable; urgency=low
+
+  * add noti binary for uevnt
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-35
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 05 Sep 2011 09:18:02 +0900
+   
+system-server (0.1.51-34) unstable; urgency=low
+
+  * set a default vconf key for mmc function 
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-34
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 31 Aug 2011 13:18:02 +0900
+   
+system-server (0.1.51-33) unstable; urgency=low
+
+  * add ta initialize
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-33
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 29 Aug 2011 20:38:02 +0900
+   
+system-server (0.1.51-32) unstable; urgency=low
+
+  * add set vconf value for mmc & rename the define value
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-32
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 24 Aug 2011 17:38:02 +0900
+   
+system-server (0.1.51-31) unstable; urgency=low
+
+  * limit backgroud application by 6
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-31
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 23 Aug 2011 16:58:02 +0900
+   
+system-server (0.1.51-30) unstable; urgency=low
+
+  * Modify set priority for recently used app
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-30
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 22 Aug 2011 12:38:02 +0900
+   
+system-server (0.1.51-29) unstable; urgency=low
+
+  * Avoid to create a disk directory on mounting multi partition storage
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-29
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Mon, 22 Aug 2011 11:38:02 +0900
+
+system-server (0.1.51-28) unstable; urgency=low
+
+  * change the scenario for launching lowbatt popup
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-28
+ 
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Fri, 19 Aug 2011 16:40:24 +0900
+ 
+system-server (0.1.51-27) unstable; urgency=low
+
+  * Make system-server create USB Storage Mount Directory, unless the directory found
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-27
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Thu, 18 Aug 2011 09:40:24 +0900
+
+system-server (0.1.51-26) unstable; urgency=low
+
+  * Change MMC mount point
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-26
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Thu, 11 Aug 2011 17:48:06 +0900
+
+system-server (0.1.51-25) unstable; urgency=low
+
+  * Fix creating file lines to using permission & change the scenario for ta
+  * Avoid to lauch lowmem popup during kill process has oom_adj over 4
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-25
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Wed, 10 Aug 2011 09:24:40 +0900
+
+system-server (0.1.51-24) unstable; urgency=low
+
+  * increase priority for recently used app
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-24
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 09 Aug 2011 17:07:52 +0900
+  
+system-server (0.1.51-23) unstable; urgency=low
+
+  * Modify Blue Screen Launching Code
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-23
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Mon, 08 Aug 2011 11:07:52 +0900
+
+system-server (0.1.51-22) unstable; urgency=low
+
+  * Modify bs launch
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-22
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Fri, 05 Aug 2011 20:25:59 +0900
+
+system-server (0.1.51-21) unstable; urgency=low
+
+  * Modify udev rule for usb host notification
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-21
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Fri, 05 Aug 2011 10:02:58 +0900
+
+system-server (0.1.51-20) unstable; urgency=low
+
+  * Fix code due to prevent
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-20
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Thu, 04 Aug 2011 18:58:57 +0900
+
+system-server (0.1.51-19) unstable; urgency=low
+
+  * Add notification for mount disk
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-19
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Thu, 28 Jul 2011 12:07:17 +0900
+
+system-server (0.1.51-18) unstable; urgency=low
+
+  * Disable to restart in killed VIP processes
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-18
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Tue, 26 Jul 2011 15:21:28 +0900
+
+system-server (0.1.51-17) unstable; urgency=low
+
+  * Add OTG Storage Mount Function
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-17
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Sat, 23 Jul 2011 11:41:38 +0900
+
+system-server (0.1.51-16) unstable; urgency=low
+
+  * add restarter binary
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-16
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 20 Jul 2011 12:41:37 +0900
+
+system-server (0.1.51-15) unstable; urgency=low
+
+  * modify using TAPI for change telephony module
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-15
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Fri, 08 Jul 2011 17:41:37 +0900
+
+system-server (0.1.51-14) unstable; urgency=low
+
+  * add checking error for bs log (bs log must be terminated with new line character)
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-14
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 28 Jun 2011 20:41:37 +0900
+
+system-server (0.1.51-13) unstable; urgency=low
+
+  * Source clean up (/sys/class/input/inputx/capabilities/sw)
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-13
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 22 Jun 2011 17:41:37 +0900
+
+system-server (0.1.51-12) unstable; urgency=low
+
+  * Modify NULL and NEGATIVE check
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-12
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Tue, 14 Jun 2011 09:41:37 +0900
+
+system-server (0.1.51-11) unstable; urgency=low
+
+  * Remove argc check in sysnoti message
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-11
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Mon, 13 Jun 2011 14:48:45 +0900
+
+system-server (0.1.51-10) unstable; urgency=low
+
+  * Add check logic due to SVACE analyze
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-10
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Fri, 10 Jun 2011 11:17:30 +0900
+
+system-server (0.1.51-9) unstable; urgency=low
+
+  * Change setting battery interval from 5 to 1
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-9
+
+ -- DongGi Jang <dg0402.jang@samsung.com>  Wed, 08 Jun 2011 16:17:01 +0900
+
+system-server (0.1.51-8) unstable; urgency=low
+
+  * add functions for mmc
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-8
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 08 Jun 2011 11:13:47 +0900
+
+system-server (0.1.51-7) unstable; urgency=low
+
+  * set a default vconf key of USB & mmc format
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-7
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 01 Jun 2011 11:13:47 +0900
+
+system-server (0.1.51-6) unstable; urgency=low
+
+  * set a default vconf key of low memory event
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-6
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 25 May 2011 19:13:47 +0900
+
+system-server (0.1.51-5) unstable; urgency=low
+
+  * fix the bug for crash in low battery
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-5
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 25 May 2011 19:13:47 +0900
+
+system-server (0.1.51-4) unstable; urgency=low
+
+  * add setting vconf value for diff time
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-4
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 19 May 2011 14:13:47 +0900
+
+system-server (0.1.51-3) unstable; urgency=low
+
+  * change the scenario for low battery with new guide
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-3
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 17 May 2011 14:13:47 +0900
+
+system-server (0.1.51-2) unstable; urgency=low
+
+  * set a default vconf key of earjack-key event
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-2
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 27 Apr 2011 10:13:47 +0900
+
+system-server (0.1.51-1) unstable; urgency=low
+
+  * give a chance to be terminated on shutdown
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 22 Apr 2011 10:33:44 +0900
+
+system-server (0.1.50-7) unstable; urgency=low
+
+  * fix bug for copying string
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.50-7
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  The, 14 Apr 2011 10:22:35 +0900
+
+system-server (0.1.50-6) unstable; urgency=low
+
+  * change the monitering for battery
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.50-6
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 12 Apr 2011 13:32:35 +0900
+
+system-server (0.1.50-5) unstable; urgency=low
+
+  * modify some codes for security
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.50-5
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 28 Mar 2011 10:32:35 +0900
+
+system-server (0.1.50-4) unstable; urgency=low
+
+  * change the scenario for dectting the mmc
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.50-4
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 28 Mar 2011 10:32:35 +0900
+
+system-server (0.1.50-3) unstable; urgency=low
+
+  * fix the bug for setting vconf
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.50-3
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 03 Mar 2011 10:32:35 +0900
+
+system-server (0.1.50-2) unstable; urgency=low
+
+  * change the scenarion for battery (level, low percentage)
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.50-2
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 02 Mar 2011 13:32:35 +0900
+
+system-server (0.1.50-1) unstable; urgency=low
+
+  * bug fix : call restart_ap instead of powerdown_ap when requesting reboot
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.50-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Sat, 26 Feb 2011 16:32:35 +0900
+
+system-server (0.1.49-2) unstable; urgency=low
+
+  * add pm_loack/unlocl for set datetime/timezone
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.49-2
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Fri, 25 Feb 2011 15:12:11 +0900
+
+system-server (0.1.49-1) unstable; urgency=low
+
+  * code cleanup for lowmem logs and bug fix of powerdown_ap_by_force
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.49-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 24 Feb 2011 14:12:11 +0900
+
+system-server (0.1.48-1) unstable; urgency=low
+
+  * Add to turn off by force
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.48-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 24 Feb 2011 10:35:21 +0900
+
+system-server (0.1.47-8) unstable; urgency=low
+
+  * fix the bug for prevent(not initialize)
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-8
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 23 Feb 2011 12:31:08 +0900
+
+system-server (0.1.47-7) unstable; urgency=low
+
+  * fix the bug for prevent 19409
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-7
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 17 Feb 2011 11:31:08 +0900
+
+system-server (0.1.47-6) unstable; urgency=low
+
+  * remove check the battery
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-6
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 14 Feb 2011 13:31:08 +0900
+
+system-server (0.1.47-5) unstable; urgency=low
+
+  * add null check for malloc
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-5
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 10 Feb 2011 13:31:08 +0900
+
+system-server (0.1.47-4) unstable; urgency=low
+
+  * add checking battery (request of the kernel part)
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-4
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 07 Feb 2011 11:31:08 +0900
+
+system-server (0.1.47-3) unstable; urgency=low
+
+  * remove checking fuel guage
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-3
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 25 Jan 2011 11:31:08 +0900
+
+system-server (0.1.47-2) unstable; urgency=low
+
+  * modify ss_xwindow.c for prevent CID 21352
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-2
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 24 Jan 2011 15:31:08 +0900
+
+system-server (0.1.47-1) unstable; urgency=low
+
+  * kill old process before launching xberc for TV out
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.47-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 19 Jan 2011 15:31:08 +0900
+
+system-server (0.1.46-1) unstable; urgency=low
+
+  * remove waiting until boot-animation is alive
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.46-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 18 Jan 2011 13:26:26 +0900
+
+system-server (0.1.45-2) unstable; urgency=low
+
+  * modify booting sequence: S20system-server -> S00system-server
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.45-2
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 12 Jan 2011 19:16:01 +0900
+
+system-server (0.1.45-1) unstable; urgency=low
+
+  * fix some warnings
+  * change poweroff duration
+  * add checking codes that shutdown animation is alive or not
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.45-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 11 Jan 2011 19:10:23 +0900
+
+system-server (0.1.44-48) unstable; urgency=low
+
+  * change poweroff scenario
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-48
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 03 Jan 2011 17:35:29 +0900
+
+system-server (0.1.44-47) unstable; urgency=low
+
+  * change the launching oom popup
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-47
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 28 Dec 2010 09:35:29 +0900
+
+system-server (0.1.44-46) unstable; urgency=low
+
+  * change the setting oom adj
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-46
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 27 Dec 2010 09:35:29 +0900
+
+system-server (0.1.44-45) unstable; urgency=low
+
+  * bug fix for crash
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-45
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 23 Dec 2010 11:35:29 +0900
+
+system-server (0.1.44-44) unstable; urgency=low
+
+  * change the deprecated functions for tel
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-44
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 23 Dec 2010 11:35:29 +0900
+
+system-server (0.1.44-43) unstable; urgency=low
+
+  * add vconf initial value
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-43
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 23 Dec 2010 10:35:29 +0900
+
+system-server (0.1.44-42) unstable; urgency=low
+
+  * change launching popup
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-42 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 20 Dec 2010 17:35:29 +0900
+
+system-server (0.1.44-41) unstable; urgency=low
+
+  * change from elm to ecore
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-41
+ 
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 20 Dec 2010 13:42:44 +0900
+
+system-server (0.1.44-40) unstable; urgency=low
+
+  * add to set the timezone
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-40
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Fri, 10 Dec 2010 11:46:15 +0900
+
+system-server (0.1.44-39) unstable; urgency=low
+
+  * add to set the timezone
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-39 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Fri, 10 Dec 2010 11:46:15 +0900
+
+system-server (0.1.44-38) unstable; urgency=low
+
+  * add the checking parameter to ss_timemgr.c
+  * Git: 165.213.180.234:slp/pkgs/s/system-server
+  * Tag: system-server_0.1.44-38 
+
+ -- Jinkun.Jang <jinkun.jang@samsung.com>  Wed, 08 Dec 2010 20:09:34 +0900
+
+system-server (0.1.44-37) unstable; urgency=low
+
+  * change the mmc format scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-37 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Fri, 03 Dec 2010 20:41:19 +0900
+
+system-server (0.1.44-36) unstable; urgency=low
+
+  * rebuild due to EFL update
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-36 
+  
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 01 Dec 2010 13:48:22 +0900
+
+system-server (0.1.44-35) unstable; urgency=low
+
+  * modify poweroff scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-35 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 25 Nov 2010 18:48:22 +0900
+
+system-server (0.1.44-34) unstable; urgency=low
+
+  * add mmc format
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-34 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 18 Nov 2010 15:25:19 +0900
+
+system-server (0.1.44-33) unstable; urgency=low
+
+  * enable dlog for system server 
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-33
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 16 Nov 2010 11:02:09 +0900
+
+system-server (0.1.44-32) unstable; urgency=low
+
+  * modify power off scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-32 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 10 Nov 2010 15:33:28 +0900
+
+system-server (0.1.44-31) unstable; urgency=low
+
+  * add setting date & time at once
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-31 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 09 Nov 2010 14:48:13 +0900
+
+system-server (0.1.44-30) unstable; urgency=low
+
+  * modify oom threshlod to support 29 kernel 
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-30
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 04 Nov 2010 21:59:21 +0900
+
+system-server (0.1.44-29) unstable; urgency=low
+
+  * change the cb function for restart
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-29 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 04 Nov 2010 12:18:40 +0900
+
+system-server (0.1.44-28) unstable; urgency=low
+
+  * modify power off scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-28 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 03 Nov 2010 19:36:45 +0900
+
+system-server (0.1.44-27) unstable; urgency=low
+
+  * fix the bug for permanent 
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-27
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 02 Nov 2010 21:41:48 +0900
+
+system-server (0.1.44-26) unstable; urgency=low
+
+  * remove unnecessary logs
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-26 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 02 Nov 2010 13:45:46 +0900
+
+system-server (0.1.44-25) unstable; urgency=low
+
+  * add copyright
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-25 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 27 Oct 2010 14:21:04 +0900
+
+system-server (0.1.44-24) unstable; urgency=low
+
+  * fix bug for lock up
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-24 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 26 Oct 2010 16:42:18 +0900
+
+system-server (0.1.44-23) unstable; urgency=low
+
+  * fix bug that cannot set the oomadj
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-23 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 21 Oct 2010 15:37:05 +0900
+
+system-server (0.1.44-22) unstable; urgency=low
+
+  * modify power off scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-22
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 18 Oct 2010 21:20:28 +0900
+
+system-server (0.1.44-21) unstable; urgency=low
+
+  * change the bs path
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-21
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 18 Oct 2010 17:51:24 +0900
+
+system-server (0.1.44-20) unstable; urgency=low
+
+  * add /etc/rc.d/rc5.d/S20system-server
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-20 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 18 Oct 2010 15:36:11 +0900
+
+system-server (0.1.44-19) unstable; urgency=low
+
+  * add setting date/time for sysman_set_date/time
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-19 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 14 Oct 2010 10:10:41 +0900
+
+system-server (0.1.44-18) unstable; urgency=low
+
+  * modify oom scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-18 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 12 Oct 2010 17:36:00 +0900
+
+system-server (0.1.44-17) unstable; urgency=low
+
+  * modify checking fuel guage
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-17 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 07 Oct 2010 20:39:10 +0900
+
+system-server (0.1.44-16) unstable; urgency=low
+
+  * modify set oomadj scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-16 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 06 Oct 2010 19:52:20 +0900
+
+system-server (0.1.44-15) unstable; urgency=low
+
+  *  modify power off scenario
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-15 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 27 Sep 2010 11:52:59 +0900
+
+system-server (0.1.44-14) unstable; urgency=low
+
+  * modify power off scenario for demo
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-14 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 22 Sep 2010 15:34:32 +0900
+
+system-server (0.1.44-13) unstable; urgency=low
+
+  * modify mount option for ums
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-13
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 14 Sep 2010 21:18:43 +0900
+
+system-server (0.1.44-12) unstable; urgency=low
+
+  * rollback mount point for ums
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-12 
+
+ -- Jonghoon Han <jonghoon.han@samsung.com>  Mon, 14 Sep 2010 21:18:43 +0900
+
+system-server (0.1.44-11) unstable; urgency=low
+
+  * modify mount point for ums
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-11 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 13 Sep 2010 15:49:43 +0900
+
+system-server (0.1.44-10) unstable; urgency=low
+
+  * rebuild due to EFL update
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-10
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Sun, 12 Sep 2010 16:26:30 +0900
+
+system-server (0.1.44-9) unstable; urgency=low
+
+  * modify power off scenario 
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-9
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Wed, 08 Sep 2010 12:02:22 +0900
+
+system-server (0.1.44-8) unstable; urgency=low
+
+  * modify heynoti API 
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-8 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Tue, 31 Aug 2010 15:58:27 +0900
+
+system-server (0.1.44-7) unstable; urgency=low
+
+  * modify mmc mount option,uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed 
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-7 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 26 Aug 2010 15:25:20 +0900
+
+system-server (0.1.44-6) unstable; urgency=low
+
+  * modify UI theme from kessler to beat
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-6
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 23 Aug 2010 20:33:00 +0900
+
+system-server (0.1.44-5) unstable; urgency=low
+
+  * add mmc mount option, iocharset=utf8
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-5
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 05 Aug 2010 15:49:01 +0900
+
+system-server (0.1.44-4) unstable; urgency=low
+
+  * add postinst file for DAC
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-4 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 02 Aug 2010 17:04:25 +0900
+
+system-server (0.1.44-3) unstable; urgency=low
+
+  * modify ss_predefine.c
+  * Git: 165.213.180.234:/git/slp/pkgs/system-server
+  * Tag: system-server_0.1.44-3 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Sat, 31 Jul 2010 11:41:42 +0900
+
+system-server (0.1.44-2) unstable; urgency=low
+
+  * change maintainer
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.44-2 
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Thu, 08 Jul 2010 16:10:57 +0900
+
+system-server (0.1.44-1) unstable; urgency=low
+
+  * Add cradle
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.44-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 16 Jun 2010 19:04:34 +0900
+
+system-server (0.1.43-2) unstable; urgency=low
+
+  * Add dlog
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.43-2
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 16 Jun 2010 10:47:15 +0900
+
+system-server (0.1.43-1) unstable; urgency=low
+
+  * change battery levels
+  * add logs and fix a warning
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.43-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 11 Jun 2010 10:44:21 +0900
+
+system-server (0.1.42-2) unstable; urgency=low
+
+  * change deprecated APIs of heynoti
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.42-2
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 03 Jun 2010 21:17:33 +0900
+
+system-server (0.1.42-1) unstable; urgency=low
+
+  * change deprecated APIs of heynoti
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.42-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 01 Jun 2010 09:16:54 +0900
+
+system-server (0.1.41-1) unstable; urgency=low
+
+  * change deprecated device fw APIs
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.41-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 31 May 2010 15:23:47 +0900
+
+system-server (0.1.40-1) unstable; urgency=low
+
+  * modified tapi for power off.
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.40-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Sat, 29 May 2010 15:15:09 +0900
+
+system-server (0.1.39-2) unstable; urgency=low
+
+  * modified tapi in comments and sysman_get_cmdline_name().
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.39-2
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 28 May 2010 16:26:22 +0900
+
+system-server (0.1.39-1) unstable; urgency=low
+
+  * modified oom_adj predefined action and add new files.
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.39-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 27 May 2010 21:34:26 +0900
+
+system-server (0.1.38-1) unstable; urgency=low
+
+  * add set oom_adj predefined action and replace system() function
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.38-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 26 May 2010 11:05:56 +0900
+
+system-server (0.1.37-1) unstable; urgency=low
+
+  * replace deprecated functions of sysman library
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.37-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 24 May 2010 23:13:19 +0900
+
+system-server (0.1.36-1) unstable; urgency=low
+
+  * replace deprecated functions and changed a socket permission
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.36-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 12 May 2010 12:40:12 +0900
+
+system-server (0.1.35-1) unstable; urgency=low
+
+  * replace deprecated functions and changed DAC policy
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.35-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 11 May 2010 10:50:37 +0900
+
+system-server (0.1.34-1) unstable; urgency=low
+
+  * replace bs launching function
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.34-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 03 May 2010 08:59:15 +0900
+
+system-server (0.1.33-2) unstable; urgency=low
+
+  * add a script for DAC
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.33-2
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 19 Apr 2010 14:08:39 +0900
+
+system-server (0.1.33-1) unstable; urgency=low
+
+  * change deprecated APIs
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.33-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 15 Apr 2010 16:48:50 +0900
+
+system-server (0.1.32-2) unstable; urgency=low
+
+  * increase pkg version
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.32-2
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 14 Apr 2010 19:19:42 +0900
+
+system-server (0.1.32-1) unstable; urgency=low
+
+  * umount mmc after changing the vconf value
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.32-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 14 Apr 2010 11:14:51 +0900
+
+system-server (0.1.31-1) unstable; urgency=low
+
+  * ignore relaunching permanent process when hibernation
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.31-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 13 Apr 2010 18:59:26 +0900
+
+system-server (0.1.30-1) unstable; urgency=low
+
+  * bug fix - not to make curbs.log empty when it is already empty
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.30-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Sat, 10 Apr 2010 19:43:11 +0900
+
+system-server (0.1.29-1) unstable; urgency=low
+
+  * add log messages for BS launching
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.29-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 09 Apr 2010 13:40:59 +0900
+
+system-server (0.1.28-1) unstable; urgency=low
+
+  * add BS launching codes
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.28-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 08 Apr 2010 17:41:21 +0900
+
+system-server (0.1.27-1) unstable; urgency=low
+
+  * On init mmc handler, set mmc removed to vconf if there is not  mmc(microsd card)
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/system-server-0
+  * Tag: system-server_0.1.27-1
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 05 Apr 2010 15:35:00 +0900
+
+system-server (0.1.26-3) unstable; urgency=low
+
+  * changed TAPI header files
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 30 Mar 2010 16:35:50 +0900
+
+system-server (0.1.26-2) unstable; urgency=low
+
+  * Toolchain Upgrade
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 25 Mar 2010 15:24:26 +0900
+
+system-server (0.1.26-1) unstable; urgency=low
+
+  * mmc/earjack key path changed
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 24 Mar 2010 09:56:46 +0900
+
+system-server (0.1.25-1) unstable; urgency=low
+
+  * change mmc(sd-card) fs type from rfs to vfat
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 19 Mar 2010 16:57:28 +0900
+
+system-server (0.1.24-2) unstable; urgency=low
+
+  * bug fix - modified buffer size
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 19 Mar 2010 14:41:22 +0900
+
+system-server (0.1.24-1) unstable; urgency=low
+
+  * add sd-card mount option (cp949)
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 18 Mar 2010 16:44:19 +0900
+
+system-server (0.1.23-1) unstable; urgency=low
+
+  * setenv ELM_THEME for usb_setting
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 15 Mar 2010 17:41:32 +0900
+
+system-server (0.1.22-1) unstable; urgency=low
+
+  * bug fix - remove permanent pid file after relaunching the process
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 15 Mar 2010 11:36:07 +0900
+
+system-server (0.1.21-1) unstable; urgency=low
+
+  * bug fix - register permanent process again after relaunching the permanent
+  process
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 15 Mar 2010 11:22:45 +0900
+
+system-server (0.1.20-1) unstable; urgency=low
+
+  * change mmc(sd card) fs type from vfat to rfs and set lowmem threshold
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 11 Mar 2010 21:22:16 +0900
+
+system-server (0.1.19-2) unstable; urgency=low
+
+  * add victim process log for low-memory and set oom_adj of lowmem_popup to
+  -17
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 08 Mar 2010 11:03:21 +0900
+
+system-server (0.1.19-1) unstable; urgency=low
+
+  * memps log creation with the low memory event
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 05 Mar 2010 17:24:05 +0900
+
+system-server (0.1.18-1) unstable; urgency=low
+
+  * indicator removed
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 05 Mar 2010 14:14:16 +0900
+
+system-server (0.1.17-2) unstable; urgency=low
+
+  * add i686 dbg package
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 04 Mar 2010 10:15:55 +0900
+
+system-server (0.1.17-1) unstable; urgency=low
+
+  * add poweroff-popup predefine action function
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 03 Mar 2010 18:51:34 +0900
+
+system-server (0.1.16-2) unstable; urgency=low
+
+  * modified dbg package for any archtecture
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Mar 2010 20:48:18 +0900
+
+system-server (0.1.16-1) unstable; urgency=low
+
+  * add dbg package and bug fix - power off battery level checking
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Mar 2010 19:23:30 +0900
+
+system-server (0.1.15-2) unstable; urgency=low
+
+  * Bug fix - wrong include
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Mar 2010 16:27:03 +0900
+
+system-server (0.1.15-1) unstable; urgency=low
+
+  * add codes due to new system-popup applications
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Mar 2010 15:38:26 +0900
+
+system-server (0.1.14-1) unstable; urgency=low
+
+  * Bug fix - update battery level for waking up from suspend
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 25 Feb 2010 18:04:49 +0900
+
+system-server (0.1.13-1) unstable; urgency=low
+
+  * turn on lcd when receiving poweroff request on lcd-off
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 25 Feb 2010 13:40:03 +0900
+
+system-server (0.1.12-1) unstable; urgency=low
+
+  * add poweroff predefine action function
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 25 Feb 2010 11:32:30 +0900
+
+system-server (0.1.11-1) unstable; urgency=low
+
+  * Bug fix - remove wrong battery monitoring logs
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 24 Feb 2010 19:09:15 +0900
+
+system-server (0.1.10-1) unstable; urgency=low
+
+  * Bug fix - remove wrong battery monitoring logs
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 24 Feb 2010 18:14:57 +0900
+
+system-server (0.1.9-1) unstable; urgency=low
+
+  * Bug fix - vconf key set when MMC removed
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 23 Feb 2010 23:23:49 +0900
+
+system-server (0.1.8-1) unstable; urgency=low
+
+  * Bug fix - immediately battery level update when usb cable removed
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 22 Feb 2010 16:44:31 +0900
+
+system-server (0.1.7-1) unstable; urgency=low
+
+  * modified due to libpmapi changes
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 19 Feb 2010 09:12:47 +0900
+
+system-server (0.1.6-2) unstable; urgency=low
+
+  * rebuild for libpmapi
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 17 Feb 2010 16:26:25 +0900
+
+system-server (0.1.6-1) unstable; urgency=low
+
+  * remove sqlfs defence codes (bug fixed on libsqlfs)
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 12 Feb 2010 10:15:42 +0900
+
+system-server (0.1.5-1) unstable; urgency=low
+
+  * defence codes for inotify broken again
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 05 Feb 2010 10:31:52 +0900
+
+system-server (0.1.4-1) unstable; urgency=low
+
+  * turn lcd on when changing device status and remove defence codes for inotify broken
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 04 Feb 2010 19:47:06 +0900
+
+system-server (0.1.3-3) unstable; urgency=low
+
+  * rebuild due to EFL update
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 04 Feb 2010 13:43:14 +0900
+
+system-server (0.1.3-2) unstable; urgency=low
+
+  * remove logs to syslog in ss_xwindow.c due to launching time
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Feb 2010 21:35:25 +0900
+
+system-server (0.1.3-1) unstable; urgency=low
+
+  * add to syslog and detecting TA by jack (bug fix)
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Feb 2010 21:09:31 +0900
+
+system-server (0.1.2-1) unstable; urgency=low
+
+  * defence sqlfs inotify broken
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Feb 2010 20:06:13 +0900
+
+system-server (0.1.1-1) unstable; urgency=low
+
+  * Change detecting TA online from power supply to jack
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 02 Feb 2010 16:03:19 +0900
+
+system-server (0.1.0-3) unstable; urgency=low
+
+  * rebuild for indicator
+
+ -- Wonil choi <wonil22.choi@samsung.com>  Tue, 26 Jan 2010 23:03:09 +0900
+
+system-server (0.1.0-2) unstable; urgency=low
+
+  * rebuild for indicator
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 26 Jan 2010 22:33:31 +0900
+
+system-server (0.1.0-1) unstable; urgency=low
+
+  * change names - remove SLP
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 26 Jan 2010 22:10:00 +0900
+
+system-server (0.0.30-1) unstable; urgency=low
+
+  * fixed warning of compiling and Prevent bugs
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 25 Jan 2010 17:39:56 +0900
+
+system-server (0.0.29-1) unstable; urgency=low
+
+  * removed movinand format and mount - it moved to bootloader and fstab
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 20 Jan 2010 11:46:56 +0900
+
+system-server (0.0.28-1) unstable; urgency=low
+
+  * clean up unused codes
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 18 Jan 2010 18:11:26 +0900
+
+system-server (0.0.27-2) unstable; urgency=low
+
+  * update dependency package version
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 15 Jan 2010 17:15:15 +0900
+
+system-server (0.0.27-1) unstable; urgency=low
+
+  * Add codes for earjack key event
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 15 Jan 2010 15:20:28 +0900
+
+system-server (0.0.26-1) unstable; urgency=low
+
+  * Avoiding phone off temporary
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 15 Jan 2010 10:41:55 +0900
+
+system-server (0.0.25-1) unstable; urgency=low
+
+  * checking usb cable when charging 
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 14 Jan 2010 09:59:19 +0900
+
+system-server (0.0.24-1) unstable; urgency=low
+
+  * add running xberc for analog TV-out
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 13 Jan 2010 16:14:34 +0900
+
+system-server (0.0.23-1) unstable; urgency=low
+
+  * movinand format as rfs
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 12 Jan 2010 18:21:21 +0900
+
+system-server (0.0.22-2) unstable; urgency=low
+
+  * add temporary unmount_ums function
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 11 Jan 2010 19:41:53 +0900
+
+system-server (0.0.22-1) unstable; urgency=low
+
+  * do not fork and exec low-batt appl.
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 08 Jan 2010 15:17:10 +0900
+
+system-server (0.0.21-2) unstable; urgency=low
+
+  * rebuild
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 04 Jan 2010 19:55:16 +0900
+
+system-server (0.0.21-1) unstable; urgency=low
+
+  * bug fix - mmc card dev path 
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 04 Jan 2010 17:00:20 +0900
+
+system-server (0.0.20-1) unstable; urgency=low
+
+  * added for low memory libsetting key
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 30 Dec 2009 21:37:03 +0900
+
+system-server (0.0.19-2) unstable; urgency=low
+
+  * Build dependency and dependency to edbus added.
+  * #include <E_DBus.h> added to solve build break. ss_main.c uses
+    E_DBus_Connection but E_DBus.h is not refereneced.
+
+ -- Jongwoo Chae <jongwoo.chae@samsung.com> Wonil Choi <wonil22.choi@samsung.com>  Wed, 30 Dec 2009 21:33:13 +0900
+
+system-server (0.0.19-1) unstable; urgency=low
+
+  * Indicator separation
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 30 Dec 2009 12:06:07 +0900
+
+system-server (0.0.18-1) unstable; urgency=low
+
+  * rebuild because of new device fw. .h file(enum changed)
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Tue, 29 Dec 2009 11:35:20 +0900
+
+system-server (0.0.18) unstable; urgency=low
+
+  * add rssi, service type indicator, add error routine
+
+ -- SoHyun Kim <anna1014.kim@samsung.com>  Mon, 28 Dec 2009 16:55:55 +0900
+
+system-server (0.0.17) unstable; urgency=low
+
+  * add call, wifi, bt, mmc, usb indicator
+
+ -- SoHyun Kim <anna1014.kim@samsung.com>  Tue, 22 Dec 2009 20:55:35 +0900
+
+system-server (0.0.16) unstable; urgency=low
+
+  * Remove dependancy of slp-message
+
+ -- SoHyun Kim <anna1014.kim@samsung.com>  Mon, 21 Dec 2009 18:12:17 +0900
+
+system-server (0.0.15) unstable; urgency=low
+
+  * Changed the names about low battery, and added to set the low battery
+  status to slp-setting
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Mon, 21 Dec 2009 17:41:31 +0900
+
+system-server (0.0.14) unstable; urgency=low
+
+  * Added to set an earjack status to libSLP-setting
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Thu, 17 Dec 2009 16:05:10 +0900
+
+system-server (0.0.13) unstable; urgency=low
+
+  * Implemented USB init and bug fix - null checking
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 16 Dec 2009 19:06:48 +0900
+
+system-server (0.0.12) unstable; urgency=low
+
+  * Implemented MMC card recognition
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Sat, 12 Dec 2009 13:35:36 +0900
+
+system-server (0.0.11) unstable; urgency=low
+
+  * Implemented fuel guage reset function
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Wed, 09 Dec 2009 10:58:23 +0900
+
+system-server (0.0.10) unstable; urgency=low
+
+  * remove mmc format when failed to mount
+
+ -- Wonil Choi <wonil22.choi@samsung.com>  Fri, 04 Dec 2009 21:46:27 +0900
+
+system-server (0.0.9) unstable; urgency=low
+
+  * add earjack predefine action
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Wed, 02 Dec 2009 13:50:08 +0900
+
+system-server (0.0.8) unstable; urgency=low
+
+  * indicator - initial battery charger bug fix
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Mon, 30 Nov 2009 16:33:15 +0900
+
+system-server (0.0.7) unstable; urgency=low
+
+  * remove indicator daemon , indicator daemon ==> system manager
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Mon, 30 Nov 2009 15:01:52 +0900
+
+system-server (0.0.6) unstable; urgency=low
+
+  * create /mnt/mmc if not exist /mnt/mmc before mount it
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Mon, 30 Nov 2009 09:23:15 +0900
+
+system-server (0.0.5) unstable; urgency=low
+
+  x1 -> slp
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Mon, 16 Nov 2009 11:46:46 +0900
+
+system-server (0.0.4) unstable; urgency=low
+
+  * mkfs.vfs path changed 
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Mon, 16 Nov 2009 11:46:46 +0900
+
+system-server (0.0.3) unstable; urgency=low
+
+  * Fix bin pkg name
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Mon, 16 Nov 2009 11:46:46 +0900
+
+system-server (0.0.2) unstable; urgency=low
+
+  * Fix bin pkg name
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Mon, 16 Nov 2009 11:46:46 +0900
+
+system-server (0.0.1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Kn-Hoon Baik <knhoon.baik@samsung.com>  Thu, 12 Nov 2009 21:48:18 +0900

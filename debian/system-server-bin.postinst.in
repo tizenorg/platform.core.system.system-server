@@ -1,0 +1,61 @@
+#!/bin/sh
+
+vconftool set -t int memory/Battery/Charger -1 -i
+vconftool set -t int memory/Battery/Status/Low -1 -i
+vconftool set -t int memory/Battery/Capacity -1 -i
+vconftool set -t int memory/Device/EarJackKey 0 -i
+vconftool set -t int db/system/timechange 0 -i
+vconftool set -t int memory/sysman/low_memory 1 -i
+vconftool set -t int memory/Connectivity/USB -1 -i
+vconftool set -t int memory/Device/mmc_format 0 -i
+
+vconftool set -t int memory/Device/Mmc -1 -i
+vconftool set -t int memory/Device/mmc_mount -1 -i
+vconftool set -t int memory/Device/mmc_unmount -1 -i
+vconftool set -t int memory/Device/mmc_format -1 -i
+
+vconftool set -t int db/MainLCD/Backlight/Normal -1 -i
+vconftool set -t int memory/Device/EarJack -1 -i
+vconftool set -t int memory/Device/Cradle/Status -1 -i
+vconftool set -t int memory/Device/Sliding_keyboard -1 -i
+
+vconftool set -t int memory/Device/usbhost/added_storage 0 -i
+vconftool set -t int memory/Device/usbhost/removed_storage 0 -i
+
+vconftool set -t string memory/Device/usbhost/added_storage_uevent "" -i
+vconftool set -t string memory/Device/usbhost/removed_storage_uevent "" -i
+
+vconftool set -t int memory/Device/usbhost/connect -1 -i
+
+heynotitool set power_off_start
+
+heynotitool set mmcblk_add
+heynotitool set mmcblk_remove
+
+heynotitool set device_usb_chgdet
+heynotitool set device_ta_chgdet
+heynotitool set device_earjack_chgdet
+heynotitool set device_earkey_chgdet
+heynotitool set device_tvout_chgdet
+heynotitool set device_hdmi_chgdet
+heynotitool set device_cradle_chgdet
+heynotitool set device_charge_chgdet
+heynotitool set device_keyboard_chgdet
+
+mkdir -p /etc/udev/rules.d
+if ! [ -L /etc/udev/rules.d/91-system-server.rules ]; then
+        ln -s @PREFIX@/share/system-server/udev-rules/91-system-server.rules /etc/udev/rules.d/91-system-server.rules
+fi
+
+#mkdir /opt/system/debug/bs -p
+#touch /opt/system/debug/bs/curbs.log
+
+#if [ ${USER} == "root" ]
+#then
+#	chown 0:5000 /opt/system/debug/bs
+#	chown 0:5000 /opt/system/debug/bs/curbs.log
+#fi
+
+# Change file permissions
+#chmod 775 /opt/system/debug/bs
+#chmod 664 /opt/system/debug/bs/curbs.log

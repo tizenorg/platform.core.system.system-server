@@ -1,0 +1,27 @@
+#MMC 
+ACTION=="add", KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/sys_event mmcblk_add"
+ACTION=="remove", KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/sys_event mmcblk_remove"
+
+#Process Monitor
+#ACTION=="change" SUBSYSTEM=="pmon", RUN+="@PREFIX@/bin/restart"
+
+#Jack
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="usb" RUN+="@PREFIX@/bin/sys_event device_usb_chgdet"
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="charger" RUN+="@PREFIX@/bin/sys_event device_ta_chgdet"
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="earjack" RUN+="@PREFIX@/bin/sys_event device_earjack_chgdet"
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="earkey" RUN+="@PREFIX@/bin/sys_event device_earkey_chgdet"
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="tvout" RUN+="@PREFIX@/bin/sys_event device_tvout_chgdet"
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="hdmi" RUN+="@PREFIX@/bin/sys_event device_hdmi_chgdet"
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="cdrom" RUN+="@PREFIX@/bin/start_composite.sh"
+ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="cradle" RUN+="@PREFIX@/bin/sys_event device_cradle_chgdet"
+
+#USB Host Device
+ACTION=="add", SUBSYSTEM=="host_notify", RUN+="@PREFIX@/bin/vconftool set -t int memory/Device/usbhost/status 1"
+ACTION=="remove", SUBSYSTEM=="host_notify", RUN+="@PREFIX@/bin/vconftool set -t int memory/Device/usbhost/status 0"
+
+#USB Storage
+ACTION=="add", KERNEL=="sd[a-z]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/vconftool set -t string memory/Device/usbhost/added_storage_uevent %N"
+ACTION=="remove", KERNEL=="sd[a-z]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/vconftool set -t string memory/Device/usbhost/removed_storage_uevent $name"
+
+#charge
+ACTION=="change" DEVPATH=="/devices/platform/charger-manager.0" RUN+="@PREFIX@/bin/sys_event device_charge_chgdet"
