@@ -5,6 +5,7 @@ Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Samsung Proprietary License
 Source0:    system-server-%{version}.tar.gz
+Source1001: packaging/system-server.manifest 
 Requires(post): /usr/bin/vconftool
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
@@ -30,6 +31,7 @@ Description: System server
 cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 
 %build
+cp %{SOURCE1001} .
 make %{?jobs:-j%jobs}
 
 %install
@@ -86,6 +88,7 @@ fi
 
 
 %files 
+%manifest system-server.manifest
 %{_bindir}/system_server
 %{_bindir}/restart
 %{_bindir}/movi_format.sh
