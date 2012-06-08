@@ -1,0 +1,8 @@
+system-server (0.1.51-67) unstable; urgency=low
+
+  * support battery err check
+  * Git: slp/pkgs/s/system-server
+  * Tag: system-server_0.1.51-67
+
+ -- Jinkun Jang <jinkun.jang@samsung.com>  Mon, 19 Mar 2012 11:00:59 +0900
+
