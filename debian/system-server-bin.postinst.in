@@ -47,15 +47,3 @@ if ! [ -L /etc/udev/rules.d/91-system-server.rules ]; then
         ln -s @PREFIX@/share/system-server/udev-rules/91-system-server.rules /etc/udev/rules.d/91-system-server.rules
 fi
 
-#mkdir /opt/system/debug/bs -p
-#touch /opt/system/debug/bs/curbs.log
-
-#if [ ${USER} == "root" ]
-#then
-#	chown 0:5000 /opt/system/debug/bs
-#	chown 0:5000 /opt/system/debug/bs/curbs.log
-#fi
-
-# Change file permissions
-#chmod 775 /opt/system/debug/bs
-#chmod 664 /opt/system/debug/bs/curbs.log

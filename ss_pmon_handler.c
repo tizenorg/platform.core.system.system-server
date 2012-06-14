@@ -1,38 +1,28 @@
-/* 
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd All Rights Reserved
+/*
+ * Copyright 2012  Samsung Electronics Co., Ltd
  *
- * This file is part of system-server
- * Written by DongGi Jang <dg0402.jang@samsung.com>
+ * Licensed under the Flora License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * PROPRIETARY/CONFIDENTIAL
+ * 	http://www.tizenopensource.org/license
  *
- * This software is the confidential and proprietary information of
- * SAMSUNG ELECTRONICS ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered
- * into with SAMSUNG ELECTRONICS.
- *
- * SAMSUNG make no representations or warranties about the suitability
- * of the software, either express or implied, including but not limited
- * to the implied warranties of merchantability, fitness for a particular
- * purpose, or non-infringement. SAMSUNG shall not be liable for any
- * damages suffered by licensee as a result of using, modifying or
- * distributing this software or its derivatives.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 */
+#include "ss_log.h"
+#include "ss_launch.h"
 
-
-#include <sysman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <assert.h>
 #include <limits.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
-#include "ss_device_plugin.h"
-#include "ss_log.h"
-#include "ss_launch.h"
-#include "include/ss_data.h"
-
+#define PMON_DEV_NODE "/dev/pmon"
 #define PMON_PERMANENT_DIR "/tmp/permanent"
 
 static int pmon_fd = -1;
@@ -48,6 +38,8 @@ static int replace_char(int size, char *t)
 	return 0;
 }
 
+#define PERNAMENT_DIR	"/tmp/permanent"
+
 static char *pmon_get_permanent_pname(int pid)
 {
 	int fd;
@@ -55,7 +47,7 @@ static char *pmon_get_permanent_pname(int pid)
 	struct stat st;
 	char *cmdline = NULL;
 
-	snprintf(buf, sizeof(buf), "%s/%d", PMON_PERMANENT_DIR, pid);
+	snprintf(buf, sizeof(buf), "%s/%d", PERNAMENT_DIR, pid);
 	fd = open(buf, O_RDONLY);
 	if (fd == -1) {
 		PRT_TRACE_ERR("file open error");
@@ -115,12 +107,14 @@ static int pmon_process(unsigned int pid, void *ad)
 				char filepath[PATH_MAX];
 				size_t cnt;
 
-				if (access(PMON_PERMANENT_DIR, R_OK) < 0) {
-					PRT_TRACE("no predefined matrix dir = %s, so created", PMON_PERMANENT_DIR);
-					mkdir(PMON_PERMANENT_DIR, 0777);
+				if (access("/tmp/permanent", R_OK) < 0) {
+					PRT_TRACE
+					    ("no predefined matrix dir = /tmp/permanent, so created");
+					mkdir("/tmp/permanent", 0777);
 				}
 
-				snprintf(filepath, sizeof(filepath), "%s/%d", PMON_PERMANENT_DIR, pid);
+				snprintf(filepath, sizeof(filepath),
+					 "/tmp/permanent/%d", pid);
 				fd = open(filepath, O_RDONLY);
 				if (fd == -1) {
 					PRT_TRACE("Failed to open");
@@ -135,7 +129,8 @@ static int pmon_process(unsigned int pid, void *ad)
 					return -1;
 				}
 
-				snprintf(filepath, sizeof(filepath), "%s/%d", PMON_PERMANENT_DIR, new_pid);
+				snprintf(filepath, sizeof(filepath), "%s/%d",
+					 "/tmp/permanent", new_pid);
 
 				fd = open(filepath, O_CREAT | O_WRONLY, 0644);
 				if (fd == -1) {
@@ -150,9 +145,16 @@ static int pmon_process(unsigned int pid, void *ad)
 				}
 				close(fd);
 
-				if (0 > plugin_intf->OEM_sys_set_process_monitor_mp_pnp(new_pid)) {
-					PRT_TRACE_ERR("Write new pid failed");
+				fd = open("/sys/class/pmon/mp_pnp", O_WRONLY);
+
+				if (fd == -1) {
+					PRT_TRACE("Failed to open");
+					return -1;
 				}
+
+				write(fd, &new_pid, sizeof(int));
+
+				close(fd);
 				PRT_TRACE("[Process MON] %d ", new_pid);
 
 				FILE *fp;
@@ -214,14 +216,7 @@ static int pmon_cb(void *data, Ecore_Fd_Handler * fd_handler)
 
 int ss_pmon_init(struct ss_main_data *ad)
 {
-	char pmon_dev_node[PATH_MAX];
-
-	if (0 > plugin_intf->OEM_sys_get_process_monitor_node(pmon_dev_node)) {
-		PRT_TRACE_ERR("ss_pmon_init get dev node path failed");
-		return -1;
-	}
-
-	pmon_fd = open(pmon_dev_node, O_RDONLY);
+	pmon_fd = open(PMON_DEV_NODE, O_RDONLY);
 	if (pmon_fd < 0) {
 		PRT_TRACE_ERR("ss_pmon_init fd open failed");
 		return -1;

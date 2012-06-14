@@ -14,7 +14,6 @@ SET(SRCS
 	ss_noti.c
 	ss_lowbat_handler.c
 	ss_lowmem_handler.c
-	ss_pmon_handler.c
 	ss_mmc_handler.c
 	ss_usb_handler.c
 	ss_ta_handler.c

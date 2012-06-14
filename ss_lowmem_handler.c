@@ -1,23 +1,17 @@
-/* 
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd All Rights Reserved
+/*
+ * Copyright 2012  Samsung Electronics Co., Ltd
  *
- * This file is part of system-server
- * Written by DongGi Jang <dg0402.jang@samsung.com>
+ * Licensed under the Flora License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * PROPRIETARY/CONFIDENTIAL
+ * 	http://www.tizenopensource.org/license
  *
- * This software is the confidential and proprietary information of
- * SAMSUNG ELECTRONICS ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered
- * into with SAMSUNG ELECTRONICS.
- *
- * SAMSUNG make no representations or warranties about the suitability
- * of the software, either express or implied, including but not limited
- * to the implied warranties of merchantability, fitness for a particular
- * purpose, or non-infringement. SAMSUNG shall not be liable for any
- * damages suffered by licensee as a result of using, modifying or
- * distributing this software or its derivatives.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 */
 
 
@@ -80,9 +74,6 @@ unsigned int oom_delete_sm_time = 0;
 
 static int remove_shm()
 {
-#if 0
-	system(DELETE_SM);
-#else
 	int maxid, shmid, id;
 	struct shmid_ds shmseg;
 	struct shm_info shm_info;
@@ -104,7 +95,6 @@ static int remove_shm()
 		}
 	}
 	return 0;
-#endif
 }
 
 static char *convert_to_str(unsigned int mem_state)

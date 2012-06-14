@@ -1,23 +1,17 @@
-/* 
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd All Rights Reserved
+/*
+ * Copyright 2012  Samsung Electronics Co., Ltd
  *
- * This file is part of system-server
- * Written by DongGi Jang <dg0402.jang@samsung.com>
+ * Licensed under the Flora License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * PROPRIETARY/CONFIDENTIAL
+ * 	http://www.tizenopensource.org/license
  *
- * This software is the confidential and proprietary information of
- * SAMSUNG ELECTRONICS ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered
- * into with SAMSUNG ELECTRONICS.
- *
- * SAMSUNG make no representations or warranties about the suitability
- * of the software, either express or implied, including but not limited
- * to the implied warranties of merchantability, fitness for a particular
- * purpose, or non-infringement. SAMSUNG shall not be liable for any
- * damages suffered by licensee as a result of using, modifying or
- * distributing this software or its derivatives.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 */
 
 
@@ -69,7 +63,6 @@
 #define POWEROFF_NOTI_NAME                     "power_off_start"
 
 #define VCONFKEY_TESTMODE_LOW_BATT_POPUP       "db/testmode/low_batt_popup"
-#define WM_READY_PATH                          "/tmp/.wm_ready"
  
 #define LOWBAT_OPT_WARNING		1
 #define LOWBAT_OPT_POWEROFF		2
@@ -84,27 +77,7 @@ static void powerdown_ap(TelTapiEvent_t *event, void *data);
 
 static int ss_flags = 0;
 
-static Ecore_Timer *poweroff_timer_id = NULL;
 static unsigned int power_subscription_id = 0;
-
-#ifdef NOUSE
-int call_predefine_action(int argc, char **argv)
-{
-	char argstr[128];
-	int pid;
-
-	if (argc < 2)
-		return -1;
-
-	snprintf(argstr, sizeof(argstr), "-t MT -n %s -i %s", argv[0], argv[1]);
-	pid = ss_launch_if_noexist(CALL_EXEC_PATH, argstr);
-	if (pid < 0) {
-		PRT_TRACE_ERR("call predefine action failed");
-		return -1;
-	}
-	return pid;
-}
-#endif
 
 static void make_memps_log(char *file, pid_t pid, char *victim_name)
 {
@@ -143,7 +116,7 @@ static void make_memps_log(char *file, pid_t pid, char *victim_name)
 
 	snprintf(params, sizeof(params), "-f %s", new_log);
 	ret = ss_launch_evenif_exist(MEMPS_EXEC_PATH, params);
-	/* will be removed, just for debugging */
+
 	if(ret > 0) {
 		char buf[PATH_MAX];
 		FILE *fp;
@@ -195,14 +168,6 @@ int lowmem_def_predefine_action(int argc, char **argv)
 				PRT_TRACE("%d will be killed with %d oom_adj value", pid, oom_adj);
 
 				kill(pid, SIGTERM);
-#ifdef NOUSE
-				sleep(WAITING_INTERVAL);
-				snprintf(buf, sizeof(buf), "/proc/%d", pid);
-				if (access(buf, R_OK) == 0) {
-					/* still alive the victim. kill it by force */
-					kill(pid, SIGKILL);
-				}
-#endif
 
 				if (oom_adj >= OOMADJ_BACKGRD_UNLOCKED) {	
 					return 0;
@@ -234,13 +199,29 @@ int lowmem_def_predefine_action(int argc, char **argv)
 
 int usbcon_def_predefine_action(int argc, char **argv)
 {
-	int pid, val = -1;
+	int pid;
+	int val = -1;
+	int ret = -1;
+	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
 
 	if (plugin_intf->OEM_sys_get_jack_usb_online(&val) == 0) {
 		if (val == 0) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
 			pm_unlock_state(LCD_OFF, STAY_CUR_STATE);
+
+			vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state);
+			if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
+				bundle *b = NULL;
+				b = bundle_create();
+				bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+
+				ret = syspopup_launch("lowbat-syspopup", b);
+				if (ret < 0) {
+					PRT_TRACE_EM("popup lauch failed\n");
+				}
+				bundle_free(b);
+			}
 			return 0;
 		}
 
@@ -262,48 +243,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 {
 	int val;
 
-	/* TODO 
-	 * if we can recognize which type of jack is changed,
-	 * should move following code for TVOUT to a new action function */
 	PRT_TRACE_EM("earjack_normal predefine action\n");
-	/*
-	   if(device_get_property(DEVTYPE_JACK,JACK_PROP_TVOUT_ONLINE,&val) == 0)
-	   {
-	   if (val == 1 &&
-	   vconf_get_int(VCONFKEY_SETAPPL_TVOUT_TVSYSTEM_INT, &val) == 0) {
-	   PRT_TRACE_EM("Start TV out %s\n", (val==0)?"NTSC":(val==1)?"PAL":"Unsupported");
-	   switch (val) {
-	   case 0:              // NTSC
-	   ss_launch_after_kill_if_exist(TVOUT_X_BIN, "-connect 2");
-	   break;
-	   case 1:              // PAL
-	   ss_launch_after_kill_if_exist(TVOUT_X_BIN, "-connect 3");
-	   break;
-	   default:
-	   PRT_TRACE_ERR("Unsupported TV system type:%d \n", val);
-	   return -1;
-	   }
-	   // UI clone on
-	   ss_launch_evenif_exist(TVOUT_X_BIN, "-clone 1");
-	   ss_flags |= TVOUT_FLAG;
-	   return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, VCONFKEY_SYSMAN_EARJACK_TVOUT);
-	   }
-	   else {
-	   if(val == 1) {
-	   PRT_TRACE_EM("TV type is not set. Please set the TV type first.\n");
-	   return -1;
-	   }
-	   if (ss_flags & TVOUT_FLAG) {
-	   PRT_TRACE_EM("TV out Jack is disconnected.\n");
-	   // UI clone off
-	   ss_launch_after_kill_if_exist(TVOUT_X_BIN, "-clone 0");
-	   ss_flags &= ~TVOUT_FLAG;
-	   return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, VCONFKEY_SYSMAN_EARJACK_REMOVED);
-	   }
-	   // Current event is not TV out event. Fall through 
-	   }
-	   }
-	 */
 	if (plugin_intf->OEM_sys_get_jack_earjack_online(&val) == 0) {
 		return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, val);
 	}
@@ -427,10 +367,6 @@ static void powerdown_ap(TelTapiEvent_t *event, void *data)
 	int poweroff_duration = POWEROFF_DURATION;
 	char *buf;
 
-	if (poweroff_timer_id) {
-		ecore_timer_del(poweroff_timer_id);
-		poweroff_timer_id = NULL;
-	}
 	if (power_subscription_id) {
 		tel_deregister_event(power_subscription_id);
 		power_subscription_id = 0;
@@ -487,42 +423,6 @@ int poweroff_def_predefine_action(int argc, char **argv)
 		return 0;
 	}
 
-	poweroff_timer_id = ecore_timer_add(15, powerdown_ap_by_force, NULL);
-	return 0;
-}
-
-int entersleep_def_predefine_action(int argc, char **argv)
-{
-	int ret;
-
-	pm_change_state(LCD_NORMAL);
-	sync();
-
-	/* flight mode
-	 * TODO - add check, cb, etc... 
-	 * should be checked wirh telephony part */
-	ret = tel_set_flight_mode(TAPI_POWER_FLIGHT_MODE_ENTER);
-	PRT_TRACE_ERR("request for changing into flight mode : %d\n", ret);
-
-	system("/etc/rc.d/rc.entersleep");
-	pm_change_state(POWER_OFF);
-
-	return 0;
-}
-
-int leavesleep_def_predefine_action(int argc, char **argv)
-{
-	int ret;
-
-	pm_change_state(LCD_NORMAL);
-	sync();
-
-	/* flight mode
-	 * TODO - add check, cb, etc... 
-	 * should be checked wirh telephony part */
-	ret = tel_set_flight_mode(TAPI_POWER_FLIGHT_MODE_LEAVE);
-	PRT_TRACE_ERR("request for changing into flight mode : %d\n", ret);
-
 	return 0;
 }
 
@@ -540,10 +440,6 @@ static void restart_ap(TelTapiEvent_t *event, void *data)
 	int poweroff_duration = POWEROFF_DURATION;
 	char *buf;
 
-	if (poweroff_timer_id) {
-		ecore_timer_del(poweroff_timer_id);
-		poweroff_timer_id = NULL;
-	}
 	if (power_subscription_id) {
 		tel_deregister_event(power_subscription_id);
 		power_subscription_id = 0;
@@ -594,7 +490,6 @@ int restart_def_predefine_action(int argc, char **argv)
 		return 0;
 	}
 
-	poweroff_timer_id = ecore_timer_add(15, restart_ap_ecore, NULL);
 	return 0;
 }
 
@@ -655,10 +550,6 @@ static void ss_action_entry_load_from_sodir()
 
 void ss_predefine_internal_init(void)
 {
-#ifdef NOUSE
-	ss_action_entry_add_internal(PREDEF_CALL, call_predefine_action, NULL,
-				     NULL);
-#endif
 	ss_action_entry_add_internal(PREDEF_LOWMEM, lowmem_def_predefine_action,
 				     NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_LOWBAT, lowbat_def_predefine_action,
@@ -672,12 +563,6 @@ void ss_predefine_internal_init(void)
 				     poweroff_def_predefine_action, NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_PWROFF_POPUP,
 				     launching_predefine_action, NULL, NULL);
-	ss_action_entry_add_internal(PREDEF_ENTERSLEEP,
-				     entersleep_def_predefine_action, NULL,
-				     NULL);
-	ss_action_entry_add_internal(PREDEF_LEAVESLEEP,
-				     leavesleep_def_predefine_action, NULL,
-				     NULL);
 	ss_action_entry_add_internal(PREDEF_REBOOT,
 				     restart_def_predefine_action, NULL, NULL);
 

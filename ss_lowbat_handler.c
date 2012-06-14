@@ -1,23 +1,17 @@
-/* 
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd All Rights Reserved
+/*
+ * Copyright 2012  Samsung Electronics Co., Ltd
  *
- * This file is part of system-server
- * Written by DongGi Jang <dg0402.jang@samsung.com>
+ * Licensed under the Flora License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * PROPRIETARY/CONFIDENTIAL
+ * 	http://www.tizenopensource.org/license
  *
- * This software is the confidential and proprietary information of
- * SAMSUNG ELECTRONICS ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered
- * into with SAMSUNG ELECTRONICS.
- *
- * SAMSUNG make no representations or warranties about the suitability
- * of the software, either express or implied, including but not limited
- * to the implied warranties of merchantability, fitness for a particular
- * purpose, or non-infringement. SAMSUNG shall not be liable for any
- * damages suffered by licensee as a result of using, modifying or
- * distributing this software or its derivatives.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 */
 
 
@@ -92,18 +86,6 @@ static struct lowbat_process_entry lpe[] = {
 	{BATTERY_NORMAL,		BATTERY_REAL_POWER_OFF,	battery_power_off_act},
 };
 
-/*
- * TODO: remove this function
- */
-static void print_lowbat_state(unsigned int bat_percent)
-{
-#if 0
-	int i;
-	for (i = 0; i < BAT_MON_SAMPLES; i++)
-		PRT_TRACE("\t%d", recent_bat_percent[i]);
-#endif
-}
-
 static int battery_warning_low_act(void *data)
 {
 	char lowbat_noti_name[NAME_MAX];
@@ -129,17 +111,6 @@ static int battery_power_off_act(void *data)
 
 static int battery_charge_act(void *data)
 {
-#ifdef NOUSE
-	int val;
-	char argstr[128];
-
-	/* instead of adding action to the queue, execute it right here */
-	if (device_get_property(DEVTYPE_JACK, JACK_PROP_TA_ONLINE, &val) == 0
-	    && val == 1) {
-		snprintf(argstr, 128, "-t 4");
-		ss_launch_after_kill_if_exist(LOWBAT_EXEC_PATH, argstr);
-	}
-#endif
 	return 0;
 }
 
@@ -272,7 +243,6 @@ int ss_lowbat_monitor(void *data)
 	}
 	if (bat_percent > 100)
 		bat_percent = 100;
-	print_lowbat_state(bat_percent);
 
 	if (lowbat_process(bat_percent, ad) < 0)
 		ecore_timer_interval_set(lowbat_timer, BAT_MON_INTERVAL_MIN);

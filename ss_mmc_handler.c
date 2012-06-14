@@ -1,23 +1,17 @@
-/* 
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd All Rights Reserved
+/*
+ * Copyright 2012  Samsung Electronics Co., Ltd
  *
- * This file is part of system-server
- * Written by DongGi Jang <dg0402.jang@samsung.com>
+ * Licensed under the Flora License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * PROPRIETARY/CONFIDENTIAL
+ * 	http://www.tizenopensource.org/license
  *
- * This software is the confidential and proprietary information of
- * SAMSUNG ELECTRONICS ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered
- * into with SAMSUNG ELECTRONICS.
- *
- * SAMSUNG make no representations or warranties about the suitability
- * of the software, either express or implied, including but not limited
- * to the implied warranties of merchantability, fitness for a particular
- * purpose, or non-infringement. SAMSUNG shall not be liable for any
- * damages suffered by licensee as a result of using, modifying or
- * distributing this software or its derivatives.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 */
 
 
@@ -151,23 +145,6 @@ int ss_mmc_unmounted(int argc, char **argv)
 
 int ss_mmc_init()
 {
-#ifdef NOUSE
-	/* movinand mount */
-	if (access(MOVINAND_MOUNT_POINT, R_OK) != 0)
-		mkdir(MOVINAND_MOUNT_POINT, 0755);
-
-	if (mount
-	    (MOVINAND_DEV, MOVINAND_MOUNT_POINT, "vfat", 0,
-	     "uid=0,gid=0,dmask=0000,fmask=0000,iocharset=iso8859-1,utf8,shortname=mixed")
-	    < 0) {
-		PRT_TRACE_ERR
-		    ("Failed to mount. Format movinand as rfs file system. "
-		     MOVINAND_DEV "\n");
-		system(FORMAT_MOVINAND);
-		mount(MOVINAND_DEV, MOVINAND_MOUNT_POINT, "rfs", 0,
-		      "uid=0,gid=0,dmask=0000,fmask=0000,iocharset=iso8859-1,utf8,shortname=mixed");
-	}
-#endif
 	/* mmc card mount */
 	ss_mmc_inserted();
 
@@ -182,14 +159,6 @@ int ss_mmc_init()
 				     NULL);
 	return 0;
 }
-
-#ifdef NOUSE
-static int set_mount_opt(char *buf)
-{
-	snprintf(buf, NAME_MAX, "external,iocharset=cp949");
-	return 0;
-}
-#endif
 
 int ss_mmc_inserted()
 {

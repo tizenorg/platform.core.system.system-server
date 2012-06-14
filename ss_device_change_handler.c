@@ -1,23 +1,17 @@
-/* 
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd All Rights Reserved
+/*
+ * Copyright 2012  Samsung Electronics Co., Ltd
  *
- * This file is part of system-server
- * Written by DongGi Jang <dg0402.jang@samsung.com>
+ * Licensed under the Flora License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * PROPRIETARY/CONFIDENTIAL
+ * 	http://www.tizenopensource.org/license
  *
- * This software is the confidential and proprietary information of
- * SAMSUNG ELECTRONICS ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered
- * into with SAMSUNG ELECTRONICS.
- *
- * SAMSUNG make no representations or warranties about the suitability
- * of the software, either express or implied, including but not limited
- * to the implied warranties of merchantability, fitness for a particular
- * purpose, or non-infringement. SAMSUNG shall not be liable for any
- * damages suffered by licensee as a result of using, modifying or
- * distributing this software or its derivatives.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 */
 
 
@@ -31,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <syspopup_caller.h>
 
 #include "ss_queue.h"
 #include "ss_log.h"
@@ -41,11 +36,6 @@
 
 #define BUFF_MAX					255
 #define SYS_CLASS_INPUT					"/sys/class/input"
-
-#ifdef ENABLE_EDBUS_USE
-#include <E_DBus.h>
-static E_DBus_Connection *conn;
-#endif				/* ENABLE_EDBUS_USE */
 
 struct input_event {
 	long dummy[2];
@@ -85,12 +75,28 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 	ss_lowbat_monitor(NULL);
 
 	int val = -1;
+	int ret = -1;
+	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
 
 	if (plugin_intf->OEM_sys_get_jack_charger_online(&val) == 0) {
-		if (val == 0) 
+		if (val == 0) {
 			pm_unlock_state(LCD_OFF, STAY_CUR_STATE);
-		else
+
+			vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state);
+			if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
+				bundle *b = NULL;
+				b = bundle_create();
+				bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+
+				ret = syspopup_launch("lowbat-syspopup", b);
+				if (ret < 0) {
+					PRT_TRACE_EM("popup lauch failed\n");
+				}
+				bundle_free(b);
+			}
+		} else {
 			pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
+	}
 	}
 	else
 		PRT_TRACE_ERR("failed to get ta status\n");
@@ -126,12 +132,6 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 static void cradle_chgdet_cb(struct ss_main_data *ad)
 {
 	PRT_TRACE("jack - cradle changed\n");
-#ifdef CRADLE_SUPPORT
-	int val;
-	ss_lowbat_is_charge_in_now();
-	if (plugin_intf->OEM_sys_get_jack_cradle_online(&val) == 0)
-		vconf_set_int(VCONFKEY_SYSMAN_CRADLE_STATUS, !!val);
-#endif
 }
 
 static void keyboard_chgdet_cb(struct ss_main_data *ad)
@@ -183,25 +183,6 @@ static void charge_cb(struct ss_main_data *ad)
 	ss_action_entry_call_internal(PREDEF_LOWBAT, 1, CHARGE_CHECK_ACT);
 }
 
-#ifdef ENABLE_EDBUS_USE
-static void cb_xxxxx_signaled(void *data, DBusMessage * msg)
-{
-	char *args;
-	DBusError err;
-	struct ss_main_data *ad;
-
-	ad = data;
-
-	dbus_error_init(&err);
-	if (dbus_message_get_args
-	    (msg, &err, DBUS_TYPE_STRING, &args, DBUS_TYPE_INVALID)) {
-		if (!strcmp(args, "action")) ;	/* action */
-	}
-
-	return;
-}
-#endif				/* ENABLE_EDBUS_USE */
-
 static void __usb_storage_cb(keynode_t *key, void *data)
 {
 	char *vconf_value;
@@ -241,18 +222,6 @@ int ss_device_change_init(struct ss_main_data *ad)
 	if (vconf_notify_key_changed(VCONFKEY_INTERNAL_REMOVED_USB_STORAGE, (void *)__usb_storage_cb, NULL) < 0) {
 		PRT_TRACE_ERR("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_REMOVED_USB_STORAGE);
 	}
-
-	/* dbus noti change cb */
-#ifdef ENABLE_EDBUS_USE
-	e_dbus_init();
-	conn = e_dbus_bus_get(DBUS_BUS_SYSTEM);
-	if (!conn)
-		PRT_TRACE_ERR("check system dbus running!\n");
-
-	e_dbus_signal_handler_add(conn, NULL, "/system/uevent/xxxxx",
-				  "system.uevent.xxxxx",
-				  "Change", cb_xxxxx_signaled, ad);
-#endif				/* ENABLE_EDBUS_USE */
 
 	cradle_chgdet_cb(NULL);
 
