@@ -6,7 +6,7 @@ Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Flora Software License
 Source0:    system-server-%{version}.tar.gz
-Requires(post): /usr/bin/vconftool
+Source1:    system-server.service
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -23,6 +23,10 @@ BuildRequires:  pkgconfig(devman_plugin)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
+Requires(preun): /usr/bin/systemctl
+Requires(post): /usr/bin/systemctl
+Requires(post): /usr/bin/vconftool
+Requires(postun): /usr/bin/systemctl
 
 %description
 Description: System server
@@ -44,6 +48,10 @@ ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc3
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/rc5.d/
 ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S00system-server
 
+mkdir -p %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants
+install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.service
+ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+
 %post
 
 vconftool set -t int memory/sysman/usbhost_status -1 -i
@@ -57,6 +65,7 @@ vconftool set -t int memory/sysman/battery_status_low -1 -i
 vconftool set -t int memory/sysman/battery_capacity -1 -i
 vconftool set -t int memory/sysman/usb_status -1 -i
 vconftool set -t int memory/sysman/earjack -1 -i
+
 vconftool set -t int memory/sysman/low_memory 1 -i
 vconftool set -t int memory/sysman/sliding_keyboard -1 -i
 vconftool set -t int memory/sysman/mmc_mount -1 -i
@@ -95,6 +104,20 @@ if ! [ -L /etc/udev/rules.d/91-system-server.rules ]; then
         ln -s %{_datadir}/system-server/udev-rules/91-system-server.rules /etc/udev/rules.d/91-system-server.rules
 fi
 
+systemctl daemon-reload
+if [ $1 == 1 ]; then
+    systemctl restart system-server.service
+fi
+
+
+%preun
+if [ $1 == 0 ]; then
+    systemctl stop system-server.service
+fi
+
+%postun
+systemctl daemon-reload
+
 
 %files
 %{_bindir}/system_server
@@ -103,6 +126,8 @@ fi
 %{_bindir}/sys_event
 %{_bindir}/sys_device_noti
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
+%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+%{_libdir}/systemd/system/system-server.service
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc3.d/S35system-server

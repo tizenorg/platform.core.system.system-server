@@ -1,0 +1,8 @@
+[Unit]
+Description=Start the system server service
+
+[Service]
+ExecStart=/usr/bin/system_server
+
+[Install]
+WantedBy=multi-user.target
