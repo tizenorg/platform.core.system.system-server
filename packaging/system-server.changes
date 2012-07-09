@@ -1,0 +1,14 @@
+* Mon Jul 09 2012 Patrick McCarty <patrick.mccarty@linux.intel.com> badd113
+- Add/install a systemd service file
+
+* Wed Jun 13 2012 Kim Kibum <kb0929.kim@samsung.com> 14f406b
+- apply FSL license
+
+* Tue May 29 2012 Ryan Ware <ryan.r.ware@intel.com> 1c84ccf
+- Add default Smack manifest for system-server.spec
+
+* Thu Apr 26 2012 Kim Kibum <kb0929.kim@samsung.com> 5557158
+- Tizen souce update
+[ eunmee.moon ]
+- Initial empty repository
+

@@ -5,8 +5,8 @@ Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Samsung Proprietary License
 Source0:    system-server-%{version}.tar.gz
+Source1:    system-server.service
 Source1001: packaging/system-server.manifest 
-Requires(post): /usr/bin/vconftool
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -21,6 +21,10 @@ BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(syspopup-caller)
 BuildRequires:  pkgconfig(devman_plugin)
 BuildRequires:  pkgconfig(x11)
+Requires(preun): /usr/bin/systemctl
+Requires(post): /usr/bin/systemctl
+Requires(post): /usr/bin/vconftool
+Requires(postun): /usr/bin/systemctl
 
 %description
 Description: System server
@@ -38,10 +42,24 @@ make %{?jobs:-j%jobs}
 rm -rf %{buildroot}
 %make_install
 
+mkdir -p %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants
+install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.service
+ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/rc5.d/
 ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S00system-server
 
+
+%preun
+if [ $1 == 0 ]; then
+    systemctl stop system-server.service
+fi
+
 %post 
+systemctl daemon-reload
+if [ $1 == 1 ]; then
+    systemctl restart system-server.service
+fi
 
 vconftool set -t int memory/Battery/Charger -1 -i
 vconftool set -t int memory/Battery/Status/Low -1 -i
@@ -86,6 +104,9 @@ if ! [ -L /etc/udev/rules.d/91-system-server.rules ]; then
         ln -s %{_datadir}/system-server/udev-rules/91-system-server.rules /etc/udev/rules.d/91-system-server.rules
 fi
 
+%postun
+systemctl daemon-reload
+
 
 %files 
 %manifest system-server.manifest
@@ -93,6 +114,8 @@ fi
 %{_bindir}/restart
 %{_bindir}/movi_format.sh
 %{_bindir}/sys_event
+%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+%{_libdir}/systemd/system/system-server.service
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc5.d/S00system-server
