@@ -3,7 +3,7 @@ Summary:    System server
 Version:    0.1.51
 Release:    1
 Group:      TO_BE/FILLED_IN
-License:    Samsung Proprietary License
+License:    Flora Software License
 Source0:    system-server-%{version}.tar.gz
 Source1:    system-server.service
 Source1001: packaging/system-server.manifest 
