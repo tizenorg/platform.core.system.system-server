@@ -117,6 +117,7 @@ systemctl daemon-reload
 %{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 %{_libdir}/systemd/system/system-server.service
 %{_datadir}/system-server/udev-rules/91-system-server.rules
+%config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc5.d/S00system-server
 

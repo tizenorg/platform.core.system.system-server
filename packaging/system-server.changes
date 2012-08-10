@@ -1,3 +1,6 @@
+* Fri Aug 10 2012 Patrick McCarty <patrick.mccarty@linux.intel.com> 81b0fb0
+- Add a dbus config for system-server
+
 * Wed Jul 26 2012 Yin Kangkai <kangkai.yin@intel.com>
 - Add some ENV setting in .service file to correclty forking usb_setting
 
