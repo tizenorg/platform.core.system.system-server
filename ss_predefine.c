@@ -23,10 +23,10 @@
 #include <sysman.h>
 #include <vconf.h>
 #include <pmapi.h>
-#include <ITapiPower.h>
+#include <ITapiModem.h>
 #include <TelPower.h>
-#include <TapiEvent.h>
-#include <TapiCommon.h>
+#include <tapi_event.h>
+#include <tapi_common.h>
 #include <syspopup_caller.h>
 #include <sys/reboot.h>
 #include <sys/time.h>
@@ -40,30 +40,30 @@
 #include "ss_procmgr.h"
 #include "include/ss_data.h"
 
-#define PREDEFINE_SO_DIR	PREFIX"/lib/ss_predefine/"
+#define PREDEFINE_SO_DIR			PREFIX"/lib/ss_predefine/"
 
-#define CALL_EXEC_PATH		PREFIX"/bin/call"
-#define LOWMEM_EXEC_PATH	PREFIX"/bin/lowmem-popup"
-#define LOWBAT_EXEC_PATH	PREFIX"/bin/lowbatt-popup"
-#define USBCON_EXEC_PATH	PREFIX"/bin/usb_setting"
-#define TVOUT_EXEC_PATH		PREFIX"/bin/tvout-selector"
-#define PWROFF_EXEC_PATH	PREFIX"/bin/poweroff-popup"
-#define MEMPS_EXEC_PATH	PREFIX"/bin/memps"
+#define CALL_EXEC_PATH				PREFIX"/bin/call"
+#define LOWMEM_EXEC_PATH			PREFIX"/bin/lowmem-popup"
+#define LOWBAT_EXEC_PATH			PREFIX"/bin/lowbatt-popup"
+#define USBCON_EXEC_PATH			PREFIX"/bin/usb_setting"
+#define TVOUT_EXEC_PATH				PREFIX"/bin/tvout-selector"
+#define PWROFF_EXEC_PATH			PREFIX"/bin/poweroff-popup"
+#define MEMPS_EXEC_PATH				PREFIX"/bin/memps"
 
 /* wait for 5 sec as victim process be dead */
-#define WAITING_INTERVAL	5
+#define WAITING_INTERVAL			5
 
-#define TVOUT_X_BIN		"/usr/bin/xberc"
-#define TVOUT_FLAG		0x00000001
-#define MEMPS_LOG_FILE		"/var/log/memps"
-#define MAX_RETRY		2
+#define TVOUT_X_BIN				"/usr/bin/xberc"
+#define TVOUT_FLAG				0x00000001
+#define MEMPS_LOG_FILE				"/var/log/memps"
+#define MAX_RETRY				2
 
-#define POWEROFF_DURATION		2
-#define POWEROFF_ANIMATION_PATH		"/usr/bin/boot-animation"
-#define POWEROFF_NOTI_NAME                     "power_off_start"
+#define POWEROFF_DURATION			2
+#define POWEROFF_ANIMATION_PATH			"/usr/bin/boot-animation"
+#define POWEROFF_NOTI_NAME			"power_off_start"
 
-#define VCONFKEY_TESTMODE_LOW_BATT_POPUP       "db/testmode/low_batt_popup"
- 
+#define WM_READY_PATH				"/tmp/.wm_ready"
+
 #define LOWBAT_OPT_WARNING		1
 #define LOWBAT_OPT_POWEROFF		2
 #define LOWBAT_OPT_CHARGEERR	3
@@ -73,11 +73,12 @@ static Ecore_Timer *lowbat_popup_id = NULL;
 static int lowbat_popup_option = 0;
 
 static struct timeval tv_start_poweroff;
-static void powerdown_ap(TelTapiEvent_t *event, void *data);
+static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data);
 
 static int ss_flags = 0;
 
-static unsigned int power_subscription_id = 0;
+static Ecore_Timer *poweroff_timer_id = NULL;
+static TapiHandle *tapi_handle = NULL;
 
 static void make_memps_log(char *file, pid_t pid, char *victim_name)
 {
@@ -254,7 +255,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 int lowbat_popup(void *data)
 {
 	int ret = -1, state = 0;
-	ret = vconf_get_int("memory/boot-animation/finished", &state);
+	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		bundle *b = NULL;
 		b = bundle_create();
@@ -274,7 +275,7 @@ int lowbat_popup(void *data)
 			bundle_free(b);
 			return 1;
 		}
-			lowbat_popup_id = NULL;
+		lowbat_popup_id = NULL;
 		lowbat_popup_option = 0;
 		bundle_free(b);
 	} else {
@@ -315,7 +316,7 @@ int lowbat_def_predefine_action(int argc, char **argv)
 		lowbat_popup_option = LOWBAT_OPT_CHECK;
 	}
 
-	ret = vconf_get_int("memory/boot-animation/finished", &state);
+	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		ret = syspopup_launch("lowbat-syspopup", b);
 		if (ret < 0) {
@@ -338,6 +339,11 @@ Eina_Bool powerdown_ap_by_force(void *data)
 	int poweroff_duration = POWEROFF_DURATION;
 	char *buf;
 
+	if(tapi_handle != NULL)
+	{
+		tel_deinit(tapi_handle);
+		tapi_handle = NULL;
+	}
 	/* Getting poweroff duration */
 	buf = getenv("PWROFF_DUR");
 	if (buf != NULL && strlen(buf) < 1024)
@@ -361,15 +367,20 @@ Eina_Bool powerdown_ap_by_force(void *data)
 	return EINA_TRUE;
 }
 
-static void powerdown_ap(TelTapiEvent_t *event, void *data)
+static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data)
 {
 	struct timeval now;
 	int poweroff_duration = POWEROFF_DURATION;
 	char *buf;
 
-	if (power_subscription_id) {
-		tel_deregister_event(power_subscription_id);
-		power_subscription_id = 0;
+	if (poweroff_timer_id) {
+		ecore_timer_del(poweroff_timer_id);
+		poweroff_timer_id = NULL;
+	}
+	if (tapi_handle) {
+		tel_deregister_noti_event(tapi_handle,TAPI_NOTI_MODEM_POWER);
+		tel_deinit(tapi_handle);
+		tapi_handle = NULL;
 	}
 	PRT_TRACE("Power off \n");
 
@@ -393,7 +404,10 @@ static void powerdown_ap(TelTapiEvent_t *event, void *data)
 	sync();
 	reboot(RB_POWER_OFF);
 }
-
+static void powerdown_res_cb(TapiHandle *handle, int result, void *data, void *user_data)
+{
+	PRT_TRACE("poweroff command request : %d",result);
+}
 int poweroff_def_predefine_action(int argc, char **argv)
 {
 	int ret;
@@ -405,10 +419,8 @@ int poweroff_def_predefine_action(int argc, char **argv)
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
-	ret =
-	    tel_register_event(TAPI_EVENT_POWER_PHONE_OFF,
-			       &power_subscription_id,
-			       (TelAppCallback) & powerdown_ap, NULL);
+	ret = tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, powerdown_ap, NULL);
+
 	if (ret != TAPI_API_SUCCESS) {
 		PRT_TRACE_ERR
 		    ("tel_register_event is not subscribed. error %d\n", ret);
@@ -416,33 +428,116 @@ int poweroff_def_predefine_action(int argc, char **argv)
 		return 0;
 	}
 
-	ret = tel_process_power_command(TAPI_PHONE_POWER_OFF);
+	ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
 	if (ret != TAPI_API_SUCCESS) {
 		PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
 		powerdown_ap_by_force(NULL);
 		return 0;
 	}
 
+	poweroff_timer_id = ecore_timer_add(15, powerdown_ap_by_force, NULL);
 	return 0;
 }
 
-static void restart_ap(TelTapiEvent_t *event, void *data);
+static void enter_flight_mode_cb(TapiHandle *handle, int result, void *data, void *user_data)
+{
+	PRT_TRACE("enter flight mode result : %d",result);
+}
+
+static void leave_flight_mode_cb(TapiHandle *handle, int result, void *data, void *user_data)
+{
+	PRT_TRACE("leave flight mode result : %d",result);
+}
+
+int entersleep_def_predefine_action(int argc, char **argv)
+{
+	int ret;
+
+	pm_change_state(LCD_NORMAL);
+	sync();
+
+	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_ENTER, enter_flight_mode_cb, NULL);
+	PRT_TRACE_ERR("request for changing into flight mode : %d\n", ret);
+
+	system("/etc/rc.d/rc.entersleep");
+	pm_change_state(POWER_OFF);
+
+	return 0;
+}
+
+int leavesleep_def_predefine_action(int argc, char **argv)
+{
+	int ret;
+
+	pm_change_state(LCD_NORMAL);
+	sync();
+
+	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_LEAVE, leave_flight_mode_cb, NULL);
+	PRT_TRACE_ERR("request for changing into flight mode : %d\n", ret);
+
+	return 0;
+}
+
+static void restart_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data);
 
 Eina_Bool restart_ap_ecore(void *data)
 {
-	restart_ap(NULL, (void *)-1);
+	restart_ap(tapi_handle,NULL,(void *)-1,NULL);
 	return EINA_TRUE;
 }
 
-static void restart_ap(TelTapiEvent_t *event, void *data)
+static void restart_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data)
 {
 	struct timeval now;
 	int poweroff_duration = POWEROFF_DURATION;
 	char *buf;
 
-	if (power_subscription_id) {
-		tel_deregister_event(power_subscription_id);
-		power_subscription_id = 0;
+	if (poweroff_timer_id) {
+		ecore_timer_del(poweroff_timer_id);
+		poweroff_timer_id = NULL;
+	}
+
+
+	if(tapi_handle != NULL)
+	{
+		tel_deregister_noti_event(tapi_handle,TAPI_NOTI_MODEM_POWER);
+		tel_deinit(tapi_handle);
+		tapi_handle = NULL;
+	}
+
+	PRT_INFO("Restart\n");
+	sync();
+
+	buf = getenv("PWROFF_DUR");
+	if (buf != NULL && strlen(buf) < 1024)
+		poweroff_duration = atoi(buf);
+	if (poweroff_duration < 0 || poweroff_duration > 60)
+		poweroff_duration = POWEROFF_DURATION;
+	gettimeofday(&now, NULL);
+	while (now.tv_sec - tv_start_poweroff.tv_sec < poweroff_duration) {
+		usleep(100000);
+		gettimeofday(&now, NULL);
+	}
+
+	reboot(RB_AUTOBOOT);
+}
+
+static void restart_ap_by_force(void *data)
+{
+	struct timeval now;
+	int poweroff_duration = POWEROFF_DURATION;
+	char *buf;
+
+	if (poweroff_timer_id) {
+		ecore_timer_del(poweroff_timer_id);
+		poweroff_timer_id = NULL;
+	}
+
+
+	if(tapi_handle != NULL)
+	{
+		tel_deinit(tapi_handle);
+		tapi_handle = NULL;
 	}
 
 	PRT_INFO("Restart\n");
@@ -473,23 +568,23 @@ int restart_def_predefine_action(int argc, char **argv)
 	gettimeofday(&tv_start_poweroff, NULL);
 
 	ret =
-	    tel_register_event(TAPI_EVENT_POWER_PHONE_OFF,
-			       &power_subscription_id,
-			       (TelAppCallback) & restart_ap, NULL);
+	    tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, restart_ap, NULL);
 	if (ret != TAPI_API_SUCCESS) {
 		PRT_TRACE_ERR
 		    ("tel_register_event is not subscribed. error %d\n", ret);
-		restart_ap(NULL, (void *)-1);
+		restart_ap_by_force((void *)-1);
 		return 0;
 	}
 
-	ret = tel_process_power_command(TAPI_PHONE_POWER_OFF);
+
+	ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
 	if (ret != TAPI_API_SUCCESS) {
 		PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
-		restart_ap(NULL, (void *)-1);
+		restart_ap_by_force((void *)-1);
 		return 0;
 	}
 
+	poweroff_timer_id = ecore_timer_add(15, restart_ap_ecore, NULL);
 	return 0;
 }
 
@@ -550,6 +645,17 @@ static void ss_action_entry_load_from_sodir()
 
 void ss_predefine_internal_init(void)
 {
+
+	/* telephony initialize */
+	int ret = 0;
+	tapi_handle = tel_init(NULL);
+	if (tapi_handle == NULL) {
+		PRT_TRACE_ERR("tapi init error");
+	}
+#ifdef NOUSE
+	ss_action_entry_add_internal(PREDEF_CALL, call_predefine_action, NULL,
+				     NULL);
+#endif
 	ss_action_entry_add_internal(PREDEF_LOWMEM, lowmem_def_predefine_action,
 				     NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_LOWBAT, lowbat_def_predefine_action,

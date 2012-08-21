@@ -18,12 +18,12 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <heynoti.h>
-#include <TapiCommon.h>
 
 #include "ss_log.h"
 #include "ss_core.h"
 #include "ss_sig_handler.h"
 #include "ss_device_handler.h"
+#include "ss_pmon_handler.h"
 #include "ss_sysnoti.h"
 #include "ss_noti.h"
 #include "ss_queue.h"
@@ -62,18 +62,6 @@ static void system_server_init(struct ss_main_data *ad)
 		exit (-1);
 	}
 
-	/* telephony initialize */
-	int ret = 0;
-	ret = tel_init();
-	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR("tapi init error : [0x%x]", ret);
-	}
-	/* Register Telephony Client */
-	ret = tel_register_app_name("slp.system.server");
-	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR("tapi app register error : [0x%x]", ret);
-	}
-
 	ad->sysnoti_fd = ss_sysnoti_init();
 	if (ss_noti_init() < 0)
 		PRT_TRACE_ERR("init noti error");
@@ -90,6 +78,7 @@ static void system_server_init(struct ss_main_data *ad)
 	ss_lowbat_init(ad);
 	ss_usb_init();
 	ss_ta_init();
+	ss_pmon_init(ad);
 	ss_device_change_init(ad);
 	ss_mmc_init();
 	ss_bs_init();

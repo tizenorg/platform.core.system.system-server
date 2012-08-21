@@ -83,6 +83,8 @@ install: build
 	# Add here commands to install the package into debian/tmp.
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 
+	mkdir -p $(CURDIR)/debian/tmp/etc/rc.d/rc3.d/
+	ln -s ../init.d/system_server.sh $(CURDIR)/debian/tmp/etc/rc.d/rc3.d/S35system-server
 	mkdir -p $(CURDIR)/debian/tmp/etc/rc.d/rc5.d/
 	ln -s ../init.d/system_server.sh $(CURDIR)/debian/tmp/etc/rc.d/rc5.d/S00system-server
 

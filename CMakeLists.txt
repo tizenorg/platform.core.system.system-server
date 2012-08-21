@@ -14,6 +14,7 @@ SET(SRCS
 	ss_noti.c
 	ss_lowbat_handler.c
 	ss_lowmem_handler.c
+	ss_pmon_handler.c
 	ss_mmc_handler.c
 	ss_usb_handler.c
 	ss_ta_handler.c
@@ -42,8 +43,7 @@ pkg_check_modules(pkgs REQUIRED
 	dlog
 	syspopup-caller
 	devman
-	devman_plugin
-	x11)
+	devman_plugin)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
@@ -77,3 +77,4 @@ INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/system_server.sh DESTINATION /etc/rc.d/init
 
 ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)
+ADD_SUBDIRECTORY(sys_device_noti)

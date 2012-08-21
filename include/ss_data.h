@@ -34,8 +34,8 @@ enum {
 
 #define MMC_DEV			"/dev/mmcblk"
 
-#define VCONFKEY_INTERNAL_ADDED_USB_STORAGE 	"memory/Device/usbhost/added_storage_uevent"
-#define VCONFKEY_INTERNAL_REMOVED_USB_STORAGE	"memory/Device/usbhost/removed_storage_uevent"
+#define VCONFKEY_INTERNAL_ADDED_USB_STORAGE 	"memory/private/sysman/added_storage_uevent"
+#define VCONFKEY_INTERNAL_REMOVED_USB_STORAGE	"memory/private/sysman/removed_storage_uevent"
 
 #define PREDEF_CALL			"call"
 #define PREDEF_LOWMEM			"lowmem"

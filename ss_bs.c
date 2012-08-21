@@ -31,7 +31,8 @@
 #define BSNOTI_DIR		"/opt/bs"
 #define BSNOTI_FILE		"curbs.log"
 #define BSNOTI_FULL_PATH	BSNOTI_DIR"/"BSNOTI_FILE
-#define CRASH_WORKER_PATH	"/usr/bin/crash-worker"
+
+#define CRASH_WORKER_PATH	"/usr/apps/org.tizen.crash-worker/bin/crash-worker"
 
 static int noti_fd;
 static int add_noti(void);
@@ -98,7 +99,7 @@ static void launch_crash_worker(void *data)
 				snprintf(args, sizeof(args), "%s %s",
 					 bsfile_name, bs_color);
 				PRT_TRACE("bsfile_name(size %d): %s\nargs: %s\n", i, bsfile_name, bs_color, args);
-				ret = ss_launch_evenif_exist(CRASH_WORKER_PATH, args);
+				ret = ss_launch_evenif_exist (CRASH_WORKER_PATH, args);
 				break;
 			}
 		}
@@ -123,18 +124,18 @@ static Ecore_File_Monitor *bs_file_monitor;
 static Ecore_File_Monitor_Cb __bs_file_cb(void *data, Ecore_File_Monitor *em, Ecore_File_Event event, const char *path)
 {
 	switch (event) {
-		case ECORE_FILE_EVENT_DELETED_DIRECTORY:
-		case ECORE_FILE_EVENT_DELETED_SELF:
-			if (0 > make_noti_file(BSNOTI_DIR, BSNOTI_FILE)) {
-				launch_crash_worker((void *)path);
-			}
-			break;
-		case ECORE_FILE_EVENT_MODIFIED:
-		default:
+	case ECORE_FILE_EVENT_DELETED_DIRECTORY:
+	case ECORE_FILE_EVENT_DELETED_SELF:
+		if (0 > make_noti_file(BSNOTI_DIR, BSNOTI_FILE)) {
 			launch_crash_worker((void *)path);
-			break;
+		}
+		break;
+	case ECORE_FILE_EVENT_MODIFIED:
+	default:
+		launch_crash_worker((void *)path);
+		break;
 	}
-	 
+
 	return;
 }
 
@@ -144,12 +145,12 @@ int ss_bs_init(void)
 		PRT_TRACE_ERR("make_noti_file() failed");
 		launch_crash_worker((void *)BSNOTI_FULL_PATH);
 	}
-		    
+
 	if (0 == ecore_file_init()) {
 		PRT_TRACE_ERR("ecore_file_init() failed");
 		launch_crash_worker((void *)BSNOTI_FULL_PATH);
 	}
-			    
+
 	bs_file_monitor = ecore_file_monitor_add(BSNOTI_FULL_PATH,(void *) __bs_file_cb, NULL);
 	if (!bs_file_monitor) {
 		PRT_TRACE_ERR("ecore_file_monitor_add() failed");

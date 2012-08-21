@@ -29,21 +29,22 @@
 #include "ss_device_plugin.h"
 #include "include/ss_data.h"
 
-#define BAT_MON_INTERVAL 30
-#define BAT_MON_INTERVAL_MIN 2
+#define BAT_MON_INTERVAL		30
+#define BAT_MON_INTERVAL_MIN		2
 
-#define BATTERY_CHARGING 65535
-#define BATTERY_UNKNOWN	 -1
-#define	BATTERY_NORMAL 100
-#define	BATTERY_WARNING_LOW 15
-#define	BATTERY_CRITICAL_LOW 5
-#define	BATTERY_POWER_OFF 1
-#define	BATTERY_REAL_POWER_OFF 0
+#define BATTERY_CHARGING		65535
+#define BATTERY_UNKNOWN			-1
+#define	BATTERY_FULL			100
+#define	BATTERY_NORMAL			100
+#define	BATTERY_WARNING_LOW		15
+#define	BATTERY_CRITICAL_LOW		5
+#define	BATTERY_POWER_OFF		1
+#define	BATTERY_REAL_POWER_OFF	0
 
-#define MAX_BATTERY_ERROR 10
-#define RESET_RETRY_COUNT 3
+#define MAX_BATTERY_ERROR		10
+#define RESET_RETRY_COUNT		3
 
-#define LOWBAT_EXEC_PATH	PREFIX"/bin/lowbatt-popup"
+#define LOWBAT_EXEC_PATH		PREFIX"/bin/lowbatt-popup"
 
 static int battery_level_table[] = {
 	5,			/* BATTERY_LEVEL0 */
@@ -74,11 +75,11 @@ static int battery_critical_low_act(void *ad);
 static int battery_power_off_act(void *ad);
 
 static struct lowbat_process_entry lpe[] = {
-	{BATTERY_NORMAL,		BATTERY_WARNING_LOW,	battery_warning_low_act},
-	{BATTERY_WARNING_LOW,	BATTERY_CRITICAL_LOW,	battery_critical_low_act},
+	{BATTERY_NORMAL, BATTERY_WARNING_LOW, battery_warning_low_act},
+	{BATTERY_WARNING_LOW, BATTERY_CRITICAL_LOW, battery_critical_low_act},
 	{BATTERY_CRITICAL_LOW,	BATTERY_POWER_OFF,		battery_critical_low_act},
 	{BATTERY_POWER_OFF,		BATTERY_REAL_POWER_OFF,	battery_power_off_act},
-	{BATTERY_NORMAL,		BATTERY_CRITICAL_LOW,	battery_critical_low_act},
+	{BATTERY_NORMAL, BATTERY_CRITICAL_LOW, battery_critical_low_act},
 	{BATTERY_WARNING_LOW,	BATTERY_POWER_OFF,		battery_critical_low_act},
 	{BATTERY_CRITICAL_LOW,	BATTERY_REAL_POWER_OFF,	battery_power_off_act},
 	{BATTERY_NORMAL,		BATTERY_POWER_OFF,		battery_critical_low_act},
@@ -146,6 +147,7 @@ static int lowbat_process(int bat_percent, void *ad)
 	int new_bat_capacity;
 	int new_bat_state;
 	int vconf_state = -1;
+	int bat_full = -1;
 	int i, ret = 0;
 
 	new_bat_capacity = bat_percent;
@@ -162,7 +164,11 @@ static int lowbat_process(int bat_percent, void *ad)
 		return -1;
 	}
 
-	if (new_bat_capacity <= BATTERY_POWER_OFF) {
+	if (new_bat_capacity <= BATTERY_REAL_POWER_OFF) {
+		new_bat_state = BATTERY_REAL_POWER_OFF;
+		if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
+			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_POWER_OFF);
+	} else if (new_bat_capacity <= BATTERY_POWER_OFF) {
 		new_bat_state = BATTERY_POWER_OFF;
 		if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
 			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_POWER_OFF);
@@ -176,8 +182,19 @@ static int lowbat_process(int bat_percent, void *ad)
 			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_WARNING_LOW);
 	} else {
 		new_bat_state = BATTERY_NORMAL;
-		if (vconf_state != VCONFKEY_SYSMAN_BAT_NORMAL)
-			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_NORMAL);
+		if (new_bat_capacity == BATTERY_FULL) {
+			plugin_intf->OEM_sys_get_battery_charge_full(&bat_full);
+			if (bat_full == 1) {
+				if (vconf_state != VCONFKEY_SYSMAN_BAT_FULL)
+				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_FULL);
+			} else {
+				if (vconf_state != VCONFKEY_SYSMAN_BAT_NORMAL)
+					ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_NORMAL);
+			}
+		} else {
+			if (vconf_state != VCONFKEY_SYSMAN_BAT_NORMAL)
+				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_NORMAL);
+		}
 	}
 
 	if(ret < 0)

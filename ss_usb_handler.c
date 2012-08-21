@@ -25,7 +25,7 @@
 #include "include/ss_data.h"
 
 #define USBCON_EXEC_PATH	PREFIX"/bin/usb_setting"
-#define RETRY	3
+#define RETRY			3
 
 int ss_usb_init()
 {
@@ -33,11 +33,11 @@ int ss_usb_init()
 
 	PRT_TRACE("check usb connection");
 	if (plugin_intf->OEM_sys_get_jack_usb_online(&val) == 0) {
-		if (val) {
+		if (val==1) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
-				      VCONFKEY_SYSMAN_USB_AVAILABLE);
+					VCONFKEY_SYSMAN_USB_AVAILABLE);
 			while (i < RETRY
-			       && pm_lock_state(LCD_OFF, STAY_CUR_STATE,
+					&& pm_lock_state(LCD_OFF, STAY_CUR_STATE,
 						0) == -1) {
 				i++;
 				sleep(1);
@@ -48,6 +48,8 @@ int ss_usb_init()
 				return -1;
 			}
 		}
+		else if (val==0)
+			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,VCONFKEY_SYSMAN_USB_DISCONNECTED);
 	}
 
 	return 0;

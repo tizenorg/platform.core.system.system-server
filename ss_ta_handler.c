@@ -31,7 +31,9 @@ int ss_ta_init()
 
 	PRT_TRACE("check ta connection");
 	if (plugin_intf->OEM_sys_get_jack_charger_online(&val) == 0) {
-		if (val==1) {
+		if ( val==1 ) {
+			vconf_set_int(VCONFKEY_SYSMAN_CHARGER_STATUS,
+					VCONFKEY_SYSMAN_CHARGER_CONNECTED);
 			while (i < RETRY
 			       && pm_lock_state(LCD_OFF, STAY_CUR_STATE,
 						0) == -1) {
@@ -40,6 +42,9 @@ int ss_ta_init()
 			}
 			PRT_TRACE("ta is connected");
 		}
+		else if ( val==0 )
+			vconf_set_int(VCONFKEY_SYSMAN_CHARGER_STATUS,
+					VCONFKEY_SYSMAN_CHARGER_DISCONNECTED);
 	}
 	return 0;
 }

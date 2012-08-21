@@ -34,7 +34,6 @@
 #include <linux/rtc.h>
 #include <fcntl.h>
 
-#include <ITapiMisc.h>
 
 static const char default_rtc0[] = "/dev/rtc0";
 static const char default_rtc1[] = "/dev/rtc1";

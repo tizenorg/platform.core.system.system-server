@@ -254,7 +254,7 @@ int ss_lowmem_init(struct ss_main_data *ad)
 		return -1;
 	}
 
-	oom_timer=NULL;
+	oom_timer = NULL;
 	ecore_main_fd_handler_add(lowmem_fd, ECORE_FD_READ, lowmem_cb, ad, NULL,
 				  NULL);
 	if (set_threshold() < 0) {

@@ -94,18 +94,6 @@ int get_mmcblk_num()
 	return -1;
 }
 
-static int ss_mmc_format_tmp(keynode_t *key_nodes, void *data)
-{
-	PRT_TRACE_ERR("mmc_format called");
-	if (vconf_keynode_get_int(key_nodes) == 1) {
-		PRT_TRACE_ERR("format start");
-		device_set_property(DEVTYPE_MMC, MMC_PROP_FORMAT, 0);
-
-	}
-
-	return 0;
-}
-
 static int ss_mmc_format(keynode_t *key_nodes, void *data)
 {
 	PRT_TRACE_ERR("mmc format called");
@@ -148,9 +136,6 @@ int ss_mmc_init()
 	/* mmc card mount */
 	ss_mmc_inserted();
 
-	vconf_notify_key_changed("memory/mmc/format", (void *)ss_mmc_format_tmp,
-				 NULL);
-
 	ss_action_entry_add_internal(PREDEF_MOUNT_MMC, ss_mmc_inserted, NULL,
 				     NULL);
 	ss_action_entry_add_internal(PREDEF_UNMOUNT_MMC, ss_mmc_unmounted, NULL,
@@ -192,7 +177,7 @@ int ss_mmc_inserted()
 	snprintf(buf, sizeof(buf), "%s%d", MMC_DEV, blk_num);
 	if (mount
 	    (buf, MMC_MOUNT_POINT, "vfat", 0,
-	     "uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed")
+	     "uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed,smackfsroot=*,smackfsdef=*")
 	    == 0) {
 		PRT_DBG("Mounted mmc card\n");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,
@@ -206,7 +191,7 @@ int ss_mmc_inserted()
 		snprintf(buf, sizeof(buf), "%s%dp1", MMC_DEV, blk_num);
 		if ((ret =
 		     mount(buf, MMC_MOUNT_POINT, "vfat", 0,
-			   "uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed"))
+			   "uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed,smackfsroot=*,smackfsdef=*"))
 		    == 0) {
 			PRT_DBG("Mounted mmc card partition 1(%s)\n", buf);
 			vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,

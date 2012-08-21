@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+#ifndef __SS_PMON_HANDLER_H__
 #define __SS_PMON_HANDLER_H__
 
 #include "include/ss_data.h"

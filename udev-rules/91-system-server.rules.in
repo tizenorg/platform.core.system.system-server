@@ -6,22 +6,34 @@ ACTION=="remove", KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/
 #ACTION=="change" SUBSYSTEM=="pmon", RUN+="@PREFIX@/bin/restart"
 
 #Jack
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="usb" RUN+="@PREFIX@/bin/sys_event device_usb_chgdet"
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="charger" RUN+="@PREFIX@/bin/sys_event device_ta_chgdet"
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="earjack" RUN+="@PREFIX@/bin/sys_event device_earjack_chgdet"
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="earkey" RUN+="@PREFIX@/bin/sys_event device_earkey_chgdet"
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="tvout" RUN+="@PREFIX@/bin/sys_event device_tvout_chgdet"
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="hdmi" RUN+="@PREFIX@/bin/sys_event device_hdmi_chgdet"
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="cdrom" RUN+="@PREFIX@/bin/start_composite.sh"
-ACTION=="change" DEVPATH=="/devices/platform/jack", ENV{CHGDET}=="cradle" RUN+="@PREFIX@/bin/sys_event device_cradle_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="usb"		RUN+="@PREFIX@/bin/sys_event device_usb_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="charger"	RUN+="@PREFIX@/bin/sys_event device_ta_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="earjack"	RUN+="@PREFIX@/bin/sys_event device_earjack_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="earkey"	RUN+="@PREFIX@/bin/sys_event device_earkey_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="tvout"	RUN+="@PREFIX@/bin/sys_event device_tvout_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="hdmi"		RUN+="@PREFIX@/bin/sys_event device_hdmi_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="cdrom"	RUN+="@PREFIX@/bin/start_composite.sh"
+ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="keyboard"	RUN+="@PREFIX@/bin/sys_event device_keyboard_chgdet"
 
 #USB Host Device
-ACTION=="add", SUBSYSTEM=="host_notify", RUN+="@PREFIX@/bin/vconftool set -t int memory/Device/usbhost/status 1"
-ACTION=="remove", SUBSYSTEM=="host_notify", RUN+="@PREFIX@/bin/vconftool set -t int memory/Device/usbhost/status 0"
+ACTION=="change",	SUBSYSTEM=="host_notify",	ENV{STATE}=="ADD",			RUN+="@PREFIX@/bin/vconftool set -t int memory/sysman/usbhost_status 1 -f"
+ACTION=="change",	SUBSYSTEM=="host_notify",	ENV{STATE}=="REMOVE",		RUN+="@PREFIX@/bin/vconftool set -t int memory/sysman/usbhost_status 0 -f"
+ACTION=="change",	SUBSYSTEM=="host_notify",	ENV{STATE}=="OVERCURRENT",	RUN+="@PREFIX@/bin/vconftool set -t int memory/sysman/usbhost_status 2 -f"
 
 #USB Storage
-ACTION=="add", KERNEL=="sd[a-z]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/vconftool set -t string memory/Device/usbhost/added_storage_uevent %N"
-ACTION=="remove", KERNEL=="sd[a-z]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/vconftool set -t string memory/Device/usbhost/removed_storage_uevent $name"
+ACTION=="add",		KERNEL=="sd[a-z]",		SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/added_storage_uevent %N -f"
+ACTION=="add",		KERNEL=="sd[a-z][0-9]",	SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/added_storage_uevent %N -f"
+ACTION=="remove",	KERNEL=="sd[a-z]",		SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/removed_storage_uevent $name -f"
+ACTION=="remove",	KERNEL=="sd[a-z][0-9]",	SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/removed_storage_uevent $name -f"
 
 #charge
-ACTION=="change" DEVPATH=="/devices/platform/charger-manager.0" RUN+="@PREFIX@/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/samsung-battery/power_supply/battery"	RUN+="/usr/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/charger-manager.0"						RUN+="@PREFIX@/bin/sys_event device_charge_chgdet"
+
+#USB Keyboard
+ACTION=="add"		SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"	ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_keyboard_add"
+ACTION=="remove"    SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_keyboard_remove"
+ACTION=="add"       SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_MOUSE}=="?*"		RUN+="/usr/bin/sys_event device_mouse_add"
+ACTION=="remove"	SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_MOUSE}=="?*"		RUN+="/usr/bin/sys_event device_mouse_remove"
+ACTION=="add"		SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"	ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}!="?*"	ENV{ID_INPUT_MOUSE}!="?*"	RUN+="/usr/bin/sys_event device_unknown_usb_add"
+ACTION=="remove"	SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}!="?*"	ENV{ID_INPUT_MOUSE}!="?*"		RUN+="/usr/bin/sys_event device_unknown_usb_remove"
