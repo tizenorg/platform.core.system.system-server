@@ -24,7 +24,7 @@
 #include "ss_launch.h"
 #include "include/ss_data.h"
 
-#define USBCON_EXEC_PATH	PREFIX"/bin/usb_setting"
+#define USBCON_EXEC_PATH	PREFIX"/bin/usb-server"
 #define RETRY			3
 
 int ss_usb_init()

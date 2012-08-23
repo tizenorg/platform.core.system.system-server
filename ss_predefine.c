@@ -45,7 +45,7 @@
 #define CALL_EXEC_PATH				PREFIX"/bin/call"
 #define LOWMEM_EXEC_PATH			PREFIX"/bin/lowmem-popup"
 #define LOWBAT_EXEC_PATH			PREFIX"/bin/lowbatt-popup"
-#define USBCON_EXEC_PATH			PREFIX"/bin/usb_setting"
+#define USBCON_EXEC_PATH			PREFIX"/bin/usb-server"
 #define TVOUT_EXEC_PATH				PREFIX"/bin/tvout-selector"
 #define PWROFF_EXEC_PATH			PREFIX"/bin/poweroff-popup"
 #define MEMPS_EXEC_PATH				PREFIX"/bin/memps"
