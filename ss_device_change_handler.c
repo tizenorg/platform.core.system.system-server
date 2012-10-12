@@ -60,6 +60,43 @@ enum snd_jack_types {
 
 
 static int input_device_number;
+static int check_lowbat_charge_device(int bInserted)
+{
+	static int bChargeDeviceInserted = 0;
+	int val = -1;
+	int bat_state = -1;
+	int ret = -1;
+	if (bInserted == 1) {
+		if (plugin_intf->OEM_sys_get_battery_charge_now(&val) == 0) {
+			if (val == 1)
+				bChargeDeviceInserted = 1;
+			return 0;
+		}
+	} else if (bInserted == 0) {
+		if (plugin_intf->OEM_sys_get_battery_charge_now(&val) == 0) {
+			if (val == 0 && bChargeDeviceInserted == 1) {
+				bChargeDeviceInserted = 0;
+				//low bat popup during charging device removing
+				vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state);
+				if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
+					bundle *b = NULL;
+					b = bundle_create();
+					if(bat_state == VCONFKEY_SYSMAN_BAT_POWER_OFF)
+						bundle_add(b,"_SYSPOPUP_CONTENT_", "poweroff");
+					else
+						bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+					ret = syspopup_launch("lowbat-syspopup", b);
+					if (ret < 0) {
+						PRT_TRACE_EM("popup lauch failed\n");
+					}
+					bundle_free(b);
+				}
+			}
+			return 0;
+		}
+	}
+	return -1;
+}
 
 static void usb_chgdet_cb(struct ss_main_data *ad)
 {
@@ -74,6 +111,7 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 	ss_action_entry_call_internal(PREDEF_USBCON, 0);
 
 	if (plugin_intf->OEM_sys_get_jack_usb_online(&val)==0) {
+		check_lowbat_charge_device(val);
 		if (val==1) {
 			snprintf(params, sizeof(params), "%d", CB_NOTI_BATT_CHARGE);
 			ss_launch_if_noexist("/usr/bin/sys_device_noti", params);
@@ -97,22 +135,10 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 	char params[BUFF_MAX];
 
 	if (plugin_intf->OEM_sys_get_jack_charger_online(&val) == 0) {
+		check_lowbat_charge_device(val);
 		vconf_set_int(VCONFKEY_SYSMAN_CHARGER_STATUS, val);
 		if (val == 0) {
 			pm_unlock_state(LCD_OFF, STAY_CUR_STATE);
-
-			vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state);
-			if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
-				bundle *b = NULL;
-				b = bundle_create();
-				bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
-
-				ret = syspopup_launch("lowbat-syspopup", b);
-				if (ret < 0) {
-					PRT_TRACE_EM("popup lauch failed\n");
-				}
-				bundle_free(b);
-			}
 		} else {
 			pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
 			snprintf(params, sizeof(params), "%d", CB_NOTI_BATT_CHARGE);

@@ -170,7 +170,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 
 				kill(pid, SIGTERM);
 
-				if (oom_adj >= OOMADJ_BACKGRD_UNLOCKED) {	
+				if (oom_adj != OOMADJ_FOREGRD_LOCKED && oom_adj != OOMADJ_FOREGRD_UNLOCKED) {
 					return 0;
 				}
 
@@ -190,11 +190,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 				}
 			}
 		}
-	} else {
-		PRT_TRACE_EM("making memps log for low memory\n");
-		make_memps_log(MEMPS_LOG_FILE, 1, "LOWMEM_WARNING");
 	}
-
 	return 0;
 }
 
@@ -210,19 +206,6 @@ int usbcon_def_predefine_action(int argc, char **argv)
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
 			pm_unlock_state(LCD_OFF, STAY_CUR_STATE);
-
-			vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state);
-			if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
-				bundle *b = NULL;
-				b = bundle_create();
-				bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
-
-				ret = syspopup_launch("lowbat-syspopup", b);
-				if (ret < 0) {
-					PRT_TRACE_EM("popup lauch failed\n");
-				}
-				bundle_free(b);
-			}
 			return 0;
 		}
 

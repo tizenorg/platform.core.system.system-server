@@ -149,14 +149,14 @@ static int lowbat_process(int bat_percent, void *ad)
 	int vconf_state = -1;
 	int bat_full = -1;
 	int i, ret = 0;
-
+	int val = 0;
 	new_bat_capacity = bat_percent;
 	if (new_bat_capacity < 0)
 		return -1;
 	if (new_bat_capacity != cur_bat_capacity) {
+		PRT_TRACE("[BAT_MON] cur = %d new = %d", cur_bat_capacity, new_bat_capacity);
 		if (vconf_set_int(VCONFKEY_SYSMAN_BATTERY_CAPACITY, new_bat_capacity) == 0)
 			cur_bat_capacity = new_bat_capacity;
-		PRT_TRACE("[BAT_MON] cur = %d new = %d", cur_bat_capacity, new_bat_capacity);
 	}
 
 	if (0 > vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &vconf_state)) {
@@ -165,13 +165,23 @@ static int lowbat_process(int bat_percent, void *ad)
 	}
 
 	if (new_bat_capacity <= BATTERY_REAL_POWER_OFF) {
-		new_bat_state = BATTERY_REAL_POWER_OFF;
-		if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
-			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_POWER_OFF);
+		if (0 > plugin_intf->OEM_sys_get_battery_charge_now(&val)) {
+			PRT_TRACE_ERR("fail to read charge now from kernel");
+		}
+		PRT_TRACE("charge_now status %d",val);
+		if (val == 1) {
+			new_bat_state = BATTERY_POWER_OFF;
+			if (vconf_state != VCONFKEY_SYSMAN_BAT_CRITICAL_LOW)
+				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_CRITICAL_LOW);
+		} else {
+			new_bat_state = BATTERY_REAL_POWER_OFF;
+			if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
+				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_POWER_OFF);
+		}
 	} else if (new_bat_capacity <= BATTERY_POWER_OFF) {
 		new_bat_state = BATTERY_POWER_OFF;
-		if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
-			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_POWER_OFF);
+		if (vconf_state != VCONFKEY_SYSMAN_BAT_CRITICAL_LOW)
+			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_CRITICAL_LOW);
 	} else if (new_bat_capacity <= BATTERY_CRITICAL_LOW) {
 		new_bat_state = BATTERY_CRITICAL_LOW;
 		if (vconf_state != VCONFKEY_SYSMAN_BAT_CRITICAL_LOW)
@@ -202,9 +212,9 @@ static int lowbat_process(int bat_percent, void *ad)
 
 	ss_lowbat_is_charge_in_now();
 
-	if (cur_bat_state == new_bat_state
-	    && cur_bat_state != BATTERY_POWER_OFF)
+	if (cur_bat_state == new_bat_state) {
 		return 0;
+	}
 
 	if (cur_bat_state == BATTERY_UNKNOWN) {
 		for (i = 0;
@@ -228,8 +238,8 @@ static int lowbat_process(int bat_percent, void *ad)
 			}
 		}
 	}
+	PRT_TRACE("[BATMON] Unknown battery state cur:%d new:%d",cur_bat_state,new_bat_state);
 	cur_bat_state = new_bat_state;
-	PRT_TRACE("[BATMON] Unknown battery state");
 	return -1;
 }
 
