@@ -82,7 +82,6 @@ static void system_server_init(struct ss_main_data *ad)
 	ss_device_change_init(ad);
 	ss_mmc_init();
 	ss_bs_init();
-	_ss_usb_storage_init();
 }
 
 #define SS_PIDFILE_PATH		"/var/run/.system_server.pid"

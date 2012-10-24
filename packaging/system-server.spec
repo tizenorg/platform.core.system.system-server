@@ -23,6 +23,7 @@ BuildRequires:  pkgconfig(devman_plugin)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
+BuildRequires:  pkgconfig(usbutils)
 BuildRequires:	gettext
 
 %description
@@ -81,14 +82,8 @@ heynotitool set device_tvout_chgdet
 heynotitool set device_hdmi_chgdet
 heynotitool set device_charge_chgdet
 heynotitool set device_keyboard_chgdet
-heynotitool set device_keyboard_add
-heynotitool set device_keyboard_remove
-heynotitool set device_mouse_add
-heynotitool set device_mouse_remove
-heynotitool set device_unknown_usb_add
-heynotitool set device_unknown_usb_remove
-heynotitool set device_camera_add
-heynotitool set device_camera_remove
+heynotitool set device_usb_host_add
+heynotitool set device_usb_host_remove
 
 
 mkdir -p /etc/udev/rules.d

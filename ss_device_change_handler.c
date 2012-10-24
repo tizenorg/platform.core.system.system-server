@@ -40,6 +40,9 @@
 
 #define BUFF_MAX		255
 #define SYS_CLASS_INPUT		"/sys/class/input"
+#define USBCON_EXEC_PATH	PREFIX"/bin/usb-server"
+#define DEFAULT_USB_INFO_PATH	"/tmp/usb_default"
+#define STORE_DEFAULT_USB_INFO	"usb-devices > "DEFAULT_USB_INFO_PATH
 
 struct input_event {
 	long dummy[2];
@@ -199,187 +202,6 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 	}
 }
 
-static int show_tickernoti(char* msg)
-{
-	PRT_TRACE("show tickernoti : %s\n", msg);
-	int ret = -1;
-
-	bundle *b = NULL;
-
-	b = bundle_create();
-	if (!b) {
-		PRT_TRACE_ERR("FAIL: bundle_create()\n");
-		return -1;
-	}
-
-	ret = bundle_add(b, "0", "info");   /* "0" means tickernoti style */
-	if (ret != 0) {
-		PRT_TRACE_ERR("FAIL: bundle_add()\n");
-		if (0 != bundle_free(b))
-			PRT_TRACE_ERR("FAIL: bundle_free()\n");
-		return -1;
-	}
-
-	ret = bundle_add(b, "1", dgettext("system-server", msg)); /* "1" means popup text */
-	if (ret != 0) {
-		PRT_TRACE_ERR("FAIL: bundle_add()\n");
-		if (0 != bundle_free(b))
-			PRT_TRACE_ERR("FAIL: bundle_free()\n");
-		return -1;
-	}
-
-	ret = bundle_add(b, "2", "0");  /* "2" means orientation of tickernoti */
-	if (ret != 0) {
-		PRT_TRACE_ERR("FAIL: bundle_add()\n");
-		if (0 != bundle_free(b))
-			PRT_TRACE_ERR("FAIL: bundle_free()\n");
-		return -1;
-	}
-
-	ret = bundle_add(b, "3", "3");  /* "3" means timeout(second) of tickernoti */
-	if (ret != 0) {
-		PRT_TRACE_ERR("FAIL: bundle_add()\n");
-		if (0 != bundle_free(b))
-			PRT_TRACE_ERR("FAIL: bundle_free()\n");
-		return -1;
-	}
-
-	ret = syspopup_launch("tickernoti-syspopup", b);
-	if (ret != 0)
-		PRT_TRACE_ERR("FAIL: syspopup_launch()\n");
-
-	if (0 != bundle_free(b))
-		PRT_TRACE_ERR("FAIL: bundle_free()\n");
-
-	return 0;
-}
-
-// TO DO - multi language
-static void keyboard_add_cb(struct ss_main_data *ad)
-{
-	pm_change_state(LCD_NORMAL);
-	show_tickernoti("Keyboard connected");
-	input_device_number++;
-	PRT_TRACE("keyboard added (total input device : %d)",input_device_number);
-}
-
-static void keyboard_remove_cb(struct ss_main_data *ad)
-{
-	pm_change_state(LCD_NORMAL);
-	show_tickernoti("Keyboard removed safely");
-	if (input_device_number > 0)
-		input_device_number--;
-	PRT_TRACE("keyboard removed (total input device : %d)",input_device_number);
-}
-
-static void mouse_add_cb(struct ss_main_data *ad)
-{
-	pm_change_state(LCD_NORMAL);
-	show_tickernoti("Mouse connected");
-	input_device_number++;
-	PRT_TRACE("mouse added (total input device : %d)",input_device_number);
-}
-
-static void mouse_remove_cb(struct ss_main_data *ad)
-{
-	pm_change_state(LCD_NORMAL);
-	show_tickernoti("Mouse removed safely");
-	if (input_device_number > 0)
-		input_device_number--;
-	PRT_TRACE("Mouse removed (total input device : %d)",input_device_number);
-}
-
-static void camera_add_cb(struct ss_main_data *ad)
-{
-	int ret = -1;
-	pm_change_state(LCD_NORMAL);
-	show_tickernoti("Camera connected");
-
-	DIR *dp;
-	struct dirent *dir;
-	struct stat stat;
-	char buf[255] = "unknown_camera";
-
-	if ((dp = opendir("/tmp/camera")) == NULL) {
-		PRT_TRACE_ERR("Can not open directory\n");
-		return -1;
-	}
-	chdir("/tmp/camera");
-
-	while (dir = readdir(dp)) {
-		memset(&stat, 0, sizeof(struct stat));
-		lstat(dir->d_name, &stat);
-		if (S_ISDIR(stat.st_mode) || S_ISLNK(stat.st_mode)) {
-			if (strncmp(".", dir->d_name, 1) == 0
-					|| strncmp("..", dir->d_name, 2) == 0)
-				continue;
-			snprintf(buf, 255, "%s", dir->d_name);
-		}
-	}
-	closedir(dp);
-
-	bundle *b = NULL;
-	b = bundle_create();
-	bundle_add(b, "_SYSPOPUP_CONTENT_", "camera_add");
-	bundle_add(b, "device_name", buf);
-
-	ret = syspopup_launch("usbotg-syspopup", b);
-	if (ret < 0) {
-		PRT_TRACE_EM("popup lauch failed\n");
-	}
-	bundle_free(b);
-	PRT_TRACE("Camera cannected");
-}
-
-static void camera_remove_cb(struct ss_main_data *ad)
-{
-	int ret = -1;
-	bundle *b = NULL;
-	b = bundle_create();
-	bundle_add(b, "_SYSPOPUP_CONTENT_", "camera_remove");
-
-	ret = syspopup_launch("usbotg-syspopup", b);
-	if (ret < 0) {
-		PRT_TRACE_EM("popup lauch failed\n");
-	}
-	bundle_free(b);
-	PRT_TRACE("Camera removed");
-}
-
-
-static void unknown_usb_add_cb(struct ss_main_data *ad)
-{
-	int ret = -1;
-	pm_change_state(LCD_NORMAL);
-	bundle *b = NULL;
-	b = bundle_create();
-	bundle_add(b, "_SYSPOPUP_CONTENT_", "unknown_add");
-
-	ret = syspopup_launch("usbotg-syspopup", b);
-	if (ret < 0) {
-		PRT_TRACE_EM("popup lauch failed\n");
-	}
-	bundle_free(b);
-	PRT_TRACE("unknown usb device added");
-}
-
-static void unknown_usb_remove_cb(struct ss_main_data *ad)
-{
-	int ret = -1;
-	pm_change_state(LCD_NORMAL);
-	bundle *b = NULL;
-	b = bundle_create();
-	bundle_add(b, "_SYSPOPUP_CONTENT_", "unknown_remove");
-
-	ret = syspopup_launch("usbotg-syspopup", b);
-	if (ret < 0) {
-		PRT_TRACE_EM("popup lauch failed\n");
-	}
-	bundle_free(b);
-	PRT_TRACE("unknown usb device added");
-}
-
-
 static void mmc_chgdet_cb(void *data)
 {
 	if (data == NULL) {
@@ -428,20 +250,47 @@ static void charge_cb(struct ss_main_data *ad)
 	}
 }
 
-static void __usb_storage_cb(keynode_t *key, void *data)
+static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 {
-	char *vconf_value;
-
-	if (data == NULL) {
-		PRT_TRACE("USB Storage removed");
-		vconf_value = vconf_get_str(VCONFKEY_INTERNAL_REMOVED_USB_STORAGE);
-		ss_action_entry_call_internal(PREDEF_USB_STORAGE_REMOVE, 1, vconf_value);
-	} else {
-		PRT_TRACE("USB Storage added");
-		show_tickernoti("Mass storage enabled");
-		vconf_value = vconf_get_str(VCONFKEY_INTERNAL_ADDED_USB_STORAGE);
-		ss_action_entry_call_internal(PREDEF_USB_STORAGE_ADD, 1, vconf_value);
+	PRT_TRACE("ENTER: usb_host_chgdet_cb()");
+	int status;
+	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
+	if (ret != 0) {
+		PRT_TRACE_ERR("vconf get failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)\n");
+		return ;
 	}
+
+	if(VCONFKEY_SYSMEN_USB_HOST_CONNECTED == status) {
+		int pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
+		if (pid < 0) {
+			PRT_TRACE("usb-server launching failed\n");
+			return;
+		}
+	}
+	PRT_TRACE("EXIT: usb_host_chgdet_cb()");
+}
+
+static void usb_host_add_cb()
+{
+	PRT_TRACE("ENTER: usb_host_add_cb()\n");
+	int status;
+	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
+	if (ret != 0) {
+		PRT_TRACE("vconf get failed ()\n");
+		return;
+	}
+
+	if (-1 == status) { /* '-1' means that USB host mode is not loaded yet */
+		PRT_TRACE("This usb device is connected defaultly\n");
+
+		ret = system(STORE_DEFAULT_USB_INFO);
+		PRT_TRACE("Return value of usb-devices: %d\n", ret);
+		if (0 != access(DEFAULT_USB_INFO_PATH, F_OK)) {
+			ret = system(STORE_DEFAULT_USB_INFO);
+			PRT_TRACE("Return value of usb-devices: %d\n", ret);
+		}
+	}
+	PRT_TRACE("EXIT: usb_host_add_cb()\n");
 }
 
 int ss_device_change_init(struct ss_main_data *ad)
@@ -454,32 +303,25 @@ int ss_device_change_init(struct ss_main_data *ad)
 	ss_noti_add("device_tvout_chgdet", (void *)tvout_chgdet_cb, (void *)ad);
 	ss_noti_add("device_hdmi_chgdet", (void *)hdmi_chgdet_cb, (void *)ad);
 	ss_noti_add("device_keyboard_chgdet", (void *)keyboard_chgdet_cb, (void *)ad);
-	ss_noti_add("device_keyboard_add", (void *)keyboard_add_cb, (void *)ad);
-	ss_noti_add("device_keyboard_remove", (void *)keyboard_remove_cb, (void *)ad);
-	ss_noti_add("device_mouse_add", (void *)mouse_add_cb, (void *)ad);
-	ss_noti_add("device_mouse_remove", (void *)mouse_remove_cb, (void *)ad);
-	ss_noti_add("device_camera_add", (void *)camera_add_cb, (void *)ad);
-	ss_noti_add("device_camera_remove", (void *)camera_remove_cb, (void *)ad);
-	ss_noti_add("device_unknown_usb_add", (void *)unknown_usb_add_cb, (void *)ad);
-	ss_noti_add("device_unknown_usb_remove", (void *)unknown_usb_remove_cb, (void *)ad);
+
+	ss_noti_add("device_usb_host_add", (void *)usb_host_add_cb, (void *)ad);
 	ss_noti_add("mmcblk_add", (void *)mmc_chgdet_cb, (void *)1);
 	ss_noti_add("mmcblk_remove", (void *)mmc_chgdet_cb, NULL);
 
 	ss_noti_add("unmount_ums", (void *)ums_unmount_cb, NULL);
 	ss_noti_add("device_charge_chgdet", (void *)charge_cb, (void *)ad);
 
-	if (vconf_notify_key_changed(VCONFKEY_INTERNAL_ADDED_USB_STORAGE, (void *)__usb_storage_cb, (void *)1) < 0) {
-		PRT_TRACE_ERR("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_ADDED_USB_STORAGE);
+	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_USB_HOST_STATUS, usb_host_chgdet_cb, NULL) < 0) {
+		PRT_TRACE_ERR("vconf key notify failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");
 	}
 
-	if (vconf_notify_key_changed(VCONFKEY_INTERNAL_REMOVED_USB_STORAGE, (void *)__usb_storage_cb, NULL) < 0) {
-		PRT_TRACE_ERR("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_REMOVED_USB_STORAGE);
 	}
 
 	/* set initial state for devices */
 	input_device_number = 0;
 	keyboard_chgdet_cb(NULL);
 	hdmi_chgdet_cb(NULL);
+	system(STORE_DEFAULT_USB_INFO);
 
 	return 0;
 }

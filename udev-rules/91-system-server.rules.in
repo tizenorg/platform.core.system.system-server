@@ -16,14 +16,14 @@ ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="cdrom"	RUN+="@
 ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="keyboard"	RUN+="@PREFIX@/bin/sys_event device_keyboard_chgdet"
 
 #USB Host Device
+ACTION=="add",		SUBSYSTEM=="usb_device",	RUN+="/usr/bin/sys_event device_usb_host_add"
+ACTION=="remove",	SUBSYSTEM=="usb_device",	RUN+="/usr/bin/sys_event device_usb_host_remove"
 ACTION=="change",	SUBSYSTEM=="host_notify",	ENV{STATE}=="ADD",			RUN+="@PREFIX@/bin/vconftool set -t int memory/sysman/usbhost_status 1 -f"
 ACTION=="change",	SUBSYSTEM=="host_notify",	ENV{STATE}=="REMOVE",		RUN+="@PREFIX@/bin/vconftool set -t int memory/sysman/usbhost_status 0 -f"
 ACTION=="change",	SUBSYSTEM=="host_notify",	ENV{STATE}=="OVERCURRENT",	RUN+="@PREFIX@/bin/vconftool set -t int memory/sysman/usbhost_status 2 -f"
 
 #USB Storage
-ACTION=="add",		KERNEL=="sd[a-z]",		SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/added_storage_uevent %N -f"
 ACTION=="add",		KERNEL=="sd[a-z][0-9]",	SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/added_storage_uevent %N -f"
-ACTION=="remove",	KERNEL=="sd[a-z]",		SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/removed_storage_uevent $name -f"
 ACTION=="remove",	KERNEL=="sd[a-z][0-9]",	SUBSYSTEM=="block",	RUN+="@PREFIX@/bin/vconftool set -t string memory/private/sysman/removed_storage_uevent $name -f"
 
 #charge
@@ -35,5 +35,3 @@ ACTION=="add"		SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"	ENV{ID_B
 ACTION=="remove"    SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_keyboard_remove"
 ACTION=="add"       SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_MOUSE}=="?*"		RUN+="/usr/bin/sys_event device_mouse_add"
 ACTION=="remove"	SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_MOUSE}=="?*"		RUN+="/usr/bin/sys_event device_mouse_remove"
-ACTION=="add"		SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"	ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}!="?*"	ENV{ID_INPUT_MOUSE}!="?*"	RUN+="/usr/bin/sys_event device_unknown_usb_add"
-ACTION=="remove"	SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}!="?*"	ENV{ID_INPUT_MOUSE}!="?*"		RUN+="/usr/bin/sys_event device_unknown_usb_remove"

@@ -22,8 +22,7 @@ SET(SRCS
 	ss_procmgr.c
 	ss_timemgr.c
 	ss_cpu_handler.c
-	ss_device_plugin.c
-	ss_usb_storage_handler.c) 
+	ss_device_plugin.c)
  
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
