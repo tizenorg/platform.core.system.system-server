@@ -625,15 +625,37 @@ static void ss_action_entry_load_from_sodir()
 
 	closedir(dp);
 }
-
+static void __tel_init_cb(keynode_t *key_nodes,void *data)
+{
+	int bTelReady = 0;
+	bTelReady = vconf_keynode_get_bool(key_nodes);
+	if (bTelReady == 1) {
+		vconf_ignore_key_changed(VCONFKEY_TELEPHONY_READY, (void*)__tel_init_cb);
+		tapi_handle = tel_init(NULL);
+		if (tapi_handle == NULL) {
+			PRT_TRACE_ERR("tapi init error");
+		}
+	} else {
+		PRT_TRACE_ERR("tapi is not ready yet");
+	}
+}
 void ss_predefine_internal_init(void)
 {
 
 	/* telephony initialize */
 	int ret = 0;
-	tapi_handle = tel_init(NULL);
-	if (tapi_handle == NULL) {
-		PRT_TRACE_ERR("tapi init error");
+	int bTelReady = 0;
+	if (vconf_get_bool(VCONFKEY_TELEPHONY_READY,&bTelReady) == 0) {
+		if (bTelReady == 1) {
+			tapi_handle = tel_init(NULL);
+			if (tapi_handle == NULL) {
+				PRT_TRACE_ERR("tapi init error");
+			}
+		} else {
+			vconf_notify_key_changed(VCONFKEY_TELEPHONY_READY, (void *)__tel_init_cb, NULL);
+		}
+	} else {
+		PRT_TRACE_ERR("failed to get tapi vconf key");
 	}
 #ifdef NOUSE
 	ss_action_entry_add_internal(PREDEF_CALL, call_predefine_action, NULL,
