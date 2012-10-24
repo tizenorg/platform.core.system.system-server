@@ -424,12 +424,32 @@ int poweroff_def_predefine_action(int argc, char **argv)
 
 static void enter_flight_mode_cb(TapiHandle *handle, int result, void *data, void *user_data)
 {
-	PRT_TRACE("enter flight mode result : %d",result);
+	int bCurFlightMode = 0;
+	if (result != TAPI_POWER_FLIGHT_MODE_ENTER) {
+		PRT_TRACE_ERR("flight mode enter failed %d",result);
+	} else {
+		PRT_TRACE("enter flight mode result : %d",result);
+		if (vconf_get_bool(VCONFKEY_TELEPHONY_FLIGHT_MODE,&bCurFlightMode) == 0) {
+			PRT_TRACE("Flight Mode is %d", bCurFlightMode);
+		} else {
+			PRT_TRACE_ERR("failed to get vconf key");
+		}
+	}
 }
 
 static void leave_flight_mode_cb(TapiHandle *handle, int result, void *data, void *user_data)
 {
-	PRT_TRACE("leave flight mode result : %d",result);
+	int bCurFlightMode = 0;
+	if (result != TAPI_POWER_FLIGHT_MODE_LEAVE) {
+		PRT_TRACE_ERR("flight mode leave failed %d",result);
+	} else {
+		PRT_TRACE("leave flight mode result : %d",result);
+		if (vconf_get_bool(VCONFKEY_TELEPHONY_FLIGHT_MODE,&bCurFlightMode) == 0) {
+			PRT_TRACE("Flight Mode is %d", bCurFlightMode);
+		} else {
+			PRT_TRACE_ERR("failed to get vconf key");
+		}
+	}
 }
 
 int entersleep_def_predefine_action(int argc, char **argv)
@@ -587,6 +607,25 @@ int launching_predefine_action(int argc, char **argv)
 	return 0;
 }
 
+int flight_mode_def_predefine_action(int argc, char **argv)
+{
+	int bCurFlightMode;
+	int err = TAPI_API_SUCCESS;
+	if (argc != 1 || argv[0] == NULL) {
+		PRT_TRACE_ERR("FlightMode Set predefine action failed");
+		return -1;
+	}
+	bCurFlightMode = atoi(argv[0]);
+	if (bCurFlightMode == 1) {
+		err = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_LEAVE, leave_flight_mode_cb, NULL);
+	} else if (bCurFlightMode == 0) {
+		err = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_ENTER, enter_flight_mode_cb, NULL);
+	}
+	if (err != TAPI_API_SUCCESS)
+		PRT_TRACE_ERR("FlightMode tel api action failed %d",err);
+	return 0;
+
+}
 static void ss_action_entry_load_from_sodir()
 {
 	DIR *dp;
@@ -677,6 +716,8 @@ void ss_predefine_internal_init(void)
 	ss_action_entry_add_internal(PREDEF_REBOOT,
 				     restart_def_predefine_action, NULL, NULL);
 
+	ss_action_entry_add_internal(PREDEF_FLIGHT_MODE,
+				     flight_mode_def_predefine_action, NULL, NULL);
 	ss_action_entry_load_from_sodir();
 
 	/* check and set earjack init status */

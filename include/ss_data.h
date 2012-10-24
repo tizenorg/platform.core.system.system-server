@@ -76,6 +76,7 @@ enum {
 #define PREDEF_RELEASE_MAX_FREQUENCY	"release_max_frequency" 
 #define PREDEF_RELEASE_MIN_FREQUENCY	"release_min_frequency" 
 
+#define PREDEF_FLIGHT_MODE		"flightmode"
 #define OOMADJ_SU                       (-17)
 #define OOMADJ_INIT                     (-16)
 #define OOMADJ_FOREGRD_LOCKED           (-15)
