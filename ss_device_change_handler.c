@@ -336,8 +336,6 @@ int ss_device_change_init(struct ss_main_data *ad)
 		PRT_TRACE_ERR("vconf key notify failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");
 	}
 
-	}
-
 	/* set initial state for devices */
 	input_device_number = 0;
 	keyboard_chgdet_cb(NULL);
