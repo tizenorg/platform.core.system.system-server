@@ -76,14 +76,15 @@ static int parse_cmd(const char *cmdline, char **argv, int max_args)
 	char *buf, *bufp;
 	int nargs = 0;
 	int escape = 0, squote = 0, dquote = 0;
+	int bufsize = strlen(cmdline)+1;
 
 	if (cmdline == NULL || cmdline[0] == '\0')
 		return -1;
 
-	bufp = buf = malloc(strlen(cmdline) + 1);
+	bufp = buf = malloc(bufsize);
 	if (bufp == NULL || buf == NULL)
 		return -1;
-
+	memset(buf, 0, bufsize);
 	p = cmdline;
 
 	while (*p) {

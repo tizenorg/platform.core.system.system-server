@@ -91,7 +91,11 @@ static int system_main(int argc, char **argv)
 	struct ss_main_data ad;
 
 	init_ad(&ad);
-	ad.noti_fd = heynoti_init();
+	if ((ad.noti_fd = heynoti_init()) < 0) {
+		PRT_TRACE_ERR("Hey Notification Initialize failed");
+		fini(&ad);
+		return 0;
+	}
 	heynoti_attach_handler(ad.noti_fd);
 	system_server_init(&ad);
 

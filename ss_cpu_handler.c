@@ -149,13 +149,17 @@ static int power_saving_cb(keynode_t *key_nodes, void *data)
 
 	power_saving_stat = vconf_keynode_get_bool(key_nodes);
 	if (power_saving_stat == 1) {
-		vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_CUSTMODE_CPU, &power_saving_cpu_stat);
-		if (power_saving_cpu_stat == 1) {
-			ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
-			if (ret < 0) {
-				PRT_TRACE_ERR("Add entry failed");
-				return -1;
+		if (vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_CUSTMODE_CPU, &power_saving_cpu_stat) == 0) {
+			if (power_saving_cpu_stat == 1) {
+				ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
+				if (ret < 0) {
+					PRT_TRACE_ERR("Add entry failed");
+					return -1;
+				}
 			}
+		} else {
+			PRT_TRACE_ERR("failed to get vconf key");
+			return -1;
 		}
 	} else {
 		ret = __remove_entry_from_max_cpu_freq_list(getpid());
@@ -181,29 +185,33 @@ static int power_saving_cpu_cb(keynode_t *key_nodes, void *data)
 	int power_saving_stat = -1;
 	int power_saving_cpu_stat = -1;
 
-	vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_SYSMODE_STATUS, &power_saving_stat);
-	if (power_saving_stat == 1) {
-		power_saving_cpu_stat = vconf_keynode_get_bool(key_nodes);
-		if (power_saving_cpu_stat == 1) {
-			ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
+	if (vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_SYSMODE_STATUS, &power_saving_stat) == 0) {
+		if (power_saving_stat == 1) {
+			power_saving_cpu_stat = vconf_keynode_get_bool(key_nodes);
+			if (power_saving_cpu_stat == 1) {
+				ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
+				if (ret < 0) {
+					PRT_TRACE_ERR("Add entry failed");
+					return -1;
+				}
+			} else {
+				ret = __remove_entry_from_max_cpu_freq_list(getpid());
+				if (ret < 0) {
+					PRT_TRACE_ERR("Remove entry failed");
+					return -1;
+				}
+				if (cur_max_cpu_freq == INT_MAX)
+					cur_max_cpu_freq = max_cpu_freq_limit;
+			}
+			ret = __write_max_cpu_freq(cur_max_cpu_freq);
 			if (ret < 0) {
-				PRT_TRACE_ERR("Add entry failed");
+				PRT_TRACE_ERR("Write failed");
 				return -1;
 			}
-		} else {
-			ret = __remove_entry_from_max_cpu_freq_list(getpid());
-			if (ret < 0) {
-				PRT_TRACE_ERR("Remove entry failed");
-				return -1;
-			}
-			if (cur_max_cpu_freq == INT_MAX)
-				cur_max_cpu_freq = max_cpu_freq_limit;
 		}
-		ret = __write_max_cpu_freq(cur_max_cpu_freq);
-		if (ret < 0) {
-			PRT_TRACE_ERR("Write failed");
-			return -1;
-		}
+	} else {
+		PRT_TRACE_ERR("failed to get vconf key");
+		return -1;
 	}
 
 	return 0;
@@ -243,20 +251,27 @@ static void __set_freq_limit()
 	/* check power saving */
 	int power_saving_stat = -1;
 	int power_saving_cpu_stat = -1;
-	vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_SYSMODE_STATUS, &power_saving_stat);
-	if (power_saving_stat == 1)
-		vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_CUSTMODE_CPU, &power_saving_cpu_stat);
-	if (power_saving_cpu_stat == 1) {
-		ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
-		if (ret < 0) {
-			PRT_TRACE_ERR("Add entry failed");
-			return;
+	if (vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_SYSMODE_STATUS, &power_saving_stat) == 0) {
+		if (power_saving_stat == 1) {
+			if (vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_CUSTMODE_CPU, &power_saving_cpu_stat) == 0) {
+				if (power_saving_cpu_stat == 1) {
+					ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
+					if (ret < 0) {
+						PRT_TRACE_ERR("Add entry failed");
+						return;
+					}
+					ret = __write_max_cpu_freq(cur_max_cpu_freq);
+					if (ret < 0) {
+						PRT_TRACE_ERR("Write entry failed");
+						return;
+					}
+				}
+			} else {
+				PRT_TRACE_ERR("failed to get vconf key");
+			}
 		}
-		ret = __write_max_cpu_freq(cur_max_cpu_freq);
-		if (ret < 0) {
-			PRT_TRACE_ERR("Write entry failed");
-			return;
-		}
+	} else {
+		PRT_TRACE_ERR("failed to get vconf key");
 	}
 }
 

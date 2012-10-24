@@ -402,23 +402,26 @@ int poweroff_def_predefine_action(int argc, char **argv)
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
-	ret = tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, powerdown_ap, NULL);
+	if (tapi_handle) {
+		ret = tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, powerdown_ap, NULL);
 
-	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR
-		    ("tel_register_event is not subscribed. error %d\n", ret);
+		if (ret != TAPI_API_SUCCESS) {
+			PRT_TRACE_ERR
+			    ("tel_register_event is not subscribed. error %d\n", ret);
+			powerdown_ap_by_force(NULL);
+			return 0;
+		}
+
+		ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
+		if (ret != TAPI_API_SUCCESS) {
+			PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
+			powerdown_ap_by_force(NULL);
+			return 0;
+		}
+		poweroff_timer_id = ecore_timer_add(15, powerdown_ap_by_force, NULL);
+	} else {
 		powerdown_ap_by_force(NULL);
-		return 0;
 	}
-
-	ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
-	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
-		powerdown_ap_by_force(NULL);
-		return 0;
-	}
-
-	poweroff_timer_id = ecore_timer_add(15, powerdown_ap_by_force, NULL);
 	return 0;
 }
 

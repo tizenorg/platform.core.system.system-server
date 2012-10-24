@@ -56,7 +56,8 @@ static int make_noti_file(const char *path, const char *file)
 	if (access(buf, F_OK) == 0)
 		return -1;
 
-	fd = open(buf, O_CREAT, S_IRUSR | S_IWUSR);
+	if ((fd = open(buf, O_CREAT, S_IRUSR | S_IWUSR)) < 0)
+		return -1;
 	close(fd);
 	snprintf(buf, sizeof(buf), "chmod 666 %s/%s", path, file);
 	system(buf);
@@ -136,7 +137,7 @@ static Ecore_File_Monitor_Cb __bs_file_cb(void *data, Ecore_File_Monitor *em, Ec
 		break;
 	}
 
-	return;
+	return NULL;
 }
 
 int ss_bs_init(void)

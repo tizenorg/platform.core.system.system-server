@@ -80,19 +80,23 @@ static int check_lowbat_charge_device(int bInserted)
 			if (val == 0 && bChargeDeviceInserted == 1) {
 				bChargeDeviceInserted = 0;
 				//low bat popup during charging device removing
-				vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state);
-				if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
-					bundle *b = NULL;
-					b = bundle_create();
-					if(bat_state == VCONFKEY_SYSMAN_BAT_POWER_OFF)
-						bundle_add(b,"_SYSPOPUP_CONTENT_", "poweroff");
-					else
-						bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
-					ret = syspopup_launch("lowbat-syspopup", b);
-					if (ret < 0) {
-						PRT_TRACE_EM("popup lauch failed\n");
+				if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state) == 0) {
+					if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
+						bundle *b = NULL;
+						b = bundle_create();
+						if(bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF)
+							bundle_add(b,"_SYSPOPUP_CONTENT_", "poweroff");
+						else
+							bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+						ret = syspopup_launch("lowbat-syspopup", b);
+						if (ret < 0) {
+							PRT_TRACE_EM("popup lauch failed\n");
+						}
+						bundle_free(b);
 					}
-					bundle_free(b);
+				} else {
+					PRT_TRACE_ERR("failed to get vconf key");
+					return -1;
 				}
 			}
 			return 0;

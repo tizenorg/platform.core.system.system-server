@@ -289,7 +289,10 @@ static int lowmem_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	}
 
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
-
+	if (fd < 0) {
+		PRT_TRACE_ERR("ecore_main_fd_handler_fd_get error , return");
+		return 1;
+	}
 	mem_state = lowmem_read(fd);
 	print_lowmem_state(mem_state);
 	lowmem_process(mem_state, ad);

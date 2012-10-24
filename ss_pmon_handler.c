@@ -58,6 +58,7 @@ static char *pmon_get_permanent_pname(int pid)
 
 	if (fstat(fd, &st) < 0) {
 		PRT_TRACE_ERR("fstat error");
+		close(fd);
 		return NULL;
 	}
 
@@ -66,6 +67,7 @@ static char *pmon_get_permanent_pname(int pid)
 	cmdline = malloc(st.st_size + 1);
 	if (cmdline == NULL) {
 		PRT_TRACE_ERR("Not enough memory");
+		close(fd);
 		return NULL;
 	}
 	memset(cmdline, 0, st.st_size + 1);
@@ -83,12 +85,13 @@ static void print_pmon_state(unsigned int dead_pid)
 	PRT_TRACE("[Process MON] %d killed", dead_pid);
 }
 
-static int pmon_process(unsigned int pid, void *ad)
+static int pmon_process(int pid, void *ad)
 {
 	char *cmdline;
 	int new_pid;
 	char old_file[PATH_MAX];
 	int fd;
+	int r;
 
 	if (sysconf_is_vip(pid)) {
 		PRT_TRACE_ERR("=======================================");
@@ -107,11 +110,15 @@ static int pmon_process(unsigned int pid, void *ad)
 				/* TODO - set oom */
 				char buf[PATH_MAX];
 				char filepath[PATH_MAX];
-				size_t cnt;
+				int cnt;
 
 				if (access(PMON_PERMANENT_DIR, R_OK) < 0) {
 					PRT_TRACE("no predefined matrix dir = %s, so created", PMON_PERMANENT_DIR);
-					mkdir(PMON_PERMANENT_DIR, 0777);
+					r = mkdir(PMON_PERMANENT_DIR, 0777);
+					if(r < 0) {
+						PRT_TRACE("Make Directory is failed");
+						return -1;
+					}
 				}
 
 				snprintf(filepath, sizeof(filepath), "%s/%d", PMON_PERMANENT_DIR, pid);
@@ -195,6 +202,10 @@ static int pmon_cb(void *data, Ecore_Fd_Handler * fd_handler)
 
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
 
+	if (fd < 0) {
+		PRT_TRACE_ERR("ecore_main_fd_handler_fd_get error , return");
+		return 1;
+	}
 	if ((read(fd, &dead_pid, sizeof(dead_pid))) < 0) {
 		PRT_TRACE_ERR("Reading DEAD_PID failed, Return");
 		return 1;
