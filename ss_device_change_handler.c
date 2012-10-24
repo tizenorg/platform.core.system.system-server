@@ -204,12 +204,27 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 
 static void mmc_chgdet_cb(void *data)
 {
+	int ret = -1;
+	int val = -1;
 	if (data == NULL) {
 		PRT_TRACE("mmc removed");
 		ss_mmc_removed();
 	} else {
 		PRT_TRACE("mmc added");
-		ss_mmc_inserted();
+		ret = ss_mmc_inserted();
+		if (ret == -1) {
+			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);
+			if (val == VCONFKEY_SYSMAN_MMC_MOUNT_FAILED) {
+				bundle *b = NULL;
+				b = bundle_create();
+				bundle_add(b, "_SYSPOPUP_CONTENT_", "mounterr");
+				ret = syspopup_launch("mmc-syspopup", b);
+				if (ret < 0) {
+					PRT_TRACE_ERR("popup launch failed");
+				}
+				bundle_free(b);
+			}
+		}
 	}
 }
 
