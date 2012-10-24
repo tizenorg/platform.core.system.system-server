@@ -124,6 +124,7 @@ systemctl daemon-reload
 %{_libdir}/systemd/system/system-server.service
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
+%config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
 %{_sysconfdir}/rc.d/rc5.d/S00system-server
