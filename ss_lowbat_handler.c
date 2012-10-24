@@ -171,17 +171,17 @@ static int lowbat_process(int bat_percent, void *ad)
 		PRT_TRACE("charge_now status %d",val);
 		if (val == 1) {
 			new_bat_state = BATTERY_POWER_OFF;
-			if (vconf_state != VCONFKEY_SYSMAN_BAT_CRITICAL_LOW)
-				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_CRITICAL_LOW);
-		} else {
-			new_bat_state = BATTERY_REAL_POWER_OFF;
 			if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
 				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_POWER_OFF);
+		} else {
+			new_bat_state = BATTERY_REAL_POWER_OFF;
+			if (vconf_state != VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF)
+				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF);
 		}
 	} else if (new_bat_capacity <= BATTERY_POWER_OFF) {
 		new_bat_state = BATTERY_POWER_OFF;
-		if (vconf_state != VCONFKEY_SYSMAN_BAT_CRITICAL_LOW)
-			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_CRITICAL_LOW);
+		if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
+			ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_POWER_OFF);
 	} else if (new_bat_capacity <= BATTERY_CRITICAL_LOW) {
 		new_bat_state = BATTERY_CRITICAL_LOW;
 		if (vconf_state != VCONFKEY_SYSMAN_BAT_CRITICAL_LOW)
