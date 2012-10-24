@@ -281,7 +281,7 @@ static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 		return ;
 	}
 
-	if(VCONFKEY_SYSMEN_USB_HOST_CONNECTED == status) {
+	if(VCONFKEY_SYSMAN_USB_HOST_CONNECTED == status) {
 		int pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
 			PRT_TRACE("usb-server launching failed\n");
