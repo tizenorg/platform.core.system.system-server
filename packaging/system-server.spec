@@ -23,6 +23,7 @@ BuildRequires:  pkgconfig(devman_plugin)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
+BuildRequires:	gettext
 
 %description
 Description: System server
@@ -104,6 +105,7 @@ fi
 %{_bindir}/sys_device_noti
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
 %{_datadir}/system-server/udev-rules/91-system-server.rules
+%{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
 %{_sysconfdir}/rc.d/rc5.d/S00system-server

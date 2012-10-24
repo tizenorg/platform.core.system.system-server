@@ -16,6 +16,18 @@
 #ifndef __SYS_DEVICE_NOTI_H__
 #define __SYS_DEVICE_NOTI_H__
 
+#ifndef _
+#define _(str) gettext(str)
+#endif
+
+#ifndef gettext_noop
+#define gettext_noop(str) (str)
+#endif
+
+#ifndef N_
+#define N_(str) gettext_noop(str)
+#endif
+
 typedef enum {
 	CB_NOTI_BATT_CHARGE,
 	CB_NOTI_BATT_LOW,
