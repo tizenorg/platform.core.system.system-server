@@ -124,20 +124,93 @@ static void print_lowmem_state(unsigned int mem_state)
 	PRT_TRACE("[LOW MEM STATE] %s ==> %s", convert_to_str(cur_mem_state),
 		  convert_to_str(mem_state));
 }
+#define BUF_MAX 1024
+static int get_lowmemnotify_info(FILE *output_fp)
+{
+	FILE *fp;
+	char line[BUF_MAX];
+
+	if (output_fp == NULL)
+		return -1;
+
+	fp = fopen("/sys/class/memnotify/meminfo", "r");
+	if (fp == NULL)
+		return -1;
+	PRT_TRACE("make LOWMEM_LOG");
+	fprintf(output_fp,
+		"====================================================================\n");
+	fprintf(output_fp, "MEMORY INFO by lowmemnotify\n");
+
+	while (fgets(line, BUF_MAX, fp) != NULL) {
+		PRT_TRACE("%s",line);
+		fputs(line, output_fp);
+	}
+	fclose(fp);
+
+	return 0;
+}
+
+static void make_LMM_log(char *file, pid_t pid, char *victim_name)
+{
+	time_t now;
+	struct tm *cur_tm;
+	char new_log[NAME_MAX];
+	static pid_t old_pid = 0;
+	int ret=-1;
+	FILE *output_file = NULL;
+
+	if (old_pid == pid)
+		return;
+	old_pid = pid;
+
+	now = time(NULL);
+	cur_tm = (struct tm *)malloc(sizeof(struct tm));
+	if (cur_tm == NULL) {
+		PRT_TRACE_ERR("Fail to memory allocation");
+		return;
+	}
+
+	if (localtime_r(&now, cur_tm) == NULL) {
+		PRT_TRACE_ERR("Fail to get localtime");
+		free(cur_tm);
+		return;
+	}
+
+	PRT_TRACE("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
+		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
+		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
+		 cur_tm->tm_sec);
+	snprintf(new_log, sizeof(new_log),
+		 "%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
+		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
+		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
+		 cur_tm->tm_sec);
+
+	output_file = fopen(new_log, "w+");
+	if(!output_file) {
+		PRT_TRACE_ERR("cannot open output file(%s)",new_log);
+		free(cur_tm);
+		return;
+	}
+	get_lowmemnotify_info(output_file);
+	fclose(output_file);
+	free(cur_tm);
+}
+
+
 
 static int memory_low_act(void *data)
 {
 	char lowmem_noti_name[NAME_MAX];
 
 	PRT_TRACE("[LOW MEM STATE] memory low state");
+	make_LMM_log("/var/log/memps", 1, "LOWMEM_WARNING");
 	remove_shm();
 
 	heynoti_get_snoti_name(_SYS_RES_CLEANUP, lowmem_noti_name, NAME_MAX);
 	ss_noti_send(lowmem_noti_name);
 	vconf_set_int(VCONFKEY_SYSMAN_LOW_MEMORY,
 		      VCONFKEY_SYSMAN_LOW_MEMORY_SOFT_WARNING);
-		
-	ss_action_entry_call_internal(PREDEF_LOWMEM, 1, LOW_MEM_ACT);
 
 	return 0;
 }
@@ -159,10 +232,11 @@ static int memory_oom_act(void *data)
 				       NAME_MAX);
 		ss_noti_send(lowmem_noti_name);
 	}
+	ss_action_entry_call_internal(PREDEF_LOWMEM, 1, OOM_MEM_ACT);
+
 	vconf_set_int(VCONFKEY_SYSMAN_LOW_MEMORY,
 		      VCONFKEY_SYSMAN_LOW_MEMORY_HARD_WARNING);
 
-	ss_action_entry_call_internal(PREDEF_LOWMEM, 1, OOM_MEM_ACT);
 
 	return 1;
 }
