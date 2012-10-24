@@ -7,6 +7,7 @@ Group:      TO_BE/FILLED_IN
 License:    Flora Software License
 Source0:    system-server-%{version}.tar.gz
 Source1:    system-server.service
+Source2:    system-server.manifest
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -39,6 +40,7 @@ Description: System server
 cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 
 %build
+cp %{SOURCE2} .
 make %{?jobs:-j%jobs}
 
 %install
@@ -114,6 +116,7 @@ systemctl daemon-reload
 
 
 %files
+%manifest system-server.manifest
 %{_bindir}/system_server
 %{_bindir}/restart
 %{_bindir}/movi_format.sh
