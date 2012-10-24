@@ -183,11 +183,13 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 	PRT_TRACE("jack - hdmi changed\n");
 	int val;
 	pm_change_state(LCD_NORMAL);
-	if (plugin_intf->OEM_sys_get_jack_hdmi_online(&val) == 0)
+	if (plugin_intf->OEM_sys_get_jack_hdmi_online(&val) == 0) {
+		vconf_set_int(VCONFKEY_SYSMAN_HDMI,val);
 		if(val == 1)
 			pm_lock_state(LCD_NORMAL, GOTO_STATE_NOW, 0);
 		else
 			pm_unlock_state(LCD_NORMAL, PM_SLEEP_MARGIN);
+	}
 }
 
 static void keyboard_chgdet_cb(struct ss_main_data *ad)
