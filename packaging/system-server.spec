@@ -6,8 +6,8 @@ Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Flora Software License
 Source0:    system-server-%{version}.tar.gz
-Source1:    system-server.service
 Source2:    system-server.manifest
+Requires(post): /usr/bin/vconftool
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -26,10 +26,6 @@ BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
 BuildRequires:	gettext
-Requires(preun): /usr/bin/systemctl
-Requires(post): /usr/bin/systemctl
-Requires(post): /usr/bin/vconftool
-Requires(postun): /usr/bin/systemctl
 
 %description
 Description: System server
@@ -52,9 +48,6 @@ ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc3
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/rc5.d/
 ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S00system-server
 
-mkdir -p %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants
-install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.service
-ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 %post
 
 vconftool set -t int memory/sysman/usbhost_status -1 -i
@@ -100,21 +93,6 @@ if ! [ -L /etc/udev/rules.d/91-system-server.rules ]; then
         ln -s %{_datadir}/system-server/udev-rules/91-system-server.rules /etc/udev/rules.d/91-system-server.rules
 fi
 
-systemctl daemon-reload
-if [ $1 == 1 ]; then
-    systemctl restart system-server.service
-fi
-
-
-%preun
-if [ $1 == 0 ]; then
-    systemctl stop system-server.service
-fi
-
-%postun
-systemctl daemon-reload
-
-
 %files
 %manifest system-server.manifest
 %{_bindir}/system_server
@@ -123,11 +101,8 @@ systemctl daemon-reload
 %{_bindir}/sys_event
 %{_bindir}/sys_device_noti
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
-%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
-%{_libdir}/systemd/system/system-server.service
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
-%config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
 %{_sysconfdir}/rc.d/rc5.d/S00system-server
