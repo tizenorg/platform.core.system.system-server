@@ -37,6 +37,7 @@
 #include "ss_noti.h"
 #include "include/ss_data.h"
 #include "sys_device_noti/sys_device_noti.h"
+#include "sys_pci_noti/sys_pci_noti.h"
 
 #define BUFF_MAX		255
 #define SYS_CLASS_INPUT		"/sys/class/input"
@@ -314,6 +315,25 @@ static void usb_host_add_cb()
 	PRT_TRACE("EXIT: usb_host_add_cb()\n");
 }
 
+static void pci_keyboard_add_cb(struct ss_main_data *ad)
+{
+	char params[BUFF_MAX];
+	PRT_TRACE("pci- keyboard inserted\n");
+	pm_change_state(LCD_NORMAL);
+
+	snprintf(params, sizeof(params), "%d", CB_NOTI_PCI_INSERTED);
+	ss_launch_if_noexist("/usr/bin/sys_pci_noti", params);
+
+}
+static void pci_keyboard_remove_cb(struct ss_main_data *ad)
+{
+	char params[BUFF_MAX];
+	PRT_TRACE("pci- keyboard removed\n");
+	pm_change_state(LCD_NORMAL);
+
+	snprintf(params, sizeof(params), "%d", CB_NOTI_PCI_REMOVED);
+	ss_launch_if_noexist("/usr/bin/sys_pci_noti", params);
+}
 int ss_device_change_init(struct ss_main_data *ad)
 {
 	/* for simple noti change cb */
@@ -331,6 +351,9 @@ int ss_device_change_init(struct ss_main_data *ad)
 
 	ss_noti_add("unmount_ums", (void *)ums_unmount_cb, NULL);
 	ss_noti_add("device_charge_chgdet", (void *)charge_cb, (void *)ad);
+
+	ss_noti_add("device_pci_keyboard_add", (void *)pci_keyboard_add_cb, (void *)ad);
+	ss_noti_add("device_pci_keyboard_remove", (void *)pci_keyboard_remove_cb, (void *)ad);
 
 	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_USB_HOST_STATUS, usb_host_chgdet_cb, NULL) < 0) {
 		PRT_TRACE_ERR("vconf key notify failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");

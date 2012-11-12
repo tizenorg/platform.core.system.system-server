@@ -1,7 +1,7 @@
 #sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
-Version: 0.1.53
+Version: 0.1.54
 Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Flora Software License
@@ -101,9 +101,11 @@ fi
 %{_bindir}/movi_format.sh
 %{_bindir}/sys_event
 %{_bindir}/sys_device_noti
+%{_bindir}/sys_pci_noti
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
+%{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
 %{_sysconfdir}/rc.d/rc5.d/S00system-server

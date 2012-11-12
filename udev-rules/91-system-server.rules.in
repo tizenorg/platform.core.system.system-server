@@ -35,3 +35,7 @@ ACTION=="add"		SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"	ENV{ID_B
 ACTION=="remove"    SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_keyboard_remove"
 ACTION=="add"       SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_MOUSE}=="?*"		RUN+="/usr/bin/sys_event device_mouse_add"
 ACTION=="remove"	SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"    ENV{ID_BUS}=="usb"	ENV{ID_INPUT_MOUSE}=="?*"		RUN+="/usr/bin/sys_event device_mouse_remove"
+
+#PCI keyboard
+ACTION=="add"		SUBSYSTEM=="input"	DEVPATH=="*/virtio[1-9]*/input/input[1-9]*/event[1-9]*"	ENV{ID_PATH}=="*virtio-pci*"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_pci_keyboard_add"
+ACTION=="remove"	SUBSYSTEM=="input"	DEVPATH=="*/virtio[1-9]*/input/input[1-9]*/event[1-9]*"	ENV{ID_PATH}=="*virtio-pci*"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_pci_keyboard_remove"

@@ -77,3 +77,4 @@ INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/system_server.sh DESTINATION /etc/rc.d/init
 ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)
 ADD_SUBDIRECTORY(sys_device_noti)
+ADD_SUBDIRECTORY(sys_pci_noti)
