@@ -60,9 +60,11 @@ int get_mmcblk_num()
 					 dir->d_name);
 
 				fd = open(buf, O_RDONLY);
-				if (fd == -1)
+				if (fd == -1) {
 					PRT_TRACE_ERR("%s open error: %s", buf,
 						      strerror(errno));
+					return -1;
+				}
 				r = read(fd, buf, 10);
 				if ((r >= 0) && (r < 10))
 					buf[r] = '\0';
@@ -151,7 +153,7 @@ int ss_mmc_inserted()
 	int blk_num, ret, retry = 0;
 	char opt[NAME_MAX];
 	char *popt = opt;
-
+	int r = 0;
 	if (mmc_status == VCONFKEY_SYSMAN_MMC_MOUNTED) {
 		PRT_DBG("Mmc is already mounted.\n");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,
@@ -161,8 +163,13 @@ int ss_mmc_inserted()
 		return -1;
 	}
 
-	if (access(MMC_MOUNT_POINT, R_OK) != 0)
-		mkdir(MMC_MOUNT_POINT, 0755);
+	if (access(MMC_MOUNT_POINT, R_OK) != 0) {
+		r = mkdir(MMC_MOUNT_POINT, 0755);
+		if(r < 0) {
+			PRT_TRACE_ERR("Make Directory is failed");
+			return -1;
+		}
+	}
 
 	if ((blk_num = get_mmcblk_num()) == -1) {
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,

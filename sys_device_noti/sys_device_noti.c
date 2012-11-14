@@ -19,6 +19,9 @@
 #include <svi.h>
 #include <pmapi.h>
 #include <notification.h>
+#include <libintl.h>
+#include <locale.h>
+#include <vconf.h>
 #include "ss_log.h"
 #include "sys_device_noti.h"
 
@@ -26,10 +29,27 @@
 static int battery_full_noti(int bNoti)
 {
 	int charge_full = bNoti;
+	char *lang;
+	char *r;
+
+
+
 	notification_h noti = NULL;
 	notification_error_e noti_err = NOTIFICATION_ERROR_NONE;
 
 	if (charge_full == 1) {
+		lang = vconf_get_str(VCONFKEY_LANGSET);
+		if (lang) {
+			setenv("LANG", lang, 1);
+			setenv("LC_MESSAGES", lang, 1);
+			r = setlocale(LC_ALL, "");
+			if (r == NULL) {
+				setlocale(LC_ALL, lang);
+			}
+			free(lang);
+		}
+		bindtextdomain("sys_device_noti","/usr/share/system-server/sys_device_noti/res/locale/");
+		textdomain("sys_device_noti");
 		noti_err = notification_delete_all_by_type(NULL, NOTIFICATION_TYPE_NOTI);
 		PRT_TRACE("[BAT_FULL_NOTI] add notification for battery full\n");
 		noti = notification_new(NOTIFICATION_TYPE_NOTI, NOTIFICATION_GROUP_ID_NONE, NOTIFICATION_PRIV_ID_NONE);
@@ -38,7 +58,7 @@ static int battery_full_noti(int bNoti)
 			return -1;
 		}
 
-		noti_err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE, "Battery fully charged", NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		noti_err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE, _("IDS_IDLE_POP_BATTERY_FULLY_CAHRGED"), NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 		if (noti_err != NOTIFICATION_ERROR_NONE) {
 			PRT_TRACE("[BAT_FULL_NOTI] Error notification_set_title : %d\n", noti_err);
 			noti_err = notification_free(noti);
@@ -49,7 +69,7 @@ static int battery_full_noti(int bNoti)
 			return -1;
 		}
 
-		noti_err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, "Unplug charger", NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		noti_err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, _("IDS_QP_BODY_UNPLUG_CHARGER"), NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 		if (noti_err != NOTIFICATION_ERROR_NONE) {
 			PRT_TRACE("[BAT_FULL_NOTI] Error notification_set_content : %d\n", noti_err);
 			noti_err = notification_free(noti);
@@ -60,7 +80,7 @@ static int battery_full_noti(int bNoti)
 			return -1;
 		}
 
-		noti_err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT_FOR_DISPLAY_OPTION_IS_OFF, "Unplug charger", NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		noti_err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT_FOR_DISPLAY_OPTION_IS_OFF, _("IDS_QP_BODY_UNPLUG_CHARGER"), NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 		if (noti_err != NOTIFICATION_ERROR_NONE) {
 			PRT_TRACE("[BAT_FULL_NOTI] Error notification_set_content : %d\n", noti_err);
 			noti_err = notification_free(noti);

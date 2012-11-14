@@ -170,7 +170,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 
 				kill(pid, SIGTERM);
 
-				if (oom_adj >= OOMADJ_BACKGRD_UNLOCKED) {	
+				if (oom_adj != OOMADJ_FOREGRD_LOCKED && oom_adj != OOMADJ_FOREGRD_UNLOCKED) {
 					return 0;
 				}
 
@@ -190,11 +190,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 				}
 			}
 		}
-	} else {
-		PRT_TRACE_EM("making memps log for low memory\n");
-		make_memps_log(MEMPS_LOG_FILE, 1, "LOWMEM_WARNING");
 	}
-
 	return 0;
 }
 
@@ -210,19 +206,6 @@ int usbcon_def_predefine_action(int argc, char **argv)
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
 			pm_unlock_state(LCD_OFF, STAY_CUR_STATE);
-
-			vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state);
-			if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
-				bundle *b = NULL;
-				b = bundle_create();
-				bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
-
-				ret = syspopup_launch("lowbat-syspopup", b);
-				if (ret < 0) {
-					PRT_TRACE_EM("popup lauch failed\n");
-				}
-				bundle_free(b);
-			}
 			return 0;
 		}
 
@@ -419,34 +402,57 @@ int poweroff_def_predefine_action(int argc, char **argv)
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
-	ret = tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, powerdown_ap, NULL);
+	if (tapi_handle) {
+		ret = tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, powerdown_ap, NULL);
 
-	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR
-		    ("tel_register_event is not subscribed. error %d\n", ret);
+		if (ret != TAPI_API_SUCCESS) {
+			PRT_TRACE_ERR
+			    ("tel_register_event is not subscribed. error %d\n", ret);
+			powerdown_ap_by_force(NULL);
+			return 0;
+		}
+
+		ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
+		if (ret != TAPI_API_SUCCESS) {
+			PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
+			powerdown_ap_by_force(NULL);
+			return 0;
+		}
+		poweroff_timer_id = ecore_timer_add(15, powerdown_ap_by_force, NULL);
+	} else {
 		powerdown_ap_by_force(NULL);
-		return 0;
 	}
-
-	ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
-	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
-		powerdown_ap_by_force(NULL);
-		return 0;
-	}
-
-	poweroff_timer_id = ecore_timer_add(15, powerdown_ap_by_force, NULL);
 	return 0;
 }
 
 static void enter_flight_mode_cb(TapiHandle *handle, int result, void *data, void *user_data)
 {
-	PRT_TRACE("enter flight mode result : %d",result);
+	int bCurFlightMode = 0;
+	if (result != TAPI_POWER_FLIGHT_MODE_ENTER) {
+		PRT_TRACE_ERR("flight mode enter failed %d",result);
+	} else {
+		PRT_TRACE("enter flight mode result : %d",result);
+		if (vconf_get_bool(VCONFKEY_TELEPHONY_FLIGHT_MODE,&bCurFlightMode) == 0) {
+			PRT_TRACE("Flight Mode is %d", bCurFlightMode);
+		} else {
+			PRT_TRACE_ERR("failed to get vconf key");
+		}
+	}
 }
 
 static void leave_flight_mode_cb(TapiHandle *handle, int result, void *data, void *user_data)
 {
-	PRT_TRACE("leave flight mode result : %d",result);
+	int bCurFlightMode = 0;
+	if (result != TAPI_POWER_FLIGHT_MODE_LEAVE) {
+		PRT_TRACE_ERR("flight mode leave failed %d",result);
+	} else {
+		PRT_TRACE("leave flight mode result : %d",result);
+		if (vconf_get_bool(VCONFKEY_TELEPHONY_FLIGHT_MODE,&bCurFlightMode) == 0) {
+			PRT_TRACE("Flight Mode is %d", bCurFlightMode);
+		} else {
+			PRT_TRACE_ERR("failed to get vconf key");
+		}
+	}
 }
 
 int entersleep_def_predefine_action(int argc, char **argv)
@@ -604,6 +610,25 @@ int launching_predefine_action(int argc, char **argv)
 	return 0;
 }
 
+int flight_mode_def_predefine_action(int argc, char **argv)
+{
+	int bCurFlightMode;
+	int err = TAPI_API_SUCCESS;
+	if (argc != 1 || argv[0] == NULL) {
+		PRT_TRACE_ERR("FlightMode Set predefine action failed");
+		return -1;
+	}
+	bCurFlightMode = atoi(argv[0]);
+	if (bCurFlightMode == 1) {
+		err = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_LEAVE, leave_flight_mode_cb, NULL);
+	} else if (bCurFlightMode == 0) {
+		err = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_ENTER, enter_flight_mode_cb, NULL);
+	}
+	if (err != TAPI_API_SUCCESS)
+		PRT_TRACE_ERR("FlightMode tel api action failed %d",err);
+	return 0;
+
+}
 static void ss_action_entry_load_from_sodir()
 {
 	DIR *dp;
@@ -642,15 +667,37 @@ static void ss_action_entry_load_from_sodir()
 
 	closedir(dp);
 }
-
+static void __tel_init_cb(keynode_t *key_nodes,void *data)
+{
+	int bTelReady = 0;
+	bTelReady = vconf_keynode_get_bool(key_nodes);
+	if (bTelReady == 1) {
+		vconf_ignore_key_changed(VCONFKEY_TELEPHONY_READY, (void*)__tel_init_cb);
+		tapi_handle = tel_init(NULL);
+		if (tapi_handle == NULL) {
+			PRT_TRACE_ERR("tapi init error");
+		}
+	} else {
+		PRT_TRACE_ERR("tapi is not ready yet");
+	}
+}
 void ss_predefine_internal_init(void)
 {
 
 	/* telephony initialize */
 	int ret = 0;
-	tapi_handle = tel_init(NULL);
-	if (tapi_handle == NULL) {
-		PRT_TRACE_ERR("tapi init error");
+	int bTelReady = 0;
+	if (vconf_get_bool(VCONFKEY_TELEPHONY_READY,&bTelReady) == 0) {
+		if (bTelReady == 1) {
+			tapi_handle = tel_init(NULL);
+			if (tapi_handle == NULL) {
+				PRT_TRACE_ERR("tapi init error");
+			}
+		} else {
+			vconf_notify_key_changed(VCONFKEY_TELEPHONY_READY, (void *)__tel_init_cb, NULL);
+		}
+	} else {
+		PRT_TRACE_ERR("failed to get tapi vconf key");
 	}
 #ifdef NOUSE
 	ss_action_entry_add_internal(PREDEF_CALL, call_predefine_action, NULL,
@@ -672,6 +719,8 @@ void ss_predefine_internal_init(void)
 	ss_action_entry_add_internal(PREDEF_REBOOT,
 				     restart_def_predefine_action, NULL, NULL);
 
+	ss_action_entry_add_internal(PREDEF_FLIGHT_MODE,
+				     flight_mode_def_predefine_action, NULL, NULL);
 	ss_action_entry_load_from_sodir();
 
 	/* check and set earjack init status */

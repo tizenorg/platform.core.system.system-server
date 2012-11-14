@@ -209,9 +209,13 @@ int ss_run_queue_add(struct ss_action_entry *act_entry, int argc, char **argv)
 	rq_entry->state = SS_STATE_INIT;
 	rq_entry->action_entry = act_entry;
 	rq_entry->forked_pid = 0;
-	rq_entry->argc = argc;
-	for (i = 0; i < argc; i++)
-		rq_entry->argv[i] = argv[i];
+	if ( argc < 0 ) {
+		rq_entry->argc = 0;
+	} else {
+		rq_entry->argc = argc;
+		for (i = 0; i < argc; i++)
+			rq_entry->argv[i] = argv[i];
+	}
 
 	run_queue = eina_list_prepend(run_queue, rq_entry);
 

@@ -26,3 +26,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} "-lsvi -lnotification")
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/data/batt_full_icon.png DESTINATION share/system-server/sys_device_noti)
+
+#i18n
+ADD_SUBDIRECTORY(po_sys_device_noti)

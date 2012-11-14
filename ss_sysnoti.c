@@ -116,6 +116,8 @@ static inline char *recv_str(int fd)
 			}                                               
 			else {      
 				PRT_TRACE_ERR("Read fail for str");
+				free(str);
+				str = NULL;
 				return NULL;
 			}                                                           
 		} else
@@ -136,6 +138,8 @@ static int read_message(int fd, struct sysnoti *msg)
 	msg->path = recv_str(fd);
 	msg->argc = recv_int(fd);
 
+	if (msg->argc < 0)
+		return 0;
 	for (i = 0; i < msg->argc; i++)
 		msg->argv[i] = recv_str(fd);
 
@@ -184,12 +188,13 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 		   (socklen_t *)&client_len);
 	if(client_sockfd == -1) {
 		PRT_TRACE_ERR("socket accept error");
+		free(msg);
 		return 1;
 	}
 
 	if (read_message(client_sockfd, msg) < 0) {
 		PRT_TRACE_ERR("%s : recv error msg", __FUNCTION__);
-		free(msg);
+		free_message(msg);
 		write(client_sockfd, &ret, sizeof(int));
 		close(client_sockfd);
 		return 1;
@@ -236,14 +241,18 @@ static int ss_sysnoti_server_init(void)
 
 	if((fsetxattr(fd, "security.SMACK64IPOUT", "@", 2, 0)) < 0 ) {
 		PRT_ERR("%s: Socket SMACK labeling failed\n", __FUNCTION__);
-		if(errno != EOPNOTSUPP)
+		if(errno != EOPNOTSUPP) {
+			close(fd);
 			return -1;
+		}
 	}
 
 	if((fsetxattr(fd, "security.SMACK64IPIN", "*", 2, 0)) < 0 ) {
 		PRT_ERR("%s: Socket SMACK labeling failed\n", __FUNCTION__);
-		if(errno != EOPNOTSUPP)
+		if(errno != EOPNOTSUPP) {
+			close(fd);
 			return -1;
+		}
 	}
 
 	bzero(&serveraddr, sizeof(struct sockaddr_un));
@@ -254,14 +263,18 @@ static int ss_sysnoti_server_init(void)
 	if (bind(fd, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr)) <
 	    0) {
 		PRT_ERR("%s: socket bind failed\n", __FUNCTION__);
+		close(fd);
 		return -1;
 	}
 
 	if (chmod(SYSNOTI_SOCKET_PATH, (S_IRWXU | S_IRWXG | S_IRWXO)) < 0)	/* 0777 */
 		PRT_ERR("failed to change the socket permission");
 
-	listen(fd, 5);
-
+	if (listen(fd, 5) < 0) {
+		PRT_ERR("failed to listen");
+		close(fd);
+		return -1;
+	}
 	PRT_INFO("socket create & listen ok\n");
 
 	return fd;
@@ -271,6 +284,8 @@ int ss_sysnoti_init(void)
 {
 	int fd;
 	fd = ss_sysnoti_server_init();
+	if ( fd < 0 )
+		return -1;
 	ecore_main_fd_handler_add(fd, ECORE_FD_READ, sysnoti_cb, NULL, NULL,
 				  NULL);
 	return fd;

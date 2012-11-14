@@ -82,7 +82,6 @@ static void system_server_init(struct ss_main_data *ad)
 	ss_device_change_init(ad);
 	ss_mmc_init();
 	ss_bs_init();
-	_ss_usb_storage_init();
 }
 
 #define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
@@ -92,7 +91,11 @@ static int system_main(int argc, char **argv)
 	struct ss_main_data ad;
 
 	init_ad(&ad);
-	ad.noti_fd = heynoti_init();
+	if ((ad.noti_fd = heynoti_init()) < 0) {
+		PRT_TRACE_ERR("Hey Notification Initialize failed");
+		fini(&ad);
+		return 0;
+	}
 	heynoti_attach_handler(ad.noti_fd);
 	system_server_init(&ad);
 

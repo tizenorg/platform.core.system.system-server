@@ -22,8 +22,7 @@ SET(SRCS
 	ss_procmgr.c
 	ss_timemgr.c
 	ss_cpu_handler.c
-	ss_device_plugin.c
-	ss_usb_storage_handler.c) 
+	ss_device_plugin.c)
  
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -79,3 +78,4 @@ INSTALL(FILES system-server.conf DESTINATION /etc/dbus-1/system.d)
 ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)
 ADD_SUBDIRECTORY(sys_device_noti)
+ADD_SUBDIRECTORY(sys_pci_noti)
