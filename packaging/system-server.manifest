@@ -1,5 +1,8 @@
 <manifest>
+    <define>
+        <domain main="system-server"/>
+    </define>
     <request>
-        <domain name="_"/>
+        <domain name="system-server"/>
     </request>
 </manifest>
