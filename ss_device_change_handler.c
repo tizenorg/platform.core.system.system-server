@@ -44,6 +44,7 @@
 #define USBCON_EXEC_PATH	PREFIX"/bin/usb-server"
 #define DEFAULT_USB_INFO_PATH	"/tmp/usb_default"
 #define STORE_DEFAULT_USB_INFO	"usb-devices > "DEFAULT_USB_INFO_PATH
+#define HDMI_NOT_SUPPORTED	(-1)
 
 struct input_event {
 	long dummy[2];
@@ -184,6 +185,13 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 	PRT_TRACE("jack - hdmi changed\n");
 	int val;
 	pm_change_state(LCD_NORMAL);
+	if (plugin_intf->OEM_sys_get_hdmi_support(&val) == 0) {
+		if (val!=1) {
+			PRT_TRACE_ERR("target is not support HDMI");
+			vconf_set_int(VCONFKEY_SYSMAN_HDMI, HDMI_NOT_SUPPORTED);
+			return;
+		}
+	}
 	if (plugin_intf->OEM_sys_get_jack_hdmi_online(&val) == 0) {
 		vconf_set_int(VCONFKEY_SYSMAN_HDMI,val);
 		if(val == 1)
