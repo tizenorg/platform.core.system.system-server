@@ -1,7 +1,7 @@
 #sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
-Version: 0.1.57
+Version: 0.1.58
 Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Flora Software License
@@ -33,7 +33,6 @@ Requires(postun): /usr/bin/systemctl
 
 %description
 Description: System server
-
 
 %prep
 %setup -q
@@ -118,6 +117,10 @@ systemctl daemon-reload
 
 %files
 %manifest system-server.manifest
+%config %{_sysconfdir}/dbus-1/system.d/system-server.conf
+%{_sysconfdir}/rc.d/init.d/system_server.sh
+%{_sysconfdir}/rc.d/rc3.d/S35system-server
+%{_sysconfdir}/rc.d/rc5.d/S00system-server
 %{_bindir}/system_server
 %{_bindir}/restart
 %{_bindir}/movi_format.sh
@@ -130,6 +133,3 @@ systemctl daemon-reload
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
-%{_sysconfdir}/rc.d/init.d/system_server.sh
-%{_sysconfdir}/rc.d/rc3.d/S35system-server
-%{_sysconfdir}/rc.d/rc5.d/S00system-server
