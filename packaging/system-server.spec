@@ -26,10 +26,10 @@ BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
 BuildRequires:	gettext
-Requires(preun): /usr/bin/systemctl
-Requires(post): /usr/bin/systemctl
+Requires(preun): /bin/systemctl
+Requires(post): /bin/systemctl
 Requires(post): /usr/bin/vconftool
-Requires(postun): /usr/bin/systemctl
+Requires(postun): /bin/systemctl
 
 %description
 Description: System server
