@@ -28,15 +28,42 @@
 #include "ss_log.h"
 #include "ss_launch.h"
 
-#define BSNOTI_DIR		"/opt/bs"
-#define BSNOTI_FILE		"curbs.log"
-#define BSNOTI_FULL_PATH	BSNOTI_DIR"/"BSNOTI_FILE
+#define CRASH_PID_MAX 7
+#define CRASH_MODE_MAX 2
+#define CRASH_TIME_MAX 65
+#define CRASH_ARG_NUM 6
+#define CRASH_DELIMITER "|"
+#define CRASH_VERIFY_MAX 5
+#define CRASH_PROCESSNAME_MAX NAME_MAX
+#define CRASH_EXEPATH_MAX NAME_MAX
+#define CRASH_ARG_MAX (CRASH_PROCESSNAME_MAX + CRASH_EXEPATH_MAX + CRASH_TIME_MAX + CRASH_PID_MAX + CRASH_MODE_MAX + CRASH_VERIFY_MAX)
+#define CRASH_NOTI_DIR		"/opt/share/crash"
+#define CRASH_NOTI_FILE		"curbs.log"
+#define CRASH_NOTI_PATH CRASH_NOTI_DIR"/"CRASH_NOTI_FILE
 
 #define CRASH_WORKER_PATH	"/usr/apps/org.tizen.crash-worker/bin/crash-worker"
 
 static int noti_fd;
 static int add_noti(void);
+static int popup_pid = 0;
 
+struct crash_arg
+{
+	char crash_mode[CRASH_MODE_MAX];
+	char crash_processname[CRASH_PROCESSNAME_MAX];
+	char crash_timestr[CRASH_TIME_MAX];
+	char crash_pid[CRASH_PID_MAX];
+	char crash_exepath[CRASH_EXEPATH_MAX];
+	char crash_verify[CRASH_VERIFY_MAX];
+};
+int is_running_process(pid_t pid)
+{
+	char buf[PATH_MAX + 1];
+	snprintf(buf, sizeof(buf), "/proc/%d", pid);
+	if (!access(buf, R_OK))
+		return 1;
+	return 0;
+}
 static int make_noti_file(const char *path, const char *file)
 {
 	PRT_TRACE("Make Noti File");
@@ -66,42 +93,98 @@ static int make_noti_file(const char *path, const char *file)
 
 	return 0;
 }
+static int crash_arg_parser(char *linebuffer, struct crash_arg *arg)
+{
+	char *ptr = NULL;
+	int verify_num = 0;
+	int verify_arg_num = 0;
 
+	if (linebuffer == NULL || arg == NULL) {
+		PRT_TRACE_ERR("crash_arg_parser input arguments is NULL\n");
+		return -1;
+	}
+	ptr = strtok(linebuffer, CRASH_DELIMITER);
+	if (ptr == NULL) {
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		return -1;
+	}
+	snprintf(arg->crash_mode, CRASH_MODE_MAX, "%s",  ptr);
+	ptr = strtok(NULL, CRASH_DELIMITER);
+	if (ptr == NULL) {
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		return -1;
+	}
+	snprintf(arg->crash_processname, CRASH_PROCESSNAME_MAX, "%s",  ptr);
+	ptr = strtok(NULL, CRASH_DELIMITER);
+	if (ptr == NULL) {
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		return -1;
+	}
+	snprintf(arg->crash_timestr, CRASH_TIME_MAX, "%s", ptr);
+	ptr = strtok(NULL, CRASH_DELIMITER);
+	if (ptr == NULL) {
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		return -1;
+	}
+	snprintf(arg->crash_pid, CRASH_PID_MAX, "%s", ptr);
+	ptr = strtok(NULL, CRASH_DELIMITER);
+	if (ptr == NULL) {
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		return -1;
+	}
+	snprintf(arg->crash_exepath, CRASH_EXEPATH_MAX, "%s", ptr);
+	ptr = strtok(NULL, CRASH_DELIMITER);
+	if (ptr == NULL) {
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		return -1;
+	}
+	snprintf(arg->crash_verify, CRASH_VERIFY_MAX, "%s", ptr);
+	verify_num = strlen(arg->crash_processname) + strlen(arg->crash_exepath);
+	verify_arg_num = atoi(arg->crash_verify);
+	PRT_TRACE("vnum %d vanum %d\n", verify_num, verify_arg_num);
+	if (verify_num == verify_arg_num)
+		return 1;
+	else
+		return 0;
+}
 static void launch_crash_worker(void *data)
 {
 	FILE *fp;
-	char bsfile_name[NAME_MAX], bs_color[MAX_INPUT];
-	char args[NAME_MAX + MAX_INPUT];
-	int ret = -1, i;
-
+	int ret = -1;
+	int len = 0;
+	char linebuffer[CRASH_ARG_MAX] = {0,};
+	char crash_worker_args[CRASH_ARG_MAX] = {0,};
+	struct crash_arg parsing_arg;
 	fp = fopen((char *)data, "r");
 	if (fp == NULL) {
 		return;
 	}
-	/* launch bs process */
-	while (fgets(args, NAME_MAX + MAX_INPUT, fp) != NULL) {
-		/* add rule for log */
-		if (args[strlen(args) - 1] != '\n') {
-			PRT_TRACE_ERR("bsfile log must be terminated with new line character\n");
+	/* launch crash process */
+	while (fgets(linebuffer, CRASH_ARG_MAX, fp) != NULL) {
+		len = strlen(linebuffer);
+		if (!len || linebuffer[len - 1] != '\n') {
+			PRT_TRACE_ERR("crash inoti msg  must be terminated with new line character\n");
 			break;
 		}
 		/* change last caracter from \n to \0 */
-		args[strlen(args) - 1] = '\0';
-		for (i = 0; i < NAME_MAX + MAX_INPUT; i++) {
-			if (args[i] == ' ') {
-				if (i >= NAME_MAX - 1) {
-					PRT_TRACE_ERR("bsfile name is over 254. 255(NAME_MAX) - 1(NULL Termination)\n");
-					break;
-				}
-				strncpy(bsfile_name, args, i);
-				bsfile_name[i] = '\0';
-				strncpy(bs_color, args + i + 1, MAX_INPUT);
-				bs_color[MAX_INPUT - 1] = '\0';
-				snprintf(args, sizeof(args), "%s %s",
-					 bsfile_name, bs_color);
-				PRT_TRACE("bsfile_name(size %d): %s\nargs: %s\n", i, bsfile_name, bs_color, args);
-				ret = ss_launch_evenif_exist (CRASH_WORKER_PATH, args);
-				break;
+		linebuffer[strlen(linebuffer) - 1] = '\0';
+		if (crash_arg_parser(linebuffer, &parsing_arg) != 1)
+			continue;
+		snprintf(crash_worker_args, sizeof(crash_worker_args), "%s %s %s %s %s",
+				parsing_arg.crash_mode, parsing_arg.crash_processname,
+				parsing_arg.crash_timestr, parsing_arg.crash_pid, parsing_arg.crash_exepath);
+		PRT_TRACE("crash_worker args(%s)\n", crash_worker_args);
+		PRT_TRACE("(%s%s%s)\n", parsing_arg.crash_mode,
+				parsing_arg.crash_processname, parsing_arg.crash_timestr);
+		ret = ss_launch_evenif_exist (CRASH_WORKER_PATH, crash_worker_args);
+		if (ret > 0) {
+			char buf[PATH_MAX];
+			FILE *fpAdj;
+			snprintf(buf, sizeof(buf), "/proc/%d/oom_adj", ret);
+			fpAdj = fopen(buf, "w");
+			if (fpAdj != NULL) {
+				fprintf(fpAdj, "%d", (-17));
+				fclose(fpAdj);
 			}
 		}
 		if (ret < 0)
@@ -120,14 +203,14 @@ static void launch_crash_worker(void *data)
 	return;
 }
 
-static Ecore_File_Monitor *bs_file_monitor;
+static Ecore_File_Monitor *crash_file_monitor;
 
-static Ecore_File_Monitor_Cb __bs_file_cb(void *data, Ecore_File_Monitor *em, Ecore_File_Event event, const char *path)
+static Ecore_File_Monitor_Cb __crash_file_cb(void *data, Ecore_File_Monitor *em, Ecore_File_Event event, const char *path)
 {
 	switch (event) {
 	case ECORE_FILE_EVENT_DELETED_DIRECTORY:
 	case ECORE_FILE_EVENT_DELETED_SELF:
-		if (0 > make_noti_file(BSNOTI_DIR, BSNOTI_FILE)) {
+		if (0 > make_noti_file(CRASH_NOTI_DIR, CRASH_NOTI_FILE)) {
 			launch_crash_worker((void *)path);
 		}
 		break;
@@ -142,20 +225,20 @@ static Ecore_File_Monitor_Cb __bs_file_cb(void *data, Ecore_File_Monitor *em, Ec
 
 int ss_bs_init(void)
 {
-	if (0 > make_noti_file(BSNOTI_DIR, BSNOTI_FILE)) {
+	if (0 > make_noti_file(CRASH_NOTI_DIR, CRASH_NOTI_FILE)) {
 		PRT_TRACE_ERR("make_noti_file() failed");
-		launch_crash_worker((void *)BSNOTI_FULL_PATH);
+		launch_crash_worker((void *)CRASH_NOTI_PATH);
 	}
 
 	if (0 == ecore_file_init()) {
 		PRT_TRACE_ERR("ecore_file_init() failed");
-		launch_crash_worker((void *)BSNOTI_FULL_PATH);
+		launch_crash_worker((void *)CRASH_NOTI_PATH);
 	}
 
-	bs_file_monitor = ecore_file_monitor_add(BSNOTI_FULL_PATH,(void *) __bs_file_cb, NULL);
-	if (!bs_file_monitor) {
+	crash_file_monitor = ecore_file_monitor_add(CRASH_NOTI_PATH,(void *) __crash_file_cb, NULL);
+	if (!crash_file_monitor) {
 		PRT_TRACE_ERR("ecore_file_monitor_add() failed");
-		launch_crash_worker((void *)BSNOTI_FULL_PATH);
+		launch_crash_worker((void *)CRASH_NOTI_PATH);
 		return -1;
 	}
 
