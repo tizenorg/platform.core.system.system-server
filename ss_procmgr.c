@@ -26,7 +26,8 @@
 #include "ss_queue.h"
 #include "ss_log.h"
 
-#define LIMITED_PROCESS_OOMADJ 15
+#define LIMITED_BACKGRD_NUM 15
+#define MAX_BACKGRD_OOMADJ (OOMADJ_BACKGRD_UNLOCKED + LIMITED_BACKGRD_NUM)
 
 int get_app_oomadj(int pid, int *oomadj)
 {
@@ -112,6 +113,22 @@ int set_oomadj_action(int argc, char **argv)
 	return 0;
 }
 
+static int update_backgrd_app_oomadj(pid_t pid, int new_oomadj)
+{
+	char buf[PATH_MAX];
+	FILE* fp;
+
+	snprintf(buf, sizeof(buf), "/proc/%d/oom_adj", pid);
+	fp = fopen(buf, "w");
+	if (fp == NULL)
+		return -1;
+
+	fprintf(fp, "%d", new_oomadj);
+	fclose(fp);
+
+	return 0;
+}
+
 int check_and_set_old_backgrd()
 {
 	int pid = -1;
@@ -120,6 +137,8 @@ int check_and_set_old_backgrd()
 	FILE *fp;
 	char buf[PATH_MAX];
 	int token =0;
+	int oom_adj, new_oomadj, i;
+	pid_t buckets[MAX_BACKGRD_OOMADJ][LIMITED_BACKGRD_NUM];
 
 	dp = opendir("/proc");
 	if (!dp) {
@@ -127,6 +146,7 @@ int check_and_set_old_backgrd()
 		return -1;
 	}
 
+	memset(buckets, 0, sizeof(buckets));
 	while ((dentry = readdir(dp)) != NULL) {
 		if (!isdigit(dentry->d_name[0]))
 			continue;
@@ -141,50 +161,40 @@ int check_and_set_old_backgrd()
 			fclose(fp);
 			continue;
 		}
-		if(atoi(buf) == OOMADJ_BACKGRD_UNLOCKED) {
-			fclose(fp);
-			PRT_TRACE("BACKGRD MANAGE : process wchich has OOMADJ_BACKGRD_UNLOCKED exists");
-			break;
+		oom_adj = atoi(buf);
+		if (oom_adj >= OOMADJ_BACKGRD_UNLOCKED) {
+			pid_t *bucket = buckets[oom_adj];
+			for (i = 0; i < LIMITED_BACKGRD_NUM; i++) {
+				if (!bucket[i])
+					break;
+			}
+			if (i >= LIMITED_BACKGRD_NUM)
+				PRT_TRACE_EM("BACKGRB MANAGE : background applications(oom_adj %d) exceeds limitation", i);
+			else
+				bucket[i] = pid;
 		}
 		fclose(fp);
 	}
 	closedir(dp);
 
-	if(dentry != NULL ) {
-		int cur_oom=-1;
-		dp = opendir("/proc");
-		if (!dp) {
-			PRT_TRACE_EM("BACKGRD MANAGE : fail to open /proc : %s", strerror(errno));
-			return -1;
-		}
-		while ((dentry = readdir(dp)) != NULL) {
-
-			if (!isdigit(dentry->d_name[0]))
-				continue;
-
-			pid = atoi(dentry->d_name);
-
-			snprintf(buf, sizeof(buf), "/proc/%d/oom_adj", pid);
-			fp = fopen(buf, "r+");
-			if (fp == NULL)
-				continue;
-			if (fgets(buf, sizeof(buf), fp) == NULL) {
-				fclose(fp); 
-				continue;
-			}                          
-			cur_oom = atoi(buf);
-			if(cur_oom >= LIMITED_PROCESS_OOMADJ) {
-				PRT_TRACE("BACKGRD MANAGE : kill the process %d (oom_adj %d)", pid, cur_oom);
+	new_oomadj = OOMADJ_BACKGRD_UNLOCKED + 1;
+	for (oom_adj = OOMADJ_BACKGRD_UNLOCKED; oom_adj < MAX_BACKGRD_OOMADJ; oom_adj++) {
+		for (i = 0; i < LIMITED_BACKGRD_NUM; i++) {
+			pid = buckets[oom_adj][i];
+			if (!pid)
+				break;
+			if (new_oomadj >= MAX_BACKGRD_OOMADJ) {
+				PRT_TRACE("BACKGRD MANAGE : kill the process %d (oom_adj %d)", pid, MAX_BACKGRD_OOMADJ);
 				kill(pid, SIGTERM);
 			}
-			else if(cur_oom >= OOMADJ_BACKGRD_UNLOCKED) {
-				PRT_TRACE("BACKGRD MANAGE : process %d set oom_adj %d (before %d)", pid, cur_oom+1, cur_oom);
-				fprintf(fp, "%d", ++cur_oom);
+			else {
+				if (new_oomadj != oom_adj)
+					update_backgrd_app_oomadj(pid, new_oomadj);
+				new_oomadj++;
 			}
-			fclose(fp);
 		}
-		closedir(dp);
 	}
+
 	return 0;
 }
 
