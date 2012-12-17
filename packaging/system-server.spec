@@ -94,6 +94,8 @@ heynotitool set device_charge_chgdet
 heynotitool set device_keyboard_chgdet
 heynotitool set device_usb_host_add
 heynotitool set device_usb_host_remove
+heynotitool set device_pci_keyboard_add
+heynotitool set device_pci_keyboard_remove
 
 
 mkdir -p /etc/udev/rules.d
