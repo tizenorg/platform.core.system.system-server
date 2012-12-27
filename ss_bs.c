@@ -40,13 +40,11 @@
 #define CRASH_NOTI_DIR		"/opt/share/crash"
 #define CRASH_NOTI_FILE		"curbs.log"
 #define CRASH_NOTI_PATH CRASH_NOTI_DIR"/"CRASH_NOTI_FILE
-
-#define CRASH_WORKER_PATH	"/usr/apps/org.tizen.crash-worker/bin/crash-worker"
+#define CRASH_WORKER_PATH	"/usr/bin/crash-worker"
+#define CRASH_POPUP_PATH	"/usr/apps/org.tizen.crash-popup/bin/crash-popup"
 
 static int noti_fd;
 static int add_noti(void);
-static int popup_pid = 0;
-
 struct crash_arg
 {
 	char crash_mode[CRASH_MODE_MAX];
@@ -56,7 +54,8 @@ struct crash_arg
 	char crash_exepath[CRASH_EXEPATH_MAX];
 	char crash_verify[CRASH_VERIFY_MAX];
 };
-int is_running_process(pid_t pid)
+
+static int is_running_process(pid_t pid)
 {
 	char buf[PATH_MAX + 1];
 	snprintf(buf, sizeof(buf), "/proc/%d", pid);
@@ -149,6 +148,7 @@ static int crash_arg_parser(char *linebuffer, struct crash_arg *arg)
 }
 static void launch_crash_worker(void *data)
 {
+	static int popup_pid = 0;
 	FILE *fp;
 	int ret = -1;
 	int len = 0;
@@ -187,8 +187,13 @@ static void launch_crash_worker(void *data)
 				fclose(fpAdj);
 			}
 		}
-		if (ret < 0)
+		if (!is_running_process(popup_pid))
+			popup_pid = ss_launch_evenif_exist (CRASH_POPUP_PATH, parsing_arg.crash_processname);
+
+		if (popup_pid < 0) {
+			PRT_TRACE_ERR("popup failed)\n");
 			break;
+		}
 	}
 	fclose(fp);
 
