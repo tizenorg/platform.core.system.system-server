@@ -83,7 +83,8 @@ static int check_lowbat_charge_device(int bInserted)
 				bChargeDeviceInserted = 0;
 				//low bat popup during charging device removing
 				if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state) == 0) {
-					if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL) {
+					if (bat_state < VCONFKEY_SYSMAN_BAT_NORMAL ||
+					    bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
 						bundle *b = NULL;
 						b = bundle_create();
 						if(bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF)

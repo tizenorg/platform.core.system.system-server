@@ -1,7 +1,7 @@
 #sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
-Version: 0.1.59
+Version: 0.1.60
 Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Flora Software License

@@ -48,9 +48,10 @@ int get_mmcblk_num()
 	}
 	chdir("/sys/block");
 
-	while (dir = readdir(dp)) {
+	while ((dir = readdir(dp)) != NULL) {
 		memset(&stat, 0, sizeof(struct stat));
-		lstat(dir->d_name, &stat);
+		if (lstat(dir->d_name, &stat) < 0)
+			continue;
 		if (S_ISDIR(stat.st_mode) || S_ISLNK(stat.st_mode)) {
 			if (strncmp(".", dir->d_name, 1) == 0
 			    || strncmp("..", dir->d_name, 2) == 0)
@@ -63,7 +64,7 @@ int get_mmcblk_num()
 				if (fd == -1) {
 					PRT_TRACE_ERR("%s open error: %s", buf,
 						      strerror(errno));
-					return -1;
+					continue;
 				}
 				r = read(fd, buf, 10);
 				if ((r >= 0) && (r < 10))

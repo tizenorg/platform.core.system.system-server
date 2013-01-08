@@ -162,7 +162,7 @@ int check_and_set_old_backgrd()
 			continue;
 		}
 		oom_adj = atoi(buf);
-		if (oom_adj >= OOMADJ_BACKGRD_UNLOCKED) {
+		if (oom_adj < MAX_BACKGRD_OOMADJ && oom_adj >= OOMADJ_BACKGRD_UNLOCKED) {
 			pid_t *bucket = buckets[oom_adj];
 			for (i = 0; i < LIMITED_BACKGRD_NUM; i++) {
 				if (!bucket[i])

@@ -83,7 +83,7 @@ static TapiHandle *tapi_handle = NULL;
 static void make_memps_log(char *file, pid_t pid, char *victim_name)
 {
 	time_t now;
-	struct tm *cur_tm;
+	struct tm cur_tm;
 	char params[4096];
 	char new_log[NAME_MAX];
 	static pid_t old_pid = 0;
@@ -94,26 +94,21 @@ static void make_memps_log(char *file, pid_t pid, char *victim_name)
 	old_pid = pid;
 
 	now = time(NULL);
-	cur_tm = (struct tm *)malloc(sizeof(struct tm));
-	if (cur_tm == NULL) {
-		PRT_TRACE_ERR("Fail to memory allocation");
-		return;
-	}
 
-	if (localtime_r(&now, cur_tm) == NULL) {
+	if (localtime_r(&now, &cur_tm) == NULL) {
 		PRT_TRACE_ERR("Fail to get localtime");
 		return;
 	}
 
 	PRT_TRACE("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
-		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
-		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
-		 cur_tm->tm_sec);
+		 pid, (1900 + cur_tm.tm_year), 1 + cur_tm.tm_mon,
+		 cur_tm.tm_mday, cur_tm.tm_hour, cur_tm.tm_min,
+		 cur_tm.tm_sec);
 	snprintf(new_log, sizeof(new_log),
 		 "%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
-		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
-		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
-		 cur_tm->tm_sec);
+		 pid, (1900 + cur_tm.tm_year), 1 + cur_tm.tm_mon,
+		 cur_tm.tm_mday, cur_tm.tm_hour, cur_tm.tm_min,
+		 cur_tm.tm_sec);
 
 	snprintf(params, sizeof(params), "-f %s", new_log);
 	ret = ss_launch_evenif_exist(MEMPS_EXEC_PATH, params);
@@ -128,7 +123,6 @@ static void make_memps_log(char *file, pid_t pid, char *victim_name)
 			fclose(fp);
 		}
 	}
-	free(cur_tm);
 }
 
 static int lowmem_get_victim_pid()
