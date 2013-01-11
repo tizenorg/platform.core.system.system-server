@@ -22,7 +22,6 @@
 int main(int argc, char *argv[])
 {
 	system("/etc/rc.d/rc.shutdown &");
-	kill(-1, SIGTERM);
         sleep(1);
         sync();
 	reboot(RB_AUTOBOOT);

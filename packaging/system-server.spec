@@ -1,7 +1,7 @@
 #sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
-Version: 0.1.60
+Version: 0.1.61
 Release:    1
 Group:      TO_BE/FILLED_IN
 License:    Flora Software License
@@ -124,7 +124,11 @@ systemctl daemon-reload
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
 %{_sysconfdir}/rc.d/rc5.d/S00system-server
 %{_bindir}/system_server
+%if 0%{?simulator}
+%exclude %{_bindir}/restart
+%else
 %{_bindir}/restart
+%endif
 %{_bindir}/movi_format.sh
 %{_bindir}/sys_event
 %{_bindir}/sys_device_noti
