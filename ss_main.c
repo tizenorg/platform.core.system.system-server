@@ -35,8 +35,12 @@
 #include "ss_device_plugin.h"
 #include "include/ss_data.h"
 
+#define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
+
 static void fini(struct ss_main_data *ad)
 {
+	// try to remove pid file
+	unlink(SS_PIDFILE_PATH);
 }
 
 static void init_ad(struct ss_main_data *ad)
@@ -83,8 +87,6 @@ static void system_server_init(struct ss_main_data *ad)
 	ss_mmc_init();
 	ss_bs_init();
 }
-
-#define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
 
 static int system_main(int argc, char **argv)
 {
