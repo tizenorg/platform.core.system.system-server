@@ -1,10 +1,10 @@
 #sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
-Version: 0.1.61
+Version: 0.1.62
 Release:    1
-Group:      TO_BE/FILLED_IN
-License:    Flora Software License
+Group:      Framework/system
+License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
 Source1:    system-server.service
 Source2:    system-server.manifest
@@ -79,6 +79,7 @@ vconftool set -t string memory/private/sysman/removed_storage_uevent "" -u 5000 
 
 vconftool set -t int memory/sysman/hdmi 0 -i
 
+vconftool set -t int memory/sysman/stime_changed 0 -i
 heynotitool set power_off_start
 
 heynotitool set mmcblk_add

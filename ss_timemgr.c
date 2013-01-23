@@ -33,11 +33,36 @@
 #include <sys/ioctl.h>
 #include <linux/rtc.h>
 #include <fcntl.h>
+#include <sys/timerfd.h>
 
+#ifndef TFD_TIMER_CANCELON_SET
+#define TFD_TIMER_CANCELON_SET (1<<1)
+#endif
+#ifndef O_CLOEXEC
+#define O_CLOEXEC	0x2000000
+#endif
 
+#ifndef O_NONBLOCK
+#define O_NONBLOCK	0x4000
+#endif
+
+#ifndef TFD_CLOEXEC
+#define TFD_CLOEXEC	O_CLOEXEC
+#endif
+
+#ifndef TFD_NONBLOCK
+#define TFD_NONBLOCK	O_NONBLOCK
+#endif
 static const char default_rtc0[] = "/dev/rtc0";
 static const char default_rtc1[] = "/dev/rtc1";
 static const char default_localtime[] = "/opt/etc/localtime";
+
+static const time_t default_time = 2147483645; // max(32bit) -3sec
+static Ecore_Fd_Handler *tfdh = NULL; // tfd change noti
+
+static int tfd_cb(void *data, Ecore_Fd_Handler * fd_handler);
+static int timerfd_check_stop(int fd);
+static int timerfd_check_start(void);
 
 char *substring(const char *str, size_t begin, size_t len)
 {
@@ -151,11 +176,83 @@ int set_timezone_action(int argc, char **argv)
 	return ret;
 }
 
+static int timerfd_check_start(void)
+{
+	int tfd = -1;
+	struct itimerspec tmr;
+
+	if ((tfd = timerfd_create(CLOCK_REALTIME,TFD_NONBLOCK|TFD_CLOEXEC)) == -1) {
+		PRT_TRACE_ERR("error timerfd_create() %d",errno);
+		tfdh = NULL;
+		return -1;
+	}
+
+	tfdh = ecore_main_fd_handler_add(tfd,ECORE_FD_READ,tfd_cb,NULL,NULL,NULL);
+	if (!tfdh) {
+		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		return -1;
+	}
+	memset(&tmr, 0, sizeof(tmr));
+	tmr.it_value.tv_sec = default_time;
+
+	if (timerfd_settime(tfd,TFD_TIMER_ABSTIME|TFD_TIMER_CANCELON_SET,&tmr,NULL) < 0) {
+		PRT_TRACE_ERR("error timerfd_settime() %d",errno);
+		return -1;
+	}
+	return 0;
+}
+
+static int timerfd_check_stop(int tfd)
+{
+	if (tfdh) {
+		ecore_main_fd_handler_del(tfdh);
+		tfdh = NULL;
+	}
+	if (tfd >=0) {
+		close(tfd);
+		tfd = -1;
+	}
+	return 0;
+}
+
+static int tfd_cb(void *data, Ecore_Fd_Handler * fd_handler)
+{
+	int tfd = -1;
+	u_int64_t ticks;
+	int ret = -1;
+
+	if (!ecore_main_fd_handler_active_get(fd_handler,ECORE_FD_READ)) {
+		PRT_TRACE_ERR("error ecore_main_fd_handler_get()");
+		return -1;
+	}
+
+	if((tfd = ecore_main_fd_handler_fd_get(fd_handler)) == -1) {
+		PRT_TRACE_ERR("error ecore_main_fd_handler_fd_get()");
+		return -1;
+	}
+
+	ret = read(tfd,&ticks,sizeof(ticks));
+
+	if (ret < 0 && errno == ECANCELED) {
+		vconf_set_int(VCONFKEY_SYSMAN_STIME, VCONFKEY_SYSMAN_STIME_CHANGED);
+		timerfd_check_stop(tfd);
+		PRT_TRACE("NOTIFICATION here");
+		timerfd_check_start();
+	} else {
+		PRT_TRACE("unexpected read (err:%d)",errno);
+	}
+	return 0;
+}
+
 int ss_time_manager_init(void)
 {
 	ss_action_entry_add_internal(PREDEF_SET_DATETIME, set_datetime_action,
 				     NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_SET_TIMEZONE, set_timezone_action,
 				     NULL, NULL);
+	if (timerfd_check_start() == -1) {
+		PRT_TRACE_ERR("fail system time change detector init");
+		return -1;
+	}
 	return 0;
 }
