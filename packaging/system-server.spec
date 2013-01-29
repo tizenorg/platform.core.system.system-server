@@ -2,7 +2,7 @@
 Name:       system-server
 Summary:    System server
 Version: 0.1.62
-Release:    1
+Release:    2
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
@@ -56,7 +56,6 @@ install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.s
 ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 
 %post
-
 vconftool set -t int memory/sysman/usbhost_status -1 -i
 vconftool set -t int memory/sysman/mmc -1 -i
 vconftool set -t int memory/sysman/earjack_key 0 -i

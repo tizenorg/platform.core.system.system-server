@@ -98,7 +98,11 @@ static int system_main(int argc, char **argv)
 		fini(&ad);
 		return 0;
 	}
-	heynoti_attach_handler(ad.noti_fd);
+	if (heynoti_attach_handler(ad.noti_fd) != 0) {
+		PRT_TRACE_ERR("fail to attach hey noti handler");
+		fini(&ad);
+		return 0;
+	}
 	system_server_init(&ad);
 
 	ecore_main_loop_begin();
