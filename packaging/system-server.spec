@@ -2,7 +2,7 @@
 Name:       system-server
 Summary:    System server
 Version: 0.1.63
-Release:    1
+Release:    2
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
@@ -72,6 +72,7 @@ vconftool set -t int memory/sysman/sliding_keyboard -1 -i
 vconftool set -t int memory/sysman/mmc_mount -1 -i
 vconftool set -t int memory/sysman/mmc_unmount -1 -i
 vconftool set -t int memory/sysman/mmc_format -1 -i
+vconftool set -t int memory/sysman/battery_level_status -1 -i
 
 vconftool set -t string memory/private/sysman/added_storage_uevent "" -i
 vconftool set -t string memory/private/sysman/removed_storage_uevent "" -u 5000 -i
