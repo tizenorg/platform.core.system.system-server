@@ -275,9 +275,9 @@ static void __ss_change_lowbat_level(int bat_percent)
 	if (prev != now)
 		vconf_set_int(VCONFKEY_SYSMAN_BATTERY_LEVEL_STATUS, now);
 }
-int ss_lowbat_monitor(void *data)
+
+static int __check_lowbat_percent(void)
 {
-	struct ss_main_data *ad = (struct ss_main_data *)data;
 	int bat_percent;
 
 	bat_percent = lowbat_read();
@@ -287,13 +287,21 @@ int ss_lowbat_monitor(void *data)
 		if (bat_err_count > MAX_BATTERY_ERROR) {
 			PRT_TRACE_ERR
 			    ("[BATMON] Cannot read battery gage. stop read fuel gage");
-			return 0;
 		}
-		return 1;
+		return -1;
 	}
 	if (bat_percent > 100)
 		bat_percent = 100;
 	__ss_change_lowbat_level(bat_percent);
+	return bat_percent;
+}
+
+int ss_lowbat_monitor(void *data)
+{
+	struct ss_main_data *ad = (struct ss_main_data *)data;
+	int bat_percent;
+
+	bat_percent = __check_lowbat_percent();
 
 	if (lowbat_process(bat_percent, ad) < 0)
 		ecore_timer_interval_set(lowbat_timer, BAT_MON_INTERVAL_MIN);
@@ -335,7 +343,9 @@ int ss_lowbat_init(struct ss_main_data *ad)
 	/* need check battery */
 	lowbat_timer =
 	    ecore_timer_add(BAT_MON_INTERVAL_MIN, ss_lowbat_monitor, ad);
-	__ss_change_lowbat_level(bat_percent);
+
+	__check_lowbat_percent();
+
 	ss_lowbat_is_charge_in_now();
 
 	vconf_notify_key_changed(VCONFKEY_PM_STATE, (void *)wakeup_cb, NULL);
