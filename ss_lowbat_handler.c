@@ -46,15 +46,10 @@
 
 #define LOWBAT_EXEC_PATH		PREFIX"/bin/lowbatt-popup"
 
-static int battery_level_table[] = {
-	5,			/* BATTERY_LEVEL0 */
-	15,			/* 1 */
-	25,			/* 2 */
-	40,			/* 3 */
-	60,			/* 4 */
-	80,			/* 5 */
-	100,			/* 6 */
-};
+#define	BATTERY_LEVEL_CHECK_FULL	95
+#define	BATTERY_LEVEL_CHECK_HIGH	15
+#define	BATTERY_LEVEL_CHECK_LOW		5
+#define	BATTERY_LEVEL_CHECK_CRITICAL	1
 
 #define _SYS_LOW_POWER "LOW_POWER"
 
@@ -252,6 +247,34 @@ static int lowbat_read()
 	return bat_percent;
 }
 
+static void __ss_change_lowbat_level(int bat_percent)
+{
+	int prev, now;
+
+	if (cur_bat_capacity == bat_percent)
+		return;
+
+	if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_LEVEL_STATUS, &prev) < 0) {
+		PRT_TRACE_ERR("vconf_get_int() failed");
+		return;
+	}
+
+
+	if (bat_percent > BATTERY_LEVEL_CHECK_FULL) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_FULL;
+	} else if (bat_percent > BATTERY_LEVEL_CHECK_HIGH) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_HIGH;
+	} else if (bat_percent > BATTERY_LEVEL_CHECK_LOW) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_LOW;
+	} else if (bat_percent > BATTERY_LEVEL_CHECK_CRITICAL) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_CRITICAL;
+	} else {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_EMPTY;
+	}
+
+	if (prev != now)
+		vconf_set_int(VCONFKEY_SYSMAN_BATTERY_LEVEL_STATUS, now);
+}
 int ss_lowbat_monitor(void *data)
 {
 	struct ss_main_data *ad = (struct ss_main_data *)data;
@@ -270,6 +293,7 @@ int ss_lowbat_monitor(void *data)
 	}
 	if (bat_percent > 100)
 		bat_percent = 100;
+	__ss_change_lowbat_level(bat_percent);
 
 	if (lowbat_process(bat_percent, ad) < 0)
 		ecore_timer_interval_set(lowbat_timer, BAT_MON_INTERVAL_MIN);
@@ -311,6 +335,7 @@ int ss_lowbat_init(struct ss_main_data *ad)
 	/* need check battery */
 	lowbat_timer =
 	    ecore_timer_add(BAT_MON_INTERVAL_MIN, ss_lowbat_monitor, ad);
+	__ss_change_lowbat_level(bat_percent);
 	ss_lowbat_is_charge_in_now();
 
 	vconf_notify_key_changed(VCONFKEY_PM_STATE, (void *)wakeup_cb, NULL);
