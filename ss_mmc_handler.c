@@ -29,8 +29,11 @@
 #define MOVINAND_DEV		"/dev/mmcblk0p1"
 #define FORMAT_MMC		PREFIX"/sbin/mkfs.vfat "
 #define FORMAT_MOVINAND		PREFIX"/bin/movi_format.sh"
+#define FS_VFAT_MOUNT_OPT  "uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed,smackfsroot=*,smackfsdef=*"
 
 int mmc_status;
+int ss_mmc_inserted(void);
+static int __umount_fs(void);
 
 int get_mmcblk_num()
 {
@@ -50,8 +53,7 @@ int get_mmcblk_num()
 
 	while ((dir = readdir(dp)) != NULL) {
 		memset(&stat, 0, sizeof(struct stat));
-		if (lstat(dir->d_name, &stat) < 0)
-			continue;
+		if(lstat(dir->d_name, &stat) < 0) {continue;}
 		if (S_ISDIR(stat.st_mode) || S_ISLNK(stat.st_mode)) {
 			if (strncmp(".", dir->d_name, 1) == 0
 			    || strncmp("..", dir->d_name, 2) == 0)
@@ -100,15 +102,18 @@ int get_mmcblk_num()
 static int ss_mmc_format(keynode_t *key_nodes, void *data)
 {
 	PRT_TRACE_ERR("mmc format called");
+	__umount_fs();
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS, VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS_NOW);
 	device_set_property(DEVTYPE_MMC, MMC_PROP_FORMAT, 0);
-
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS, VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS_NONE);
+	ss_mmc_inserted();
 	return 0;
 }
 
 int ss_mmc_unmounted(int argc, char **argv)
 {
 	int option = -1;
-
+	int mmc_err = 0;
 	if (argc < 1) {
 		PRT_TRACE_ERR("Option is wong");
 		return -1;
@@ -119,9 +124,12 @@ int ss_mmc_unmounted(int argc, char **argv)
 	}
 
 	if (umount2(MMC_MOUNT_POINT, option) != 0) {
+		mmc_err = errno;
 		PRT_TRACE_ERR("Failed to unmount mmc card\n");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_UNMOUNT,
 			      VCONFKEY_SYSMAN_MMC_UNMOUNT_FAILED);
+		vconf_set_int(VCONFKEY_SYSMAN_MMC_ERR_STATUS,
+				mmc_err);
 		return -1;
 
 	}
@@ -139,96 +147,112 @@ int ss_mmc_init()
 	/* mmc card mount */
 	ss_mmc_inserted();
 
-	ss_action_entry_add_internal(PREDEF_MOUNT_MMC, ss_mmc_inserted, NULL,
-				     NULL);
-	ss_action_entry_add_internal(PREDEF_UNMOUNT_MMC, ss_mmc_unmounted, NULL,
-				     NULL);
-	ss_action_entry_add_internal(PREDEF_FORMAT_MMC, ss_mmc_format, NULL,
-				     NULL);
+	ss_action_entry_add_internal(PREDEF_MOUNT_MMC, ss_mmc_inserted, NULL, NULL);
+	ss_action_entry_add_internal(PREDEF_UNMOUNT_MMC, ss_mmc_unmounted, NULL, NULL);
+	ss_action_entry_add_internal(PREDEF_FORMAT_MMC, ss_mmc_format, NULL, NULL);
 	return 0;
 }
 
-int ss_mmc_inserted()
+static int __mount_fs(char *path, const char *fs_name, const char *mount_data)
 {
-	char buf[NAME_MAX];
-	int blk_num, ret, retry = 0;
-	char opt[NAME_MAX];
-	char *popt = opt;
-	int r = 0;
-	if (mmc_status == VCONFKEY_SYSMAN_MMC_MOUNTED) {
-		PRT_DBG("Mmc is already mounted.\n");
-		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,
-			      VCONFKEY_SYSMAN_MMC_MOUNTED);
-		vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT,
-			      VCONFKEY_SYSMAN_MMC_MOUNT_ALREADY);
-		return -1;
-	}
-
-	if (access(MMC_MOUNT_POINT, R_OK) != 0) {
-		r = mkdir(MMC_MOUNT_POINT, 0755);
-		if(r < 0) {
-			PRT_TRACE_ERR("Make Directory is failed");
-			return -1;
-		}
-	}
-
-	if ((blk_num = get_mmcblk_num()) == -1) {
-		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,
-			      VCONFKEY_SYSMAN_MMC_REMOVED);
-		vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT,
-			      VCONFKEY_SYSMAN_MMC_MOUNT_FAILED);
-		mmc_status = VCONFKEY_SYSMAN_MMC_REMOVED;
-		return 0;
-	}
-	popt = NULL;
-
-	snprintf(buf, sizeof(buf), "%s%d", MMC_DEV, blk_num);
-	if (mount
-	    (buf, MMC_MOUNT_POINT, "vfat", 0,
-	     "uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed,smackfsroot=*,smackfsdef=*")
-	    == 0) {
-		PRT_DBG("Mounted mmc card\n");
-		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,
-			      VCONFKEY_SYSMAN_MMC_MOUNTED);
-		vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT,
-			      VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED);
-		mmc_status = VCONFKEY_SYSMAN_MMC_MOUNTED;
-		return 0;
-	}
+	int ret, retry = 0;
 	do {
-		snprintf(buf, sizeof(buf), "%s%dp1", MMC_DEV, blk_num);
-		if ((ret =
-		     mount(buf, MMC_MOUNT_POINT, "vfat", 0,
-			   "uid=0,gid=0,dmask=0000,fmask=0111,iocharset=iso8859-1,utf8,shortname=mixed,smackfsroot=*,smackfsdef=*"))
-		    == 0) {
-			PRT_DBG("Mounted mmc card partition 1(%s)\n", buf);
-			vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,
-				      VCONFKEY_SYSMAN_MMC_MOUNTED);
-			vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT,
-				      VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED);
-			mmc_status = VCONFKEY_SYSMAN_MMC_MOUNTED;
+		if ((ret = mount(path, MMC_MOUNT_POINT, fs_name, 0, mount_data)) == 0) {
+			PRT_TRACE("Mounted mmc card\n");
 			return 0;
 		}
 		usleep(100000);
 	} while (ret == -1 && errno == ENOENT && retry++ < 10);
 
-	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS,
-		      VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED);
-	vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT,
-		      VCONFKEY_SYSMAN_MMC_MOUNT_FAILED);
+	return errno;
+}
+
+static int __mmc_mount_fs(void)
+{
+	char buf[NAME_MAX];
+	char params[NAME_MAX];
+	int fd;
+	int blk_num;
+
+	if (access(MMC_MOUNT_POINT, R_OK) != 0) {
+		if (mkdir(MMC_MOUNT_POINT, 0755) < 0) {
+			PRT_TRACE_ERR("Make Directory is failed");
+			return errno;
+		}
+	}
+
+	blk_num = get_mmcblk_num();
+	if (blk_num  == -1) {
+		PRT_TRACE_ERR("fail to check mmc block");
+		return -1;
+	}
+
+	snprintf(buf, sizeof(buf), "%s%dp1", MMC_DEV, blk_num);
+	fd = open(buf, O_RDONLY);
+	if (fd < 0) {
+		PRT_TRACE_ERR("can't open the '%s': %s", buf, strerror(errno));
+		snprintf(buf, sizeof(buf), "%s%d", MMC_DEV, blk_num);
+	}
+	close(fd);
+
+		if (__mount_fs(buf, "vfat", FS_VFAT_MOUNT_OPT) != 0)
+			return errno;
+	return 0;
+}
+
+int ss_mmc_inserted(void)
+{
+	int r = 0;
+
+	if (mmc_status == VCONFKEY_SYSMAN_MMC_MOUNTED) {
+		PRT_DBG("Mmc is already mounted.\n");
+		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_MOUNTED);
+		vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_ALREADY);
+
+		return -1;
+	}
+
+	r = __mmc_mount_fs();
+	if (r == 0)
+		goto mount_complete;
+	else if (r == -1)
+		goto mount_fail;
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED);
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_FAILED);
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_ERR_STATUS, errno);
 	mmc_status = VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED;
 	PRT_TRACE_ERR("Failed to mount mmc card\n");
 	return -1;
+
+mount_complete:
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_MOUNTED);
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED);
+	mmc_status = VCONFKEY_SYSMAN_MMC_MOUNTED;
+	return 0;
+mount_fail:
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_REMOVED);
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_FAILED);
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_ERR_STATUS, VCONFKEY_SYSMAN_MMC_EINVAL);
+	mmc_status = VCONFKEY_SYSMAN_MMC_REMOVED;
+	return 0;
+}
+
+static int __umount_fs(void)
+{
+	int ret;
+	if ((ret = umount2(MMC_MOUNT_POINT, MNT_DETACH)) != 0) {
+		PRT_TRACE_ERR("Failed to unmount mmc card\n");
+	}
+	mmc_status = VCONFKEY_SYSMAN_MMC_REMOVED;
+	return ret;
 }
 
 int ss_mmc_removed()
 {
+	int mmc_err = 0;
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_REMOVED);
-
-	if (umount2(MMC_MOUNT_POINT, MNT_DETACH) != 0) {
-		PRT_TRACE_ERR("Failed to unmount mmc card\n");
-	}
-	mmc_status = VCONFKEY_SYSMAN_MMC_REMOVED;
+	mmc_err = __umount_fs();
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_ERR_STATUS, mmc_err);
 
 	return 0;
 }

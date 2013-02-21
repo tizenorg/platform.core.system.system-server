@@ -2,7 +2,7 @@
 Name:       system-server
 Summary:    System server
 Version: 0.1.63
-Release:    3
+Release:    4
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
@@ -56,6 +56,7 @@ install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.s
 ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 
 %post
+
 vconftool set -t int memory/sysman/usbhost_status -1 -i
 vconftool set -t int memory/sysman/mmc -1 -i
 vconftool set -t int memory/sysman/earjack_key 0 -i
@@ -72,14 +73,20 @@ vconftool set -t int memory/sysman/sliding_keyboard -1 -i
 vconftool set -t int memory/sysman/mmc_mount -1 -i
 vconftool set -t int memory/sysman/mmc_unmount -1 -i
 vconftool set -t int memory/sysman/mmc_format -1 -i
+vconftool set -t int memory/sysman/mmc_format_progress 0 -i
+vconftool set -t int memory/sysman/mmc_err_status 0 -i
+vconftool set -t int memory/sysman/power_off 0 -u 5000 -i -f
 vconftool set -t int memory/sysman/battery_level_status -1 -i
-
 vconftool set -t string memory/private/sysman/added_storage_uevent "" -i
 vconftool set -t string memory/private/sysman/removed_storage_uevent "" -u 5000 -i
 
 vconftool set -t int memory/sysman/hdmi 0 -i
 
 vconftool set -t int memory/sysman/stime_changed 0 -i
+
+#db type vconf key init
+vconftool set -t int db/sysman/mmc_dev_changed 0 -i
+
 heynotitool set power_off_start
 
 heynotitool set mmcblk_add
