@@ -31,6 +31,8 @@
 #include <sys/reboot.h>
 #include <sys/time.h>
 #include <devman.h>
+#include <mntent.h>
+#include <sys/mount.h>
 
 #include "ss_log.h"
 #include "ss_launch.h"
@@ -188,14 +190,33 @@ static void make_memps_log(char *file, pid_t pid, char *victim_name)
 
 static void remount_ro()
 {
-	FILE *f;
-	f = fopen("/proc/sysrq-trigger", "w");
-	if (!f) {
+	struct mntent* mnt;
+	const char* table = "/etc/mtab";
+	const char mmtpoint[10][64];
+	FILE* fp;
+	int r = -1, foundmount=0;
+	char buf[256];
+	fp = setmntent(table, "r");
+
+	if (!fp)
 		return;
+
+	while (mnt=getmntent(fp)) {
+		if (foundmount >= 10)
+			continue;
+		if (!strcmp(mnt->mnt_type, "ext4") && strstr(mnt->mnt_opts, "rw")) {
+			memset(mmtpoint[foundmount], 0, 64);
+			strncpy(mmtpoint[foundmount], mnt->mnt_dir, 63);
+			foundmount++;
+		}
 	}
-	if (fwrite("u", 1, 1, f) != 1)
-		return;
-	fclose(f);
+	endmntent(fp);
+	while (foundmount) {
+		foundmount--;
+		snprintf(buf, sizeof(buf), "fuser -c %s -k -15", mmtpoint[foundmount]);
+		sleep(1);
+		umount2(mmtpoint[foundmount], MNT_DETACH);
+	}
 }
 
 static int lowmem_get_victim_pid()
@@ -458,7 +479,6 @@ Eina_Bool powerdown_ap_by_force(void *data)
 	PRT_TRACE("Power off by force\n");
 	/* give a chance to be terminated for each process */
 	power_off = 1;
-	sleep(1);
 	sync();
 	remount_ro();
 	reboot(RB_POWER_OFF);
@@ -498,7 +518,6 @@ static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, vo
 
 	/* give a chance to be terminated for each process */
 	power_off = 1;
-	sleep(1);
 	sync();
 	remount_ro();
 	reboot(RB_POWER_OFF);
