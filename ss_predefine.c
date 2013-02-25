@@ -85,6 +85,7 @@ static int lowbat_popup_option = 0;
 static struct timeval tv_start_poweroff;
 static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data);
 static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad);
+int internal_poweroff_def_predefine_action(int argc, char **argv);
 
 static int ss_flags = 0;
 
@@ -365,14 +366,22 @@ int lowbat_popup(void *data)
 int predefine_control_launch(char *name, bundle *b)
 {
 	int pid;
+	static int launched_poweroff = 0;
 	//lowbat-popup
 	if (strncmp(name, LOWBAT_POPUP_NAME, strlen(LOWBAT_POPUP_NAME)) == 0) {
-		if (lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
-			pid = __predefine_get_pid(LOWBAT_EXEC_PATH);
-			if (pid > 0) {
-				PRT_TRACE_ERR("pre launched %s destroy", LOWBAT_EXEC_PATH);
-				kill(pid, SIGTERM);
-			}
+		if (launched_poweroff == 1) {
+			PRT_TRACE_ERR("will be foreced power off");
+			internal_poweroff_def_predefine_action(0,NULL);
+			return 0;
+		}
+
+		if (lowbat_popup_option == LOWBAT_OPT_POWEROFF)
+			launched_poweroff = 1;
+
+		pid = __predefine_get_pid(LOWBAT_EXEC_PATH);
+		if (pid > 0) {
+			PRT_TRACE_ERR("pre launched %s destroy", LOWBAT_EXEC_PATH);
+			kill(pid, SIGTERM);
 		}
 		if (syspopup_launch(name, b) < 0)
 			return -1;
