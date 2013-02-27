@@ -35,7 +35,7 @@
 #include "ss_launch.h"
 #include "ss_queue.h"
 #include "ss_device_handler.h"
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_predefine.h"
 #include "ss_procmgr.h"
 #include "include/ss_data.h"
@@ -130,7 +130,7 @@ static int lowmem_get_victim_pid()
 	pid_t pid;
 	int fd;
 
-	if (0 > plugin_intf->OEM_sys_get_memnotify_victim_task(&pid)) {
+	if (device_get_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_VICTIM_TASK, &pid) < 0) {
 		PRT_TRACE_ERR("Get victim task failed");
 		return -1;
 	}
@@ -195,7 +195,7 @@ int usbcon_def_predefine_action(int argc, char **argv)
 	int ret = -1;
 	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
 
-	if (plugin_intf->OEM_sys_get_jack_usb_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
 		if (val == 0) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
@@ -222,7 +222,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 	int val;
 
 	PRT_TRACE_EM("earjack_normal predefine action\n");
-	if (plugin_intf->OEM_sys_get_jack_earjack_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARJACK_ONLINE, &val) == 0) {
 		return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, val);
 	}
 

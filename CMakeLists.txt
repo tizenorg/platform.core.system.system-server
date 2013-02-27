@@ -22,8 +22,8 @@ SET(SRCS
 	ss_procmgr.c
 	ss_timemgr.c
 	ss_cpu_handler.c
-	ss_device_plugin.c)
- 
+	)
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(MOVINAND_FORMAT movi_format.sh)
@@ -42,7 +42,7 @@ pkg_check_modules(pkgs REQUIRED
 	dlog
 	syspopup-caller
 	devman
-	devman_plugin)
+	device-node)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")

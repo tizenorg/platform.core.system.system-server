@@ -26,7 +26,7 @@
 #include "ss_launch.h"
 #include "ss_noti.h"
 #include "ss_queue.h"
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "include/ss_data.h"
 
 #define BAT_MON_INTERVAL		30
@@ -122,7 +122,7 @@ int ss_lowbat_set_charge_on(int onoff)
 int ss_lowbat_is_charge_in_now()
 {
 	int val = 0;
-	if (0 > plugin_intf->OEM_sys_get_battery_charge_now(&val)) {
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
 		PRT_TRACE_ERR("fail to read charge now from kernel");
 		ss_lowbat_set_charge_on(0);
 		return 0;
@@ -160,7 +160,7 @@ static int lowbat_process(int bat_percent, void *ad)
 	}
 
 	if (new_bat_capacity <= BATTERY_REAL_POWER_OFF) {
-		if (0 > plugin_intf->OEM_sys_get_battery_charge_now(&val)) {
+		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
 			PRT_TRACE_ERR("fail to read charge now from kernel");
 		}
 		PRT_TRACE("charge_now status %d",val);
@@ -188,7 +188,9 @@ static int lowbat_process(int bat_percent, void *ad)
 	} else {
 		new_bat_state = BATTERY_NORMAL;
 		if (new_bat_capacity == BATTERY_FULL) {
-			plugin_intf->OEM_sys_get_battery_charge_full(&bat_full);
+			if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &bat_full) < 0) {
+				PRT_TRACE_ERR("fail to read charge full from kernel");
+			}
 			if (bat_full == 1) {
 				if (vconf_state != VCONFKEY_SYSMAN_BAT_FULL)
 				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_FULL);
@@ -242,7 +244,10 @@ static int lowbat_read()
 {
 	int bat_percent;
 
-	plugin_intf->OEM_sys_get_battery_capacity(&bat_percent);
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent) < 0) {
+		PRT_TRACE_ERR("fail to read power capacity from kernel");
+		return -1;
+	}
 
 	return bat_percent;
 }
@@ -328,7 +333,7 @@ static int check_battery()
 	int r;
 	int ret = -1;
 
-	if (0 > plugin_intf->OEM_sys_get_battery_present(&ret)) {
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_PRESENT, &ret) < 0) {
 		PRT_TRACE_ERR("[BATMON] battery check : %d", ret);
 	}
 	PRT_TRACE("[BATMON] battery check : %d", ret);

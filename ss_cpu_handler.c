@@ -17,7 +17,7 @@
 
 #include <fcntl.h>
 
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_log.h"
 #include "include/ss_data.h"
 #include "vconf.h"
@@ -236,13 +236,13 @@ static void __set_freq_limit()
 {
 	int ret;
 
-	ret = plugin_intf->OEM_sys_get_cpufreq_cpuinfo_max_freq(&max_cpu_freq_limit);
+	ret = device_get_property(DEVICE_TYPE_CPU, PROP_CPU_CPUINFO_MAX_FREQ, &max_cpu_freq_limit);
 	if (ret < 0) {
 		PRT_TRACE_ERR("get cpufreq cpuinfo max readerror: %s", strerror(errno));
 		max_cpu_freq_limit = DEFAULT_MAX_CPU_FREQ;
 	}
 
-	ret = plugin_intf->OEM_sys_get_cpufreq_cpuinfo_min_freq(&min_cpu_freq_limit);
+	ret = device_get_property(DEVICE_TYPE_CPU, PROP_CPU_CPUINFO_MIN_FREQ, &min_cpu_freq_limit);
 	if (ret < 0) {
 		PRT_TRACE_ERR("get cpufreq cpuinfo min readerror: %s", strerror(errno));
 		min_cpu_freq_limit = DEFAULT_MIN_CPU_FREQ;
@@ -406,7 +406,7 @@ static int __write_max_cpu_freq(int freq)
 {
 	int ret;
 
-	ret = plugin_intf->OEM_sys_set_cpufreq_scaling_max_freq(freq);
+	ret = device_set_property(DEVICE_TYPE_CPU, PROP_CPU_SCALING_MAX_FREQ, freq);
 	if (ret < 0) {
 		PRT_TRACE_ERR("set cpufreq max freq write error: %s", strerror(errno));
 		return -1;
@@ -419,7 +419,7 @@ static int __write_min_cpu_freq(int freq)
 {
 	int ret;
 
-	ret = plugin_intf->OEM_sys_set_cpufreq_scaling_min_freq(freq);
+	ret = device_set_property(DEVICE_TYPE_CPU, PROP_CPU_SCALING_MIN_FREQ, freq);
 	if (ret < 0) {
 		PRT_TRACE_ERR("set cpufreq min freq write error: %s", strerror(errno));
 		return -1;

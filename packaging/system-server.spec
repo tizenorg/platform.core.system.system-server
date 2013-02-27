@@ -1,8 +1,8 @@
 #sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
-Version: 0.1.63
-Release:    4
+Version:    0.1.64
+Release:    1
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
@@ -20,11 +20,11 @@ BuildRequires:  pkgconfig(pmapi)
 BuildRequires:  pkgconfig(edbus)
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(syspopup-caller)
-BuildRequires:  pkgconfig(devman_plugin)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
+BuildRequires:  pkgconfig(device-node)
 BuildRequires:	gettext
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl
