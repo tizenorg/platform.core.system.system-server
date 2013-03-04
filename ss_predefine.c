@@ -671,6 +671,8 @@ static void restart_ap(TapiHandle *handle, const char *noti_id, void *data, void
 	}
 
 	PRT_INFO("Restart\n");
+	vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
+	power_off = 1;
 	sync();
 
 	buf = getenv("PWROFF_DUR");
@@ -707,6 +709,7 @@ static void restart_ap_by_force(void *data)
 	}
 
 	PRT_INFO("Restart\n");
+	power_off = 1;
 	sync();
 
 	buf = getenv("PWROFF_DUR");
@@ -728,6 +731,7 @@ int restart_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
+	heynoti_publish(POWEROFF_NOTI_NAME);
 	pm_change_state(LCD_NORMAL);
 	system("/etc/rc.d/rc.shutdown &");
 	sync();
@@ -853,6 +857,9 @@ static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad)
 		break;
 	case VCONFKEY_SYSMAN_POWER_OFF_POPUP:
 		ss_action_entry_call_internal(PREDEF_PWROFF_POPUP, 0);
+		break;
+	case VCONFKEY_SYSMAN_POWER_OFF_RESTART:
+		ss_action_entry_call_internal(PREDEF_REBOOT, 0);
 		break;
 	}
 }
