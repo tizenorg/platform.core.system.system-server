@@ -1,5 +1,6 @@
 [Unit]
 Description=Start the system server service
+After=vconf-setup.service
 
 [Service]
 # set DISPLAY for usb_setting launching
