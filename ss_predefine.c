@@ -74,11 +74,13 @@ static int lowbat_popup_option = 0;
 
 static struct timeval tv_start_poweroff;
 static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data);
+static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad);
 
 static int ss_flags = 0;
 
 static Ecore_Timer *poweroff_timer_id = NULL;
 static TapiHandle *tapi_handle = NULL;
+static int power_off = 0;
 
 static void make_memps_log(char *file, pid_t pid, char *victim_name)
 {
@@ -336,8 +338,8 @@ Eina_Bool powerdown_ap_by_force(void *data)
 	}
 
 	PRT_TRACE("Power off by force\n");
-	kill(-1, SIGTERM);
 	/* give a chance to be terminated for each process */
+	power_off = 1;
 	sleep(1);
 	sync();
 	reboot(RB_POWER_OFF);
@@ -375,8 +377,8 @@ static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, vo
 		gettimeofday(&now, NULL);
 	}
 
-	kill(-1, SIGTERM);
 	/* give a chance to be terminated for each process */
+	power_off = 1;
 	sleep(1);
 	sync();
 	reboot(RB_POWER_OFF);
@@ -390,6 +392,7 @@ int poweroff_def_predefine_action(int argc, char **argv)
 	int ret;
 
 	heynoti_publish(POWEROFF_NOTI_NAME);
+	vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
 
 	pm_change_state(LCD_NORMAL);
 	system("/etc/rc.d/rc.shutdown &");
@@ -675,6 +678,21 @@ static void __tel_init_cb(keynode_t *key_nodes,void *data)
 		PRT_TRACE_ERR("tapi is not ready yet");
 	}
 }
+static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad)
+{
+	int val;
+	if (vconf_get_int(VCONFKEY_SYSMAN_POWER_OFF_STATUS, &val) != 0)
+		return;
+	switch (val) {
+	case VCONFKEY_SYSMAN_POWER_OFF_DIRECT:
+		ss_action_entry_call_internal(PREDEF_POWEROFF, 0);
+		break;
+	case VCONFKEY_SYSMAN_POWER_OFF_POPUP:
+		ss_action_entry_call_internal(PREDEF_PWROFF_POPUP, 0);
+		break;
+	}
+}
+
 void ss_predefine_internal_init(void)
 {
 
@@ -715,6 +733,9 @@ void ss_predefine_internal_init(void)
 
 	ss_action_entry_add_internal(PREDEF_FLIGHT_MODE,
 				     flight_mode_def_predefine_action, NULL, NULL);
+	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void *)poweroff_control_cb, NULL) < 0) {
+		PRT_TRACE_ERR("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_POWER_OFF_STATUS);
+	}
 	ss_action_entry_load_from_sodir();
 
 	/* check and set earjack init status */
