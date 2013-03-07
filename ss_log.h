@@ -27,26 +27,26 @@
 #define __LOG(prio, fmt, arg...) \
 	do { SLOG(prio, LOG_TAG, fmt, ##arg); } while (0)
 #define __LOGD(prio, fmt, arg...) \
-	do { SLOG(prio, LOG_TAG, "[%s:%d] "fmt"\n", __FUNCTION__, __LINE__, ##arg); } while (0)
+	do { SLOG(prio, LOG_TAG, "%s: %s(%d) > " fmt, __MODULE__, __func__, __LINE__, ##arg); } while (0)
 #define __PRT(prio, fmt, arg...) \
 	do { fprintf(((D##prio) == DLOG_ERR ? stderr : stdout), fmt"\n", ##arg); } while (0)
 #define __PRTD(prio, fmt, arg...) \
 	do { \
 		fprintf(((D##prio) == DLOG_ERR ? stderr : stdout), \
-				"[%s:%d] "fmt"\n", __FILE__, __LINE__, ##arg); \
+				"%s: %s(%d) > "fmt"\n", __MODULE__, __func__, __LINE__, ##arg); \
 	} while (0)
 #else
 #include <syslog.h>
 #define __LOG(prio, fmt, arg...) \
 	do { syslog(prio, fmt, ##arg); } while (0)
 #define __LOGD(prio, fmt, arg...) \
-	do { syslog(prio, "[%s:%d] "fmt"\n", __FUNCTION__, __LINE__, ##arg); } while (0)
+	do { syslog(prio, "%s: %s(%d) > "fmt"\n", __MODULE__, __func__, __LINE__, ##arg); } while (0)
 #define __PRT(prio, fmt, arg...) \
 	do { fprintf(((prio) == LOG_ERR ? stderr : stdout), fmt"\n", ##arg); } while (0)
 #define __PRTD(prio, fmt, arg...) \
 	do { \
 		fprintf(((prio) == LOG_ERR ? stderr : stdout), \
-				"[%s:%d] "fmt"\n", __FILE__, __LINE__, ##arg); \
+				 "%s: %s(%d) > "fmt"\n", __MODULE__, __func__, __LINE__, ##arg); \
 	} while (0)
 #endif
 
