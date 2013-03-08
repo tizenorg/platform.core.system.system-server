@@ -22,6 +22,7 @@ SET(SRCS
 	ss_procmgr.c
 	ss_timemgr.c
 	ss_cpu_handler.c
+	ss_vibrator.c
 	)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

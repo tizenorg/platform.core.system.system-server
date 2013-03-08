@@ -2,7 +2,7 @@
 Name:       system-server
 Summary:    System server
 Version:    0.1.65
-Release:    2
+Release:    3
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
