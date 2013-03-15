@@ -26,7 +26,7 @@
 #include "ss_launch.h"
 #include "ss_noti.h"
 #include "ss_queue.h"
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "include/ss_data.h"
 
 #define BAT_MON_INTERVAL		30
@@ -46,15 +46,10 @@
 
 #define LOWBAT_EXEC_PATH		PREFIX"/bin/lowbatt-popup"
 
-static int battery_level_table[] = {
-	5,			/* BATTERY_LEVEL0 */
-	15,			/* 1 */
-	25,			/* 2 */
-	40,			/* 3 */
-	60,			/* 4 */
-	80,			/* 5 */
-	100,			/* 6 */
-};
+#define	BATTERY_LEVEL_CHECK_FULL	95
+#define	BATTERY_LEVEL_CHECK_HIGH	15
+#define	BATTERY_LEVEL_CHECK_LOW		5
+#define	BATTERY_LEVEL_CHECK_CRITICAL	1
 
 #define _SYS_LOW_POWER "LOW_POWER"
 
@@ -127,7 +122,7 @@ int ss_lowbat_set_charge_on(int onoff)
 int ss_lowbat_is_charge_in_now()
 {
 	int val = 0;
-	if (0 > plugin_intf->OEM_sys_get_battery_charge_now(&val)) {
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
 		PRT_TRACE_ERR("fail to read charge now from kernel");
 		ss_lowbat_set_charge_on(0);
 		return 0;
@@ -165,7 +160,7 @@ static int lowbat_process(int bat_percent, void *ad)
 	}
 
 	if (new_bat_capacity <= BATTERY_REAL_POWER_OFF) {
-		if (0 > plugin_intf->OEM_sys_get_battery_charge_now(&val)) {
+		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
 			PRT_TRACE_ERR("fail to read charge now from kernel");
 		}
 		PRT_TRACE("charge_now status %d",val);
@@ -193,7 +188,9 @@ static int lowbat_process(int bat_percent, void *ad)
 	} else {
 		new_bat_state = BATTERY_NORMAL;
 		if (new_bat_capacity == BATTERY_FULL) {
-			plugin_intf->OEM_sys_get_battery_charge_full(&bat_full);
+			if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &bat_full) < 0) {
+				PRT_TRACE_ERR("fail to read charge full from kernel");
+			}
 			if (bat_full == 1) {
 				if (vconf_state != VCONFKEY_SYSMAN_BAT_FULL)
 				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_FULL);
@@ -247,14 +244,45 @@ static int lowbat_read()
 {
 	int bat_percent;
 
-	plugin_intf->OEM_sys_get_battery_capacity(&bat_percent);
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent) < 0) {
+		PRT_TRACE_ERR("fail to read power capacity from kernel");
+		return -1;
+	}
 
 	return bat_percent;
 }
 
-int ss_lowbat_monitor(void *data)
+static void __ss_change_lowbat_level(int bat_percent)
 {
-	struct ss_main_data *ad = (struct ss_main_data *)data;
+	int prev, now;
+
+	if (cur_bat_capacity == bat_percent)
+		return;
+
+	if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_LEVEL_STATUS, &prev) < 0) {
+		PRT_TRACE_ERR("vconf_get_int() failed");
+		return;
+	}
+
+
+	if (bat_percent > BATTERY_LEVEL_CHECK_FULL) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_FULL;
+	} else if (bat_percent > BATTERY_LEVEL_CHECK_HIGH) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_HIGH;
+	} else if (bat_percent > BATTERY_LEVEL_CHECK_LOW) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_LOW;
+	} else if (bat_percent > BATTERY_LEVEL_CHECK_CRITICAL) {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_CRITICAL;
+	} else {
+		now = VCONFKEY_SYSMAN_BAT_LEVEL_EMPTY;
+	}
+
+	if (prev != now)
+		vconf_set_int(VCONFKEY_SYSMAN_BATTERY_LEVEL_STATUS, now);
+}
+
+static int __check_lowbat_percent(void)
+{
 	int bat_percent;
 
 	bat_percent = lowbat_read();
@@ -264,12 +292,21 @@ int ss_lowbat_monitor(void *data)
 		if (bat_err_count > MAX_BATTERY_ERROR) {
 			PRT_TRACE_ERR
 			    ("[BATMON] Cannot read battery gage. stop read fuel gage");
-			return 0;
 		}
-		return 1;
+		return -1;
 	}
 	if (bat_percent > 100)
 		bat_percent = 100;
+	__ss_change_lowbat_level(bat_percent);
+	return bat_percent;
+}
+
+int ss_lowbat_monitor(void *data)
+{
+	struct ss_main_data *ad = (struct ss_main_data *)data;
+	int bat_percent;
+
+	bat_percent = __check_lowbat_percent();
 
 	if (lowbat_process(bat_percent, ad) < 0)
 		ecore_timer_interval_set(lowbat_timer, BAT_MON_INTERVAL_MIN);
@@ -296,7 +333,7 @@ static int check_battery()
 	int r;
 	int ret = -1;
 
-	if (0 > plugin_intf->OEM_sys_get_battery_present(&ret)) {
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_PRESENT, &ret) < 0) {
 		PRT_TRACE_ERR("[BATMON] battery check : %d", ret);
 	}
 	PRT_TRACE("[BATMON] battery check : %d", ret);
@@ -311,6 +348,9 @@ int ss_lowbat_init(struct ss_main_data *ad)
 	/* need check battery */
 	lowbat_timer =
 	    ecore_timer_add(BAT_MON_INTERVAL_MIN, ss_lowbat_monitor, ad);
+
+	__check_lowbat_percent();
+
 	ss_lowbat_is_charge_in_now();
 
 	vconf_notify_key_changed(VCONFKEY_PM_STATE, (void *)wakeup_cb, NULL);

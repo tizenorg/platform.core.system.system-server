@@ -32,11 +32,14 @@
 #include "ss_procmgr.h"
 #include "ss_timemgr.h"
 #include "ss_cpu_handler.h"
-#include "ss_device_plugin.h"
 #include "include/ss_data.h"
+
+#define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
 
 static void fini(struct ss_main_data *ad)
 {
+	// try to remove pid file
+	unlink(SS_PIDFILE_PATH);
 }
 
 static void init_ad(struct ss_main_data *ad)
@@ -57,11 +60,6 @@ static void writepid(char *pidpath)
 
 static void system_server_init(struct ss_main_data *ad)
 {
-	if (0 > _ss_devman_plugin_init()) {
-		PRT_TRACE_ERR("Device Manager Plugin Initialize failed");
-		exit (-1);
-	}
-
 	ad->sysnoti_fd = ss_sysnoti_init();
 	if (ss_noti_init() < 0)
 		PRT_TRACE_ERR("init noti error");
@@ -83,8 +81,6 @@ static void system_server_init(struct ss_main_data *ad)
 	ss_mmc_init();
 	ss_bs_init();
 }
-
-#define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
 
 static int system_main(int argc, char **argv)
 {

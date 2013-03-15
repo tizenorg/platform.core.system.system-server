@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 #include <sys/shm.h>
 
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_log.h"
 #include "ss_noti.h"
 #include "ss_queue.h"
@@ -303,12 +303,12 @@ static int lowmem_cb(void *data, Ecore_Fd_Handler * fd_handler)
 
 static int set_threshold()
 {
-	if (0 > plugin_intf->OEM_sys_set_memnotify_threshold_lv1(MEM_THRESHOLD_LV1)) {
+	if (device_set_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_THRESHOLD_LV1, MEM_THRESHOLD_LV1) < 0) {
 		PRT_TRACE_ERR("Set memnorify threshold lv1 failed");
 		return -1;
 	}
 
-	if (0 > plugin_intf->OEM_sys_set_memnotify_threshold_lv2(MEM_THRESHOLD_LV2)) {
+	if (device_set_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_THRESHOLD_LV2, MEM_THRESHOLD_LV2) < 0) {
 		PRT_TRACE_ERR("Set memnorify threshold lv2 failed");
 		return -1;
 	}
@@ -320,7 +320,7 @@ int ss_lowmem_init(struct ss_main_data *ad)
 {
 	char lowmem_dev_node[PATH_MAX];
 
-	if (0 > plugin_intf->OEM_sys_get_memnotify_node(lowmem_dev_node)) {
+	if (device_get_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_NODE, lowmem_dev_node) < 0) {
 		PRT_TRACE_ERR("Low memory handler fd init failed");
 		return -1;
 	}

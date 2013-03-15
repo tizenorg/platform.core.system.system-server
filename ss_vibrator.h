@@ -15,16 +15,9 @@
  */
 
 
-#ifndef __SS_DEVICE_PLUGIN_H__
-#define __SS_DEVICE_PLUGIN_H__
+#ifndef __SS_VIBRATOR_H__
+#define __SS_VIBRATOR_H__
 
-#include "devman_plugin_intf.h"
+int haptic_def_predefine_action(int argc, char **argv);
 
-#define DEVMAN_PLUGIN_PATH      "/usr/lib/libslp_devman_plugin.so"
-
-int _ss_devman_plugin_init(void);
-int _ss_devman_plugin_fini(void);
-
-const OEM_sys_devman_plugin_interface *plugin_intf;
-
-#endif  /* __SS_DEVICE_PLUGIN_H__ */
+#endif /* __SS_VIBRATOR_H__ */

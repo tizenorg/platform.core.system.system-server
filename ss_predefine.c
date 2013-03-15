@@ -35,9 +35,10 @@
 #include "ss_launch.h"
 #include "ss_queue.h"
 #include "ss_device_handler.h"
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_predefine.h"
 #include "ss_procmgr.h"
+#include "ss_vibrator.h"
 #include "include/ss_data.h"
 
 #define PREDEFINE_SO_DIR			PREFIX"/lib/ss_predefine/"
@@ -74,11 +75,13 @@ static int lowbat_popup_option = 0;
 
 static struct timeval tv_start_poweroff;
 static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data);
+static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad);
 
 static int ss_flags = 0;
 
 static Ecore_Timer *poweroff_timer_id = NULL;
 static TapiHandle *tapi_handle = NULL;
+static int power_off = 0;
 
 static void make_memps_log(char *file, pid_t pid, char *victim_name)
 {
@@ -130,7 +133,7 @@ static int lowmem_get_victim_pid()
 	pid_t pid;
 	int fd;
 
-	if (0 > plugin_intf->OEM_sys_get_memnotify_victim_task(&pid)) {
+	if (device_get_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_VICTIM_TASK, &pid) < 0) {
 		PRT_TRACE_ERR("Get victim task failed");
 		return -1;
 	}
@@ -195,7 +198,7 @@ int usbcon_def_predefine_action(int argc, char **argv)
 	int ret = -1;
 	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
 
-	if (plugin_intf->OEM_sys_get_jack_usb_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
 		if (val == 0) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
@@ -222,7 +225,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 	int val;
 
 	PRT_TRACE_EM("earjack_normal predefine action\n");
-	if (plugin_intf->OEM_sys_get_jack_earjack_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARJACK_ONLINE, &val) == 0) {
 		return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, val);
 	}
 
@@ -336,8 +339,8 @@ Eina_Bool powerdown_ap_by_force(void *data)
 	}
 
 	PRT_TRACE("Power off by force\n");
-	kill(-1, SIGTERM);
 	/* give a chance to be terminated for each process */
+	power_off = 1;
 	sleep(1);
 	sync();
 	reboot(RB_POWER_OFF);
@@ -375,8 +378,8 @@ static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, vo
 		gettimeofday(&now, NULL);
 	}
 
-	kill(-1, SIGTERM);
 	/* give a chance to be terminated for each process */
+	power_off = 1;
 	sleep(1);
 	sync();
 	reboot(RB_POWER_OFF);
@@ -390,6 +393,7 @@ int poweroff_def_predefine_action(int argc, char **argv)
 	int ret;
 
 	heynoti_publish(POWEROFF_NOTI_NAME);
+	vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
 
 	pm_change_state(LCD_NORMAL);
 	system("/etc/rc.d/rc.shutdown &");
@@ -623,6 +627,7 @@ int flight_mode_def_predefine_action(int argc, char **argv)
 	return 0;
 
 }
+
 static void ss_action_entry_load_from_sodir()
 {
 	DIR *dp;
@@ -675,6 +680,21 @@ static void __tel_init_cb(keynode_t *key_nodes,void *data)
 		PRT_TRACE_ERR("tapi is not ready yet");
 	}
 }
+static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad)
+{
+	int val;
+	if (vconf_get_int(VCONFKEY_SYSMAN_POWER_OFF_STATUS, &val) != 0)
+		return;
+	switch (val) {
+	case VCONFKEY_SYSMAN_POWER_OFF_DIRECT:
+		ss_action_entry_call_internal(PREDEF_POWEROFF, 0);
+		break;
+	case VCONFKEY_SYSMAN_POWER_OFF_POPUP:
+		ss_action_entry_call_internal(PREDEF_PWROFF_POPUP, 0);
+		break;
+	}
+}
+
 void ss_predefine_internal_init(void)
 {
 
@@ -712,9 +732,14 @@ void ss_predefine_internal_init(void)
 				     launching_predefine_action, NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_REBOOT,
 				     restart_def_predefine_action, NULL, NULL);
-
 	ss_action_entry_add_internal(PREDEF_FLIGHT_MODE,
 				     flight_mode_def_predefine_action, NULL, NULL);
+	ss_action_entry_add_internal(PREDEF_HAPTIC, haptic_def_predefine_action,
+					NULL, NULL);
+
+	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void *)poweroff_control_cb, NULL) < 0) {
+		PRT_TRACE_ERR("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_POWER_OFF_STATUS);
+	}
 	ss_action_entry_load_from_sodir();
 
 	/* check and set earjack init status */

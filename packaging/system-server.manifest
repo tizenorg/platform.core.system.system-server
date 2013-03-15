@@ -1,17 +1,16 @@
 <manifest>
-    <define>
-        <domain name="system-server"/>
-        <request>
-            <smack request="sys-assert::core" type="rwxat" />
-        </request>
-    </define>
-    <assign>
-        <filesystem path="/etc/init.d/system_server.sh" label="_" exec_label="none" />
-        <filesystem path="/etc/rc.d/init.d/system_server.sh" label="_" exec_label="none" />
-        <filesystem path="/etc/rc.d/rc3.d/S35system-server" label="_" exec_label="none" />
-        <filesystem path="/etc/rc.d/rc5.d/S00system-server" label="_" exec_label="none" />
-    </assign>
-    <request>
-        <domain name="system-server"/>
-    </request>
+	<define>
+		<domain name="system-server"/>
+	</define>
+	<assign>
+		<filesystem path="/etc/init.d/system_server.sh" label="_" exec_label="none" />
+		<filesystem path="/etc/rc.d/init.d/system_server.sh" label="_" exec_label="none" />
+		<filesystem path="/etc/rc.d/rc3.d/S35system-server" label="_" exec_label="none" />
+		<filesystem path="/etc/rc.d/rc5.d/S00system-server" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/system-server.service" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/multi-user.target.wants/system-server.service" label="_" exec_label="none" />
+	</assign>
+	<request>
+		<domain name="system-server"/>
+	</request>
 </manifest>

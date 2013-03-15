@@ -19,7 +19,7 @@
 #include <vconf.h>
 #include <sysman.h>
 
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_log.h"
 #include "include/ss_data.h"
 
@@ -30,7 +30,7 @@ int ss_ta_init()
 	int val = -1, i = 0, pid;
 
 	PRT_TRACE("check ta connection");
-	if (plugin_intf->OEM_sys_get_jack_charger_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_TA_ONLINE, &val) == 0) {
 		if ( val==1 ) {
 			vconf_set_int(VCONFKEY_SYSMAN_CHARGER_STATUS,
 					VCONFKEY_SYSMAN_CHARGER_CONNECTED);

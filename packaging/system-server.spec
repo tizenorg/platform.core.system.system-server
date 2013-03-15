@@ -1,10 +1,10 @@
 #sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
-Version: 0.1.63
-Release:    1
-Group:      framework-system
-License:    APLv2
+Version:    0.1.65
+Release:    3
+Group:      Framework/system
+License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
 Source1:    system-server.service
 Source2:    system-server.manifest
@@ -20,13 +20,12 @@ BuildRequires:  pkgconfig(pmapi)
 BuildRequires:  pkgconfig(edbus)
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(syspopup-caller)
-BuildRequires:  pkgconfig(devman_plugin)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
+BuildRequires:  pkgconfig(device-node)
 BuildRequires:	gettext
-Requires: sys-assert
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl
 Requires(post): /usr/bin/vconftool
@@ -74,11 +73,19 @@ vconftool set -t int memory/sysman/sliding_keyboard -1 -i
 vconftool set -t int memory/sysman/mmc_mount -1 -i
 vconftool set -t int memory/sysman/mmc_unmount -1 -i
 vconftool set -t int memory/sysman/mmc_format -1 -i
-
+vconftool set -t int memory/sysman/mmc_format_progress 0 -i
+vconftool set -t int memory/sysman/mmc_err_status 0 -i
+vconftool set -t int memory/sysman/power_off 0 -u 5000 -i -f
+vconftool set -t int memory/sysman/battery_level_status -1 -i
 vconftool set -t string memory/private/sysman/added_storage_uevent "" -i
 vconftool set -t string memory/private/sysman/removed_storage_uevent "" -u 5000 -i
 
 vconftool set -t int memory/sysman/hdmi 0 -i
+
+vconftool set -t int memory/sysman/stime_changed 0 -i
+
+#db type vconf key init
+vconftool set -t int db/sysman/mmc_dev_changed 0 -i
 
 heynotitool set power_off_start
 
@@ -108,12 +115,6 @@ systemctl daemon-reload
 if [ $1 == 1 ]; then
     systemctl restart system-server.service
 fi
-
-if [ -f %{_libdir}/rpm-plugins/msm.so ] ; then
-	find /opt/share/crash -print0 | xargs -0 chsmack -a 'sys-assert::core'
-	find /opt/share/crash -type d -print0 | xargs -0 chsmack -t
-fi
-
 
 %preun
 if [ $1 == 0 ]; then

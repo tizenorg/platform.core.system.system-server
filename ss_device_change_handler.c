@@ -33,7 +33,7 @@
 #include "ss_queue.h"
 #include "ss_log.h"
 #include "ss_device_handler.h"
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_noti.h"
 #include "include/ss_data.h"
 #include "sys_device_noti/sys_device_noti.h"
@@ -72,13 +72,13 @@ static int check_lowbat_charge_device(int bInserted)
 	int bat_state = -1;
 	int ret = -1;
 	if (bInserted == 1) {
-		if (plugin_intf->OEM_sys_get_battery_charge_now(&val) == 0) {
+		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) == 0) {
 			if (val == 1)
 				bChargeDeviceInserted = 1;
 			return 0;
 		}
 	} else if (bInserted == 0) {
-		if (plugin_intf->OEM_sys_get_battery_charge_now(&val) == 0) {
+		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) == 0) {
 			if (val == 0 && bChargeDeviceInserted == 1) {
 				bChargeDeviceInserted = 0;
 				//low bat popup during charging device removing
@@ -120,7 +120,8 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 	ss_lowbat_monitor(NULL);
 	ss_action_entry_call_internal(PREDEF_USBCON, 0);
 
-	if (plugin_intf->OEM_sys_get_jack_usb_online(&val)==0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
+		PRT_TRACE("jack - usb changed %d",val);
 		check_lowbat_charge_device(val);
 		if (val==1) {
 			snprintf(params, sizeof(params), "%d", CB_NOTI_BATT_CHARGE);
@@ -144,7 +145,8 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
 	char params[BUFF_MAX];
 
-	if (plugin_intf->OEM_sys_get_jack_charger_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_TA_ONLINE, &val) == 0) {
+		PRT_TRACE("jack - ta changed %d",val);
 		check_lowbat_charge_device(val);
 		vconf_set_int(VCONFKEY_SYSMAN_CHARGER_STATUS, val);
 		if (val == 0) {
@@ -170,8 +172,7 @@ static void earkey_chgdet_cb(struct ss_main_data *ad)
 {
 	int val;
 	PRT_TRACE("jack - earkey changed\n");
-
-	if (plugin_intf->OEM_sys_get_jack_earkey_online(&val) == 0)
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARKEY_ONLINE, &val) == 0)
 		vconf_set_int(VCONFKEY_SYSMAN_EARJACKKEY, val);
 }
 
@@ -186,14 +187,15 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 	PRT_TRACE("jack - hdmi changed\n");
 	int val;
 	pm_change_state(LCD_NORMAL);
-	if (plugin_intf->OEM_sys_get_hdmi_support(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_SUPPORT, &val) == 0) {
 		if (val!=1) {
 			PRT_TRACE_ERR("target is not support HDMI");
 			vconf_set_int(VCONFKEY_SYSMAN_HDMI, HDMI_NOT_SUPPORTED);
 			return;
 		}
 	}
-	if (plugin_intf->OEM_sys_get_jack_hdmi_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_ONLINE, &val) == 0) {
+		PRT_TRACE("jack - hdmi changed %d",val);
 		vconf_set_int(VCONFKEY_SYSMAN_HDMI,val);
 		if(val == 1)
 			pm_lock_state(LCD_NORMAL, GOTO_STATE_NOW, 0);
@@ -208,8 +210,8 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 	int ret = -1;
 	PRT_TRACE("jack - keyboard changed\n");
 
-	ret = plugin_intf->OEM_sys_get_jack_keyboard_online(&val);
-	if( ret == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_KEYBOARD_ONLINE, &val) == 0) {
+		PRT_TRACE("jack - keyboard changed %d",val);
 		if(val != 1)
 			val = 0;
 		vconf_set_int(VCONFKEY_SYSMAN_SLIDING_KEYBOARD, val);
@@ -255,16 +257,18 @@ static void charge_cb(struct ss_main_data *ad)
 	char params[BUFF_MAX];
 	static int bat_full_noti = 0;
 	ss_lowbat_monitor(NULL);
-	if (plugin_intf->OEM_sys_get_battery_health(&val) == 0) {
+
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_HEALTH, &val) == 0) {
 		if (val==BATTERY_OVERHEAT || val==BATTERY_COLD) {
 			PRT_TRACE_ERR("Battery health status is not good (%d)", val);
 			ss_action_entry_call_internal(PREDEF_LOWBAT, 1, CHARGE_ERROR_ACT);
+
 			return;
 		}
 	} else {
 		PRT_TRACE_ERR("failed to get battery health status");
 	}
-	plugin_intf->OEM_sys_get_battery_charge_full(&val);
+	device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &val);
 	if (val==0) {
 		if (bat_full_noti==1) {
 			snprintf(params, sizeof(params), "%d %d", CB_NOTI_BATT_FULL, CB_NOTI_OFF);

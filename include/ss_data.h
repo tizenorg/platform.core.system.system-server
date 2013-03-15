@@ -50,6 +50,7 @@ enum {
 #define PREDEF_USB_STORAGE_ADD		"usbstorage-add"
 #define PREDEF_USB_STORAGE_REMOVE	"usbstorage-remove"
 #define PREDEF_INACTIVE			"inactive"
+#define PREDEF_HAPTIC			"haptic"
 
 #define OOMADJ_SET			"oomadj_set"
 #define LOW_MEM_ACT			"low_mem_act"

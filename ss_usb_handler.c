@@ -20,7 +20,7 @@
 #include <sysman.h>
 
 #include "ss_log.h"
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_launch.h"
 #include "include/ss_data.h"
 
@@ -32,7 +32,7 @@ int ss_usb_init()
 	int val = -1, i = 0, pid;
 
 	PRT_TRACE("check usb connection");
-	if (plugin_intf->OEM_sys_get_jack_usb_online(&val) == 0) {
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
 		if (val==1) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 					VCONFKEY_SYSMAN_USB_AVAILABLE);

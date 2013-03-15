@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "ss_device_plugin.h"
+#include "device-node.h"
 #include "ss_log.h"
 #include "ss_launch.h"
 #include "include/ss_data.h"
@@ -151,7 +151,7 @@ static int pmon_process(int pid, void *ad)
 				}
 				close(fd);
 
-				if (0 > plugin_intf->OEM_sys_set_process_monitor_mp_pnp(new_pid)) {
+				if ( device_set_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_MP_PNP, new_pid) < 0) {
 					PRT_TRACE_ERR("Write new pid failed");
 				}
 				PRT_TRACE("[Process MON] %d ", new_pid);
@@ -220,8 +220,7 @@ static int pmon_cb(void *data, Ecore_Fd_Handler * fd_handler)
 int ss_pmon_init(struct ss_main_data *ad)
 {
 	char pmon_dev_node[PATH_MAX];
-
-	if (0 > plugin_intf->OEM_sys_get_process_monitor_node(pmon_dev_node)) {
+	if (device_get_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_NODE, pmon_dev_node) < 0) {
 		PRT_TRACE_ERR("ss_pmon_init get dev node path failed");
 		return -1;
 	}
