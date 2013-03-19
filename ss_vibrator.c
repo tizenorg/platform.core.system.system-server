@@ -53,10 +53,12 @@ static struct haptic_node *find_node(int pid)
 
 	for (elem = haptic_head; elem; elem = elem->next) {
 		node = elem->data;
-		if (node->pid == pid)
-			break;
+		if (node->pid == pid) {
+			return node;
+		}
 	}
 
+	node = NULL;
 	return node;
 }
 

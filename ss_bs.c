@@ -23,6 +23,11 @@
 #include <errno.h>
 #include <string.h>
 #include <sysman.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/types.h>
+#include <grp.h>
+#include <dirent.h>
 #include <Ecore_File.h>
 
 #include "ss_log.h"
@@ -31,6 +36,11 @@
 #define CRASH_PID_MAX 7
 #define CRASH_MODE_MAX 2
 #define CRASH_TIME_MAX 65
+#define CRASH_POPUP_ON	1
+#define CRASH_POPUP_OFF	0
+#define CRASH_CHECK_SIZE (512 * 1024)
+#define CRASH_CHECK_DISK_PATH   "/opt/usr"
+#define CRASH_LIMIT_NUM 5
 #define CRASH_ARG_NUM 6
 #define CRASH_DELIMITER "|"
 #define CRASH_VERIFY_MAX 5
@@ -40,6 +50,9 @@
 #define CRASH_NOTI_DIR		"/opt/share/crash"
 #define CRASH_NOTI_FILE		"curbs.log"
 #define CRASH_NOTI_PATH CRASH_NOTI_DIR"/"CRASH_NOTI_FILE
+#define CRASH_COREDUMP_PATH		"/opt/usr/share/crash/core"
+#define CRASH_DUMP_PATH		"/opt/usr/share/crash/dump"
+#define CRASH_INFO_PATH		"/opt/share/crash/info"
 #define CRASH_WORKER_PATH	"/usr/bin/crash-worker"
 #define CRASH_POPUP_PATH	"/usr/apps/org.tizen.crash-popup/bin/crash-popup"
 
@@ -65,32 +78,167 @@ static int is_running_process(pid_t pid)
 }
 static int make_noti_file(const char *path, const char *file)
 {
-	PRT_TRACE("Make Noti File");
 	int fd;
 	char buf[PATH_MAX];
+	gid_t group_id;
+	struct group *group_entry;
+	mode_t old_mask;
 
-	/* make a directory */
-	if (access(path, F_OK) == -1) {
-		snprintf(buf, sizeof(buf), "mkdir -p %s", path);
-		system(buf);
-		snprintf(buf, sizeof(buf), "chown root:app %s", path);
-		system(buf);
+	PRT_TRACE("Make Noti File");
+	snprintf(buf, sizeof(buf), "%s/%s", path, file);	/* buf - full path to file */
+	if (access(buf, F_OK) == 0)				/* if file exists then return -1 */
+		return -1;
+
+	/* save old mask and set new calling process's file mode creation mask */
+	old_mask = umask(0);
+
+	mkdir(path, 0775);		/* make directory, if exest then errno==EEXIST */
+	group_entry = getgrnam("crash");		/* need to find out group ID of "crash" group name */
+	if (group_entry == NULL) {
+		umask(old_mask);	/* restore old file mask */
+		return -1;
 	}
-
-	snprintf(buf, sizeof(buf), "%s/%s", path, file);
-
-	if (access(buf, F_OK) == 0)
+	chown(path, 0, group_entry->gr_gid);			/* chown root:crash */
+	if ((fd = open(buf, O_CREAT, 0666)) < 0) {	/* create crash file */
+		umask(old_mask);			/* restore old file mask */
 		return -1;
-
-	if ((fd = open(buf, O_CREAT, S_IRUSR | S_IWUSR)) < 0)
-		return -1;
+	}
+	fchown(fd, 0, group_entry->gr_gid);	/* chown root:crash */
 	close(fd);
-	snprintf(buf, sizeof(buf), "chmod 666 %s/%s", path, file);
-	system(buf);
-	snprintf(buf, sizeof(buf), "chown root:app %s/%s", path, file);
-	system(buf);
+	umask(old_mask);		/* restore old file mask */
 
 	return 0;
+}
+static int make_coredump_dir(void)
+{
+	mode_t old_mask;
+	gid_t group_id;
+	struct group *group_entry;
+
+	PRT_TRACE("Make core dump directory");
+	if (access(CRASH_COREDUMP_PATH, F_OK) == 0)				/* if file exists then return -1 */
+		return -1;
+
+	/* save old mask and set new calling process's file mode creation mask */
+	old_mask = umask(0);
+
+	mkdir(CRASH_COREDUMP_PATH, 0775);		/* make directory, if exest then errno==EEXIST */
+	group_entry = getgrnam("crash");		/* need to find out group ID of "crash" group name*/
+	if (group_entry == NULL) {
+		umask(old_mask);	/* restore old file mask */
+		return -1;
+	}
+	chown(CRASH_COREDUMP_PATH, 0, group_entry->gr_gid);			/* chown root:crash */
+	umask(old_mask);		/* restore old file mask */
+
+	return 0;
+}
+static int make_info_dir(void)
+{
+	mode_t old_mask;
+	gid_t group_id;
+	struct group *group_entry;
+
+	PRT_TRACE("Make crash info directory");
+	if (access(CRASH_INFO_PATH, F_OK) == 0)				/* if file exists then return -1 */
+		return -1;
+
+	/* save old mask and set new calling process's file mode creation mask */
+	old_mask = umask(0);
+
+	mkdir(CRASH_INFO_PATH, 0775);		/* make directory, if exest then errno==EEXIST */
+	group_entry = getgrnam("crash");		/* need to find out group ID of "crash" group name*/
+	if (group_entry == NULL) {
+		umask(old_mask);	/* restore old file mask */
+		return -1;
+	}
+	chown(CRASH_INFO_PATH, 0, group_entry->gr_gid);			/* chown root:crash */
+	umask(old_mask);		/* restore old file mask */
+
+	return 0;
+}
+static int clean_coredump_dir(void)
+{
+	DIR *dir;
+	struct dirent *dp;
+	int dfd;
+	dir = opendir(CRASH_COREDUMP_PATH);
+	if (!dir) {
+		PRT_TRACE_ERR("opendir failed");
+		return 0;
+	}
+	dfd = dirfd(dir);
+	if (dfd < 0) return 0;
+	while ((dp = readdir(dir)) != NULL) {
+		const char *name = dp->d_name;
+		/* always skip "." and ".." */
+		if (name[0] == '.') {
+			if (name[1] == 0) continue;
+			if ((name[1] == '.') && (name[2] == 0)) continue;
+		}
+		if (unlinkat(dfd, name, 0) < 0) {
+			PRT_TRACE_ERR("clean_coredump_dir (%s)",name);
+			continue;
+		}
+	}
+	closedir(dir);
+	return 1;
+}
+static int clean_dump_dir(void)
+{
+	DIR *dir;
+	struct dirent *dp;
+	char dirname[PATH_MAX];
+
+	dir = opendir(CRASH_DUMP_PATH);
+	if (!dir) {
+		PRT_TRACE_ERR("opendir failed");
+		return 0;
+	}
+	while ((dp = readdir(dir)) != NULL) {
+		if (dp->d_type == DT_DIR) {
+			const char *name = dp->d_name;
+			/* always skip "." and ".." */
+			if (name[0] == '.') {
+				if (name[1] == 0) continue;
+				if ((name[1] == '.') && (name[2] == 0)) continue;
+			}
+			snprintf(dirname, sizeof(dirname), "%s/%s", CRASH_DUMP_PATH, name);
+			if (ecore_file_recursive_rm(dirname) == EINA_FALSE) {
+				PRT_TRACE_ERR("clean_dump_dir (%s)",dirname);
+				continue;
+			}
+		}
+	}
+	closedir(dir);
+	return 1;
+}
+static int clean_info_dir(void)
+{
+	DIR *dir;
+	struct dirent *dp;
+	int dfd;
+	dir = opendir(CRASH_INFO_PATH);
+	if (!dir) {
+		PRT_TRACE_ERR("opendir failed");
+		return 0;
+	}
+	dfd = dirfd(dir);
+	if (dfd < 0) return 0;
+	while ((dp = readdir(dir)) != NULL) {
+		const char *name = dp->d_name;
+		/* always skip "." and ".." */
+		if (name[0] == '.') {
+			if (name[1] == 0) continue;
+			if ((name[1] == '.') && (name[2] == 0)) continue;
+		}
+		if (unlinkat(dfd, name, 0) < 0) {
+			PRT_TRACE_ERR("clean_info_dir (%s)",name);
+			continue;
+		}
+	}
+	closedir(dir);
+	return 1;
 }
 static int crash_arg_parser(char *linebuffer, struct crash_arg *arg)
 {
@@ -99,54 +247,54 @@ static int crash_arg_parser(char *linebuffer, struct crash_arg *arg)
 	int verify_arg_num = 0;
 
 	if (linebuffer == NULL || arg == NULL) {
-		PRT_TRACE_ERR("crash_arg_parser input arguments is NULL\n");
+		PRT_TRACE_ERR("crash_arg_parser input arguments is NULL");
 		return -1;
 	}
 	ptr = strtok(linebuffer, CRASH_DELIMITER);
 	if (ptr == NULL) {
-		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)", ptr);
 		return -1;
 	}
 	snprintf(arg->crash_mode, CRASH_MODE_MAX, "%s",  ptr);
 	ptr = strtok(NULL, CRASH_DELIMITER);
 	if (ptr == NULL) {
-		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)", ptr);
 		return -1;
 	}
 	snprintf(arg->crash_processname, CRASH_PROCESSNAME_MAX, "%s",  ptr);
 	ptr = strtok(NULL, CRASH_DELIMITER);
 	if (ptr == NULL) {
-		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)", ptr);
 		return -1;
 	}
 	snprintf(arg->crash_timestr, CRASH_TIME_MAX, "%s", ptr);
 	ptr = strtok(NULL, CRASH_DELIMITER);
 	if (ptr == NULL) {
-		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)", ptr);
 		return -1;
 	}
 	snprintf(arg->crash_pid, CRASH_PID_MAX, "%s", ptr);
 	ptr = strtok(NULL, CRASH_DELIMITER);
 	if (ptr == NULL) {
-		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)", ptr);
 		return -1;
 	}
 	snprintf(arg->crash_exepath, CRASH_EXEPATH_MAX, "%s", ptr);
 	ptr = strtok(NULL, CRASH_DELIMITER);
 	if (ptr == NULL) {
-		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)\n", ptr);
+		PRT_TRACE_ERR("can't strtok linebuffer ptr(%s)", ptr);
 		return -1;
 	}
 	snprintf(arg->crash_verify, CRASH_VERIFY_MAX, "%s", ptr);
 	verify_num = strlen(arg->crash_processname) + strlen(arg->crash_exepath);
 	verify_arg_num = atoi(arg->crash_verify);
-	PRT_TRACE("vnum %d vanum %d\n", verify_num, verify_arg_num);
+	PRT_TRACE("vnum %d vanum %d", verify_num, verify_arg_num);
 	if (verify_num == verify_arg_num)
 		return 1;
 	else
 		return 0;
 }
-static void launch_crash_worker(void *data)
+static void launch_crash_worker(const char *filename, int popup_on)
 {
 	static int popup_pid = 0;
 	FILE *fp;
@@ -155,7 +303,7 @@ static void launch_crash_worker(void *data)
 	char linebuffer[CRASH_ARG_MAX] = {0,};
 	char crash_worker_args[CRASH_ARG_MAX] = {0,};
 	struct crash_arg parsing_arg;
-	fp = fopen((char *)data, "r");
+	fp = fopen(filename, "r");
 	if (fp == NULL) {
 		return;
 	}
@@ -173,8 +321,8 @@ static void launch_crash_worker(void *data)
 		snprintf(crash_worker_args, sizeof(crash_worker_args), "%s %s %s %s %s",
 				parsing_arg.crash_mode, parsing_arg.crash_processname,
 				parsing_arg.crash_timestr, parsing_arg.crash_pid, parsing_arg.crash_exepath);
-		PRT_TRACE("crash_worker args(%s)\n", crash_worker_args);
-		PRT_TRACE("(%s%s%s)\n", parsing_arg.crash_mode,
+		PRT_TRACE("crash_worker args(%s)", crash_worker_args);
+		PRT_TRACE("(%s%s%s)", parsing_arg.crash_mode,
 				parsing_arg.crash_processname, parsing_arg.crash_timestr);
 		ret = ss_launch_evenif_exist (CRASH_WORKER_PATH, crash_worker_args);
 		if (ret > 0) {
@@ -187,8 +335,10 @@ static void launch_crash_worker(void *data)
 				fclose(fpAdj);
 			}
 		}
-		if (!is_running_process(popup_pid))
-			popup_pid = ss_launch_evenif_exist (CRASH_POPUP_PATH, parsing_arg.crash_processname);
+		if (popup_on) {
+			if (!is_running_process(popup_pid))
+				popup_pid = ss_launch_evenif_exist (CRASH_POPUP_PATH, parsing_arg.crash_processname);
+		}
 
 		if (popup_pid < 0) {
 			PRT_TRACE_ERR("popup failed)\n");
@@ -198,7 +348,7 @@ static void launch_crash_worker(void *data)
 	fclose(fp);
 
 	if (ret != -1) {
-		fp = fopen((char *)data, "w");
+		fp = fopen(filename, "w");
 		if (fp == NULL) {
 			return;
 		}
@@ -215,35 +365,76 @@ static Ecore_File_Monitor_Cb __crash_file_cb(void *data, Ecore_File_Monitor *em,
 	switch (event) {
 	case ECORE_FILE_EVENT_DELETED_DIRECTORY:
 	case ECORE_FILE_EVENT_DELETED_SELF:
-		if (0 > make_noti_file(CRASH_NOTI_DIR, CRASH_NOTI_FILE)) {
-			launch_crash_worker((void *)path);
+		if (make_noti_file(CRASH_NOTI_DIR, CRASH_NOTI_FILE) < 0) {
+			launch_crash_worker(path, CRASH_POPUP_ON);
 		}
 		break;
 	case ECORE_FILE_EVENT_MODIFIED:
 	default:
-		launch_crash_worker((void *)path);
+		launch_crash_worker(path, CRASH_POPUP_ON);
 		break;
 	}
 
 	return NULL;
 }
+static int _get_file_count(char *path)
+{
+	DIR *dir;
+	struct dirent *dp;
+	int count = 0;
+	dir = opendir(path);
+	if (!dir) return 0;
+	while ((dp = readdir(dir)) != NULL) {
+		const char *name = dp->d_name;
+		/* always skip "." and ".." */
+		if (name[0] == '.') {
+			if (name[1] == 0) continue;
+			if ((name[1] == '.') && (name[2] == 0)) continue;
+		}
+		count++;
+	}
+	return count;
+}
+/* check disk available size */
+static int _check_disk_available(void)
+{
+	struct statfs lstatfs;
+	int avail_size = 0;
+	if (statfs(CRASH_CHECK_DISK_PATH, &lstatfs) < 0)
+		return -1;
+	avail_size = (int)(lstatfs.f_bavail * (lstatfs.f_bsize/1024));
+	if (CRASH_CHECK_SIZE > avail_size)
+		return -1;
+	return 1;
+}
 
 int ss_bs_init(void)
 {
-	if (0 > make_noti_file(CRASH_NOTI_DIR, CRASH_NOTI_FILE)) {
+	if (make_noti_file(CRASH_NOTI_DIR, CRASH_NOTI_FILE) < 0) {
 		PRT_TRACE_ERR("make_noti_file() failed");
-		launch_crash_worker((void *)CRASH_NOTI_PATH);
+		launch_crash_worker(CRASH_NOTI_PATH, CRASH_POPUP_OFF);
 	}
+	if (make_info_dir() < 0) {
+		if (CRASH_LIMIT_NUM < _get_file_count(CRASH_INFO_PATH))
+			clean_info_dir();
+	}
+	if (make_coredump_dir() < 0) {
+		if (CRASH_LIMIT_NUM < _get_file_count(CRASH_COREDUMP_PATH)
+					|| _check_disk_available() < 0)
+			clean_coredump_dir();
+	}
+	if (CRASH_LIMIT_NUM < _get_file_count(CRASH_DUMP_PATH))
+		clean_dump_dir();
 
-	if (0 == ecore_file_init()) {
+	if (ecore_file_init() == 0) {
 		PRT_TRACE_ERR("ecore_file_init() failed");
-		launch_crash_worker((void *)CRASH_NOTI_PATH);
+		launch_crash_worker(CRASH_NOTI_PATH, CRASH_POPUP_OFF);
 	}
 
 	crash_file_monitor = ecore_file_monitor_add(CRASH_NOTI_PATH,(void *) __crash_file_cb, NULL);
 	if (!crash_file_monitor) {
 		PRT_TRACE_ERR("ecore_file_monitor_add() failed");
-		launch_crash_worker((void *)CRASH_NOTI_PATH);
+		launch_crash_worker(CRASH_NOTI_PATH, CRASH_POPUP_OFF);
 		return -1;
 	}
 
