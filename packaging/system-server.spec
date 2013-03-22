@@ -8,6 +8,7 @@ License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
 Source1:    system-server.service
 Source2:    system-server.manifest
+Source3:    deviced.manifest
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -34,12 +35,28 @@ Requires(postun): /usr/bin/systemctl
 %description
 Description: System server
 
+%package -n libdeviced
+Summary:    Deviced library
+Group:      Development/Libraries
+
+%description -n libdeviced
+Deviced library for device control
+
+%package -n libdeviced-devel
+Summary:    Deviced library for (devel)
+Group:      Development/Libraries
+Requires:   libdeviced = %{version}-%{release}
+
+%description -n libdeviced-devel
+Deviced library for device control (devel)
+
 %prep
 %setup -q
 cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 
 %build
 cp %{SOURCE2} .
+cp %{SOURCE3} .
 make %{?jobs:-j%jobs}
 
 %install
@@ -147,3 +164,14 @@ systemctl daemon-reload
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
+
+%files -n libdeviced
+%defattr(-,root,root,-)
+%{_libdir}/libdeviced.so.*
+%manifest deviced.manifest
+
+%files -n libdeviced-devel
+%defattr(-,root,root,-)
+%{_includedir}/deviced/dd-battery.h
+%{_libdir}/libdeviced.so
+%{_libdir}/pkgconfig/deviced.pc
