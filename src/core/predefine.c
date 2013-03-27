@@ -30,7 +30,7 @@
 #include <sys/time.h>
 #include <mntent.h>
 #include <sys/mount.h>
-#include "dd-system.h"
+#include "dd-deviced.h"
 #include "log.h"
 #include "launch.h"
 #include "queue.h"
