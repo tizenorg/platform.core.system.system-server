@@ -41,6 +41,7 @@
 #include "core/data.h"
 #include "common.h"
 #include "display/poll.h"
+#include "setting.h"
 #include "led/led.h"
 
 #define CALL_EXEC_PATH			PREFIX"/bin/call"
@@ -859,6 +860,9 @@ static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad)
 		ss_action_entry_call_internal(PREDEF_REBOOT, 0);
 		break;
 	}
+
+	if (update_pm_setting)
+		update_pm_setting(SETTING_POWEROFF, val);
 }
 
 void ss_predefine_internal_init(void)
