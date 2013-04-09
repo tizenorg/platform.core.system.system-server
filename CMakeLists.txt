@@ -42,6 +42,7 @@ pkg_check_modules(pkgs REQUIRED
 	tapi
 	dlog
 	syspopup-caller
+	notification
 	devman
 	device-node)
 
