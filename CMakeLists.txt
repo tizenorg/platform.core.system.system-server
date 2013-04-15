@@ -44,7 +44,8 @@ pkg_check_modules(pkgs REQUIRED
 	syspopup-caller
 	notification
 	devman
-	device-node)
+	device-node
+	libsmack)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
@@ -69,7 +70,7 @@ SET(UDEV_RULES udev-rules/91-system-server.rules)
 CONFIGURE_FILE(${UDEV_RULES}.in ${UDEV_RULES} @ONLY)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} "-ldl")
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} "-ldl" "-lsmack")
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 INSTALL(FILES ${MOVINAND_FORMAT} DESTINATION bin)

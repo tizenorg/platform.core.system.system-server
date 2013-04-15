@@ -25,6 +25,7 @@ BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
 BuildRequires:  pkgconfig(device-node)
+BuildRequires:  pkgconfig(libsmack)
 BuildRequires:	gettext
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl

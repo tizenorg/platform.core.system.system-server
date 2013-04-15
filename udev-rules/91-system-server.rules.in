@@ -1,5 +1,6 @@
 #MMC 
-ACTION=="add", KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/sys_event mmcblk_add"
+ACTION=="change", KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block"
+ACTION=="add",    KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/sys_event mmcblk_add"
 ACTION=="remove", KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/sys_event mmcblk_remove"
 
 #Process Monitor
