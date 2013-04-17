@@ -46,11 +46,13 @@ static GList *haptic_head;
 static int add_node(struct haptic_node *node)
 {
 	haptic_head = g_list_append(haptic_head, node);
+	return 0;
 }
 
 static int delete_node(struct haptic_node *node)
 {
 	haptic_head = g_list_remove(haptic_head, node);
+	return 0;
 }
 
 static struct haptic_node *find_node(int handle)

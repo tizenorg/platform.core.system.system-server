@@ -627,8 +627,8 @@ static int __mmc_mount_fs(void)
 	if (fd < 0) {
 		PRT_TRACE_ERR("can't open the '%s': %s", buf, strerror(errno));
 		snprintf(buf, sizeof(buf), "%s%d", MMC_DEV, blk_num);
-	}
-	close(fd);
+	} else
+		close(fd);
 
 	switch (inserted_type) {
 	case FS_TYPE_FAT:
