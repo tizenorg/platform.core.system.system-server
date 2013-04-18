@@ -142,6 +142,7 @@ systemctl daemon-reload
 %{_bindir}/sys_event
 %{_bindir}/sys_device_noti
 %{_bindir}/sys_pci_noti
+%{_bindir}/mmc-smack-label
 %{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 %{_libdir}/systemd/system/system-server.service
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
