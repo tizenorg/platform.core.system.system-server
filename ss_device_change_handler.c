@@ -222,19 +222,13 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 
 static void mmc_chgdet_cb(void *data)
 {
-	static int inserted;
 	int ret = -1;
 	int val = -1;
-
 	if (data == NULL) {
 		PRT_TRACE("mmc removed");
 		ss_mmc_removed();
-		inserted = 0;
 	} else {
 		PRT_TRACE("mmc added");
-		if (inserted)
-			return;
-		inserted = 1;
 		ret = ss_mmc_inserted();
 		if (ret == -1) {
 			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);

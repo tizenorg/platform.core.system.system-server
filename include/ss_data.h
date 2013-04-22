@@ -71,9 +71,6 @@ enum {
 #define PREDEF_MOUNT_MMC		"mountmmc"
 #define PREDEF_UNMOUNT_MMC		"unmountmmc"
 #define PREDEF_FORMAT_MMC		"formatmmc"
-#define PREDEF_CHECK_SMACK_MMC	"checksmackmmc"
-#define PREDEF_CHECK_MMC		"checkmmc"
-#define PREDEF_CHECK_MMC_PROC	"checkmmcproc"
 
 #define PREDEF_SET_MAX_FREQUENCY	"set_max_frequency"     
 #define PREDEF_SET_MIN_FREQUENCY	"set_min_frequency"     
