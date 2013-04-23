@@ -301,6 +301,7 @@ int internal_poweroff_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
+	display_device_ops.exit(NULL);
 	system("/usr/lib/system-server/shutdown.sh &");
 	sync();
 
@@ -481,6 +482,7 @@ int restart_def_predefine_action(int argc, char **argv)
 
 	heynoti_publish(POWEROFF_NOTI_NAME);
 	pm_change_internal(getpid(), LCD_NORMAL);
+	display_device_ops.exit(NULL);
 	system("/etc/rc.d/rc.shutdown &");
 	sync();
 
