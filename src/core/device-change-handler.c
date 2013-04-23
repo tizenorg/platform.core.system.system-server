@@ -31,10 +31,12 @@
 #include <bundle.h>
 #include <dirent.h>
 #include <libudev.h>
+#include <fnmatch.h>
 #include "dd-deviced.h"
 #include <device-node.h>
 #include "queue.h"
 #include "log.h"
+#include "device-notifier.h"
 #include "device-handler.h"
 #include "noti.h"
 #include "data.h"
@@ -42,6 +44,7 @@
 #include "display/poll.h"
 #include "devices.h"
 #include "sys_pci_noti/sys_pci_noti.h"
+#include "udev.h"
 
 #define PREDEF_USBCON			"usbcon"
 #define PREDEF_EARJACKCON		"earjack_predef_internal"
@@ -537,7 +540,8 @@ static int uevent_control_start(void)
 	}
 
 	udev_monitor_set_receive_buffer_size(mon, 1024);
-	if (udev_monitor_filter_add_match_subsystem_devtype(mon, "platform", NULL) < 0) {
+	if (udev_monitor_filter_add_match_subsystem_devtype(mon, "platform", NULL) < 0 ||
+		udev_monitor_filter_add_match_subsystem_devtype(mon, "input", NULL) < 0) {
 		_E("error apply subsystem filter");
 		uevent_control_stop(-1);
 		return -1;
@@ -581,6 +585,24 @@ static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler)
 		return -1;
 	if ((dev = udev_monitor_receive_device(mon)) == NULL)
 		return -1;
+
+	env_name = udev_device_get_subsystem(dev);
+	if (strncmp(env_name, INPUT_SUBSYSTEM, strlen(INPUT_SUBSYSTEM)) == 0) {
+		char *devpath = udev_device_get_devpath(dev);
+		/* check new input device */
+		if (!fnmatch(INPUT_PATH, devpath, 0)) {
+			char *action = udev_device_get_action(dev);
+			char *devnode = udev_device_get_devnode(dev);
+			if (!strcmp(action, ADD))
+				device_notify(DEVICE_NOTIFIER_INPUT_ADD, devnode);
+			else if (!strcmp(action, REMOVE))
+				device_notify(DEVICE_NOTIFIER_INPUT_REMOVE, devnode);
+			udev_device_unref(dev);
+			uevent_control_stop(ufd);
+			uevent_control_start();
+			return 0;
+		}
+	}
 
 	udev_list_entry_foreach(list_entry,udev_device_get_properties_list_entry(dev)) {
 		env_name = udev_list_entry_get_name(list_entry);
