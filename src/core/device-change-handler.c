@@ -147,7 +147,7 @@ static int check_lowbat_charge_device(int bInserted)
 							bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
 						ret = syspopup_launch("lowbat-syspopup", b);
 						if (ret < 0) {
-							_I("popup lauch failed\n");
+							_I("popup launch failed");
 						}
 						bundle_free(b);
 					}
@@ -228,26 +228,26 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 		__sync_usb_status();
 	}
 	else
-		_E("failed to get ta status\n");
+		_E("failed to get ta status");
 }
 
 static void earjack_chgdet_cb(struct ss_main_data *ad)
 {
-	_D("jack - earjack changed\n");
+	_D("jack - earjack changed");
 	ss_action_entry_call_internal(PREDEF_EARJACKCON, 0);
 }
 
 static void earkey_chgdet_cb(struct ss_main_data *ad)
 {
 	int val;
-	_D("jack - earkey changed\n");
+	_D("jack - earkey changed");
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARKEY_ONLINE, &val) == 0)
 		vconf_set_int(VCONFKEY_SYSMAN_EARJACKKEY, val);
 }
 
 static void tvout_chgdet_cb(struct ss_main_data *ad)
 {
-	_D("jack - tvout changed\n");
+	_D("jack - tvout changed");
 	pm_change_internal(getpid(), LCD_NORMAL);
 }
 
@@ -265,7 +265,7 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 		}
 	}
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_ONLINE, &val) == 0) {
-		_D("jack - hdmi changed %d",val);
+		_D("jack - hdmi changed %d", val);
 		vconf_set_int(VCONFKEY_SYSMAN_HDMI,val);
 		if(val == 1)
 			pm_lock_internal(getpid(), LCD_NORMAL, GOTO_STATE_NOW, 0);
@@ -281,7 +281,7 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 	int val = -1;
 
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_KEYBOARD_ONLINE, &val) == 0) {
-		_D("jack - keyboard changed %d",val);
+		_D("jack - keyboard changed %d", val);
 		if(val != 1)
 			val = 0;
 		vconf_set_int(VCONFKEY_SYSMAN_SLIDING_KEYBOARD, val);
@@ -306,16 +306,10 @@ static void mmc_chgdet_cb(void *data)
 	}
 
 	if (data == NULL) {
-		/* when removed mmc, emul kernel notify twice
-		 * So this code ignores second event */
-		if (!inserted)
-			return;
-		inserted = false;
 		_D("mmc removed");
 		ss_mmc_removed();
 	} else {
-		/* when inserted mmc, emul kernel notify twice(insert, changed)
-		 * So this code ignores second event */
+		_D("mmc added");
 		if (inserted)
 			return;
 		inserted = true;
@@ -385,16 +379,16 @@ static void charge_cb(struct ss_main_data *ad)
 
 	ret = device_get_property(DEVICE_TYPE_POWER, PROP_POWER_PRESENT, &val);
 	if (ret != 0)
-		PRT_TRACE_ERR("fail to get battery present value");
+		_E("fail to get battery present value");
 	if (val == 0 && present_status == 1) {
 		present_status = 0;
-		PRT_TRACE_ERR("battery cf is opened");
+		_E("battery cf is opened");
 		ss_action_entry_call_internal(PREDEF_BATTERY_CF_OPENED, 0);
 	}
 
 	if (val == 1 && present_status == 0) {
 		present_status = 1;
-		PRT_TRACE_ERR("battery cf is closed again");
+		_E("battery cf is closed again");
 	}
 
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &charge_now) != 0 ||
@@ -464,14 +458,14 @@ static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 	int status;
 	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
 	if (ret != 0) {
-		_E("vconf get failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)\n");
+		_E("vconf get failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");
 		return ;
 	}
 
 	if(VCONFKEY_SYSMAN_USB_HOST_CONNECTED == status) {
 		int pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
-			_D("usb-server launching failed\n");
+			_D("usb-server launching failed");
 			return;
 		}
 	}
@@ -480,16 +474,16 @@ static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 
 static void usb_host_add_cb()
 {
-	_D("ENTER: usb_host_add_cb()\n");
+	_D("ENTER: usb_host_add_cb()");
 	int status;
 	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
 	if (ret != 0) {
-		_D("vconf get failed ()\n");
+		_D("vconf get failed ()");
 		return;
 	}
 
 	if (-1 == status) { /* '-1' means that USB host mode is not loaded yet */
-		_D("This usb device is connected defaultly\n");
+		_D("This usb device is connected defaultly");
 
 		ret = system(STORE_DEFAULT_USB_INFO);
 		_D("Return value of usb-devices: %d\n", ret);
@@ -498,7 +492,7 @@ static void usb_host_add_cb()
 			_D("Return value of usb-devices: %d\n", ret);
 		}
 	}
-	_D("EXIT: usb_host_add_cb()\n");
+	_D("EXIT: usb_host_add_cb()");
 }
 
 static int uevent_control_stop(int ufd)
@@ -618,7 +612,7 @@ static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler)
 		return -1;
 	}
 
-	_D("UEVENT DETECTED (%s)",env_value);
+	_D("UEVENT DETECTED (%s)", env_value);
 	ss_action_entry_call_internal(PREDEF_DEVICE_CHANGED,1,env_value);
 
 	udev_device_unref(dev);
@@ -676,12 +670,12 @@ int usbcon_def_predefine_action(int argc, char **argv)
 		pm_lock_internal(getpid(), LCD_OFF, STAY_CUR_STATE, 0);
 		pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
-			PRT_TRACE_ERR("usb predefine action failed\n");
+			_E("usb predefine action failed\n");
 			return -1;
 		}
 		return pid;
 	}
-	PRT_TRACE_ERR("failed to get usb status\n");
+	_E("failed to get usb status\n");
 	return -1;
 }
 
@@ -689,7 +683,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 {
 	int val;
 
-	PRT_TRACE_EM("earjack_normal predefine action\n");
+	_E("earjack_normal predefine action");
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARJACK_ONLINE, &val) == 0) {
 		return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, val);
 	}
@@ -708,7 +702,7 @@ static int battery_def_cf_opened_actioin(int argc, char **argv)
 	ret = syspopup_launch("lowbat-syspopup", b);
 
 	if (ret < 0) {
-	PRT_TRACE_ERR("popup launch failed");
+	_E("popup launch failed");
 	}
 
 	bundle_free(b);

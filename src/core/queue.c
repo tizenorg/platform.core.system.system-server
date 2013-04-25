@@ -157,9 +157,9 @@ int ss_action_entry_call_internal(char *type, int argc, ...)
 
 			int ret;
 			ret=ss_run_queue_add(data, argc, argv);
-			_E("ss_run_queue_add : %d",ret);
+			_E("ss_run_queue_add : %d", ret);
 			ret=ss_core_action_run();
-			_E("ss_core_action_run : %d",ret);
+			_E("ss_core_action_run : %d", ret);
 			return 0;
 		}
 	}
@@ -191,7 +191,7 @@ int ss_action_entry_call(struct sysnoti *msg, int sockfd)
 		}
 	}
 
-	_I("[SYSMAN] cannot found action");
+	_I("[SYSMAN] cannot find action");
 	return -1;
 }
 

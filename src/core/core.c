@@ -76,8 +76,7 @@ static int core_pipe_cb(void *userdata, Ecore_Fd_Handler * fd_handler)
 	int retry_count = 0;
 	int r = -1;
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
-		_E
-		    ("ecore_main_fd_handler_active_get error , return\n");
+		_E("ecore_main_fd_handler_active_get error , return");
 		return 1;
 	}
 
@@ -168,7 +167,7 @@ static void core_init(void *data)
 	__pipe_stop(core_pipe[1]);
 
 	if (__pipe_start(ad) == -1)
-		PRT_TRACE_ERR("fail pipe control fd init");
+		_E("fail pipe control fd init");
 }
 
 const struct device_ops core_device_ops = {

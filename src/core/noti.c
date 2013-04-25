@@ -47,11 +47,11 @@ static void noti_init(void *data)
 	struct ss_main_data *ad = (struct ss_main_data*)data;
 
 	if ((ad->noti_fd = heynoti_init()) < 0) {
-		PRT_TRACE_ERR("Hey Notification Initialize failed");
+		_E("Hey Notification Initialize failed");
 		return;
 	}
 	if (heynoti_attach_handler(ad->noti_fd) != 0) {
-		PRT_TRACE_ERR("fail to attach hey noti handler");
+		_E("fail to attach hey noti handler");
 		return;
 	}
 

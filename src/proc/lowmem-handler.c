@@ -92,7 +92,7 @@ static int remove_shm()
 
 	maxid = shmctl(0, SHM_INFO, (struct shmid_ds *)(void *)&shm_info);
 	if (maxid < 0) {
-		_E("shared mem error\n");
+		_E("shared mem error");
 		return -1;
 	}
 
@@ -101,7 +101,7 @@ static int remove_shm()
 		if (shmid < 0)
 			continue;
 		if (shmseg.shm_nattch == 0) {
-			_D("shared memory killer ==> %d killed\n",
+			_D("shared memory killer ==> %d killed",
 				  shmid);
 			shmctl(shmid, IPC_RMID, NULL);
 		}
@@ -150,11 +150,11 @@ static int get_lowmemnotify_info(FILE *output_fp)
 		return -1;
 	_D("make LOWMEM_LOG");
 	fprintf(output_fp,
-		"====================================================================\n");
-	fprintf(output_fp, "MEMORY INFO by lowmemnotify\n");
+		"====================================================================");
+	fprintf(output_fp, "MEMORY INFO by lowmemnotify");
 
 	while (fgets(line, BUF_MAX, fp) != NULL) {
-		_D("%s",line);
+		_D("%s", line);
 		fputs(line, output_fp);
 	}
 	fclose(fp);
@@ -284,7 +284,7 @@ static unsigned int lowmem_read(int fd)
 {
 	unsigned int mem_state;
 	if (read(fd, &mem_state, sizeof(mem_state)) < 0) {
-		PRT_TRACE_ERR("error lowmem state");
+		_E("error lowmem state");
 		return -1;
 	}
 	return mem_state;
@@ -345,17 +345,17 @@ static void make_memps_log(char *file, pid_t pid, char *victim_name)
 	now = time(NULL);
 	cur_tm = (struct tm *)malloc(sizeof(struct tm));
 	if (cur_tm == NULL) {
-		PRT_TRACE_ERR("Fail to memory allocation");
+		_E("Fail to memory allocation");
 		return;
 	}
 
 	if (localtime_r(&now, cur_tm) == NULL) {
-		PRT_TRACE_ERR("Fail to get localtime");
+		_E("Fail to get localtime");
 		free(cur_tm);
 		return;
 	}
 
-	PRT_TRACE("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
+	_D("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
 		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
 		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
 		 cur_tm->tm_sec);
@@ -385,7 +385,7 @@ static int lowmem_get_victim_pid()
 	int fd;
 
 	if (device_get_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_VICTIM_TASK, &pid) < 0) {
-		PRT_TRACE_ERR("Get victim task failed");
+		_E("Get victim task failed");
 		return -1;
 	}
 
@@ -405,16 +405,15 @@ int lowmem_def_predefine_action(int argc, char **argv)
 		if (pid > 0 && pid != get_exec_pid(LOWMEM_EXEC_PATH) && pid != get_exec_pid(MEMPS_EXEC_PATH)) {
 			if ((get_cmdline_name(pid, appname, PATH_MAX)) ==
 			    0) {
-				PRT_TRACE_EM
-				    ("we will kill, lowmem lv2 = %d (%s)\n",
+				_E("we will kill, lowmem lv2 = %d (%s)\n",
 				     pid, appname);
 				make_memps_log(MEMPS_LOG_FILE, pid, appname);
 
 				if(get_app_oomadj(pid, &oom_adj) < 0) {
-					PRT_TRACE_ERR("Failed to get oom_adj");
+					_E("Failed to get oom_adj");
 					return -1;
 				}
-				PRT_TRACE("%d will be killed with %d oom_adj value", pid, oom_adj);
+				_D("%d will be killed with %d oom_adj value", pid, oom_adj);
 
 				kill(pid, SIGTERM);
 
@@ -428,12 +427,12 @@ int lowmem_def_predefine_action(int argc, char **argv)
 				ret = syspopup_launch("lowmem-syspopup", b);
 				bundle_free(b);
 				if (ret < 0) {
-					PRT_TRACE_EM("popup lauch failed\n");
+					_E("popup lauch failed\n");
 					return -1;
 				}
 
 				if (set_su_oomadj(ret) < 0) {
-					PRT_TRACE_ERR("Failed to set oom_adj");
+					_E("Failed to set oom_adj");
 				}
 			}
 		}

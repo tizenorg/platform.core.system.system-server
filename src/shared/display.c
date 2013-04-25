@@ -20,12 +20,12 @@
 #include <stdio.h>
 #include <vconf.h>
 #include <errno.h>
+#include <device-node.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 #include <linux/limits.h>
-#include <device-node.h>
 
 #include "log.h"
 #include "dd-display.h"

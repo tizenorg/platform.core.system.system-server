@@ -22,21 +22,10 @@
 #include <sys/wait.h>
 #include <vconf.h>
 #include "core.h"
+#include "log.h"
 #include "core/edbus-handler.h"
 #include "display/poll.h"
 #include "devices.h"
-
-#define _E(format, args...) do { \
-	char buf[255];\
-	snprintf(buf, 255, format, ##args);\
-	write(2, buf, strlen(buf));\
-} while (0);
-
-#define _D(format, args...) do { \
-	char buf[255];\
-	snprintf(buf, 255, format, ##args);\
-	write(1, buf, strlen(buf));\
-} while (0);
 
 static struct sigaction sig_child_old_act;
 static struct sigaction sig_pipe_old_act;

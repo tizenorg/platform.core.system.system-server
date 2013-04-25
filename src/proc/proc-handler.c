@@ -84,13 +84,13 @@ int set_app_oomadj(pid_t pid, int new_oomadj)
 	}
 	old_oomadj = atoi(buf);
 	fclose(fp);
-	PRT_TRACE_EM("Process %s, pid %d, old_oomadj %d", exe_name, pid,
+	_E("Process %s, pid %d, old_oomadj %d", exe_name, pid,
 		     old_oomadj);
 
 	if (old_oomadj < OOMADJ_APP_LIMIT)
 		return 0;
 
-	PRT_TRACE_EM("Process %s, pid %d, new_oomadj %d", exe_name, pid,
+	_E("Process %s, pid %d, new_oomadj %d", exe_name, pid,
 		     new_oomadj);
 	snprintf(buf, sizeof(buf), "/proc/%d/oom_adj", pid);
 	fp = fopen(buf, "w");
@@ -128,7 +128,7 @@ int set_oomadj_action(int argc, char **argv)
 	char buf[255];
 	FILE *fp;
 
-	PRT_TRACE_EM("OOMADJ_SET : pid %d, new_oomadj %d", pid, new_oomadj);
+	_E("OOMADJ_SET : pid %d, new_oomadj %d", pid, new_oomadj);
 	snprintf(buf, sizeof(buf), "/proc/%d/oom_adj", pid);
 	fp = fopen(buf, "w");
 	if (fp == NULL)
@@ -168,7 +168,7 @@ int check_and_set_old_backgrd()
 
 	dp = opendir("/proc");
 	if (!dp) {
-		PRT_TRACE_EM("BACKGRD MANAGE : fail to open /proc : %s", strerror(errno));
+		_E("BACKGRD MANAGE : fail to open /proc : %s", strerror(errno));
 		return -1;
 	}
 
@@ -195,7 +195,7 @@ int check_and_set_old_backgrd()
 					break;
 			}
 			if (i >= LIMITED_BACKGRD_NUM)
-				PRT_TRACE_EM("BACKGRB MANAGE : background applications(oom_adj %d) exceeds limitation", i);
+				_E("BACKGRB MANAGE : background applications(oom_adj %d) exceeds limitation", i);
 			else
 				bucket[i] = pid;
 		}
@@ -209,7 +209,11 @@ int check_and_set_old_backgrd()
 			pid = buckets[oom_adj][i];
 			if (!pid)
 				break;
-			if (new_oomadj < MAX_BACKGRD_OOMADJ) {
+			if (new_oomadj >= MAX_BACKGRD_OOMADJ) {
+				_D("BACKGRD MANAGE : kill the process %d (oom_adj %d)", pid, MAX_BACKGRD_OOMADJ);
+				kill(pid, SIGTERM);
+			}
+			else {
 				if (new_oomadj != oom_adj)
 					update_backgrd_app_oomadj(pid, new_oomadj);
 				new_oomadj++;
@@ -253,7 +257,7 @@ int set_active_action(int argc, char **argv)
 		if(oomadj > OOMADJ_BACKGRD_UNLOCKED) {
 			ret = set_app_oomadj((pid_t) pid, OOMADJ_BACKGRD_LOCKED);
 		} else {
-			PRT_TRACE_EM("Unknown oomadj value (%d) !", oomadj);
+			_E("Unknown oomadj value (%d) !", oomadj);
 			ret = -1;
 		}
 		break;
@@ -296,7 +300,7 @@ int set_inactive_action(int argc, char **argv)
 		if(oomadj > OOMADJ_BACKGRD_UNLOCKED) {
 			ret = 0;
 		} else {
-			PRT_TRACE_EM("Unknown oomadj value (%d) !", oomadj);
+			_E("Unknown oomadj value (%d) !", oomadj);
 			ret = -1;
 		}
 		break;
@@ -338,7 +342,7 @@ int set_foregrd_action(int argc, char **argv)
 		if(oomadj > OOMADJ_BACKGRD_UNLOCKED) {
 			ret = set_app_oomadj((pid_t) pid, OOMADJ_FOREGRD_UNLOCKED);
 		} else {
-			PRT_TRACE_EM("Unknown oomadj value (%d) !", oomadj);
+			_E("Unknown oomadj value (%d) !", oomadj);
 			ret = -1;
 		}
 		break;
@@ -381,7 +385,7 @@ int set_backgrd_action(int argc, char **argv)
 		if(oomadj > OOMADJ_BACKGRD_UNLOCKED) {
 			ret = 0;
 		} else {
-			PRT_TRACE_EM("Unknown oomadj value (%d) !", oomadj);
+			_E("Unknown oomadj value (%d) !", oomadj);
 			ret = -1;
 		}
 		break;
@@ -405,9 +409,9 @@ int set_process_group_action(int argc, char **argv)
 		ret = device_set_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_MP_PNP, pid);
 
 	if (ret == 0)
-		PRT_TRACE_ERR("%s : pid %d", argv[1], pid);
+		_E("%s : pid %d", argv[1], pid);
 	else
-		PRT_TRACE_ERR("fail to set %s : pid %d",argv[1], pid);
+		_E("fail to set %s : pid %d",argv[1], pid);
 	return 0;
 }
 

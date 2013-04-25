@@ -159,8 +159,7 @@ static int pmon_process(int pid, void *ad)
 
 				FILE *fp;
 
-				_D
-				    ("[Process MON] OOMADJ_SET : pid %d, new_oomadj %d",
+				_D("[Process MON] OOMADJ_SET : pid %d, new_oomadj %d",
 				     new_pid, (-17));
 				
 				fp = open_proc_oom_adj_file(new_pid, "w");
@@ -194,8 +193,7 @@ static int pmon_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	struct ss_main_data *ad = (struct ss_main_data *)data;
 	int dead_pid;
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
-		_E
-		    ("ecore_main_fd_handler_active_get error , return\n");
+		_E("ecore_main_fd_handler_active_get error , return");
 		return -1;
 	}
 
@@ -262,7 +260,7 @@ static void pmon_init(void *data)
 		pmon_efd = NULL;
 	}
 	if (__pmon_start(ad) == -1) {
-		PRT_TRACE_ERR("fail pmon control fd init");
+		_E("fail pmon control fd init");
 		return;
 	}
 }

@@ -93,14 +93,14 @@ int handle_timezone(char *str)
 	_D("TZPATH = %s\n", tzpath);
 
 	if (stat(tzpath, &sts) == -1 && errno == ENOENT) {
-		PRT_TRACE_ERR("invalid tzpath(%s)", tzpath);
+		_E("invalid tzpath(%s)", tzpath);
 		return -EINVAL;
 	}
 
 	/* FIXME for debugging purpose */
 	time(&now);
 	ts = localtime(&now);
-	PRT_TRACE_ERR("cur local time is %s", asctime(ts));
+	_E("cur local time is %s", asctime(ts));
 
 	/* unlink current link
 	 * eg. rm /opt/etc/localtime */
@@ -130,7 +130,7 @@ int handle_timezone(char *str)
 
 	/* FIXME for debugging purpose */
 	ts = localtime(&now);
-	PRT_TRACE_ERR("new local time is %s", asctime(ts));
+	_E("new local time is %s", asctime(ts));
 	return 0;
 }
 

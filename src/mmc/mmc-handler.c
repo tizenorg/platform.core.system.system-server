@@ -125,7 +125,7 @@ int get_mmcblk_num(void)
 	int mmc_dev_changed = 0;
 
 	if ((dp = opendir("/sys/block")) == NULL) {
-		_E("Can not open directory..\n");
+		_E("Can not open directory: /sys/block");
 		return -1;
 	}
 	chdir("/sys/block");
@@ -166,7 +166,7 @@ int get_mmcblk_num(void)
 
 					free(str_mmcblk_num);
 					closedir(dp);
-					_D("%d \n", mmcblk_num);
+					_D("%d", mmcblk_num);
 
 					snprintf(buf, 255, "/sys/block/%s/device/cid", dir->d_name);
 
@@ -206,7 +206,7 @@ int get_mmcblk_num(void)
 		}
 	}
 	closedir(dp);
-	_E("Failed to find mmc block number\n");
+	_E("Failed to find mmc block number");
 	return -1;
 }
 
@@ -215,7 +215,7 @@ static int mmc_umount(int option)
 	int ret;
 	ret = umount2(MMC_MOUNT_POINT, option);
 	if (ret != 0)
-		_E("Failed to unmount mmc card\n");
+		_E("Failed to unmount mmc card");
 	return ret;
 }
 
@@ -299,7 +299,7 @@ static int create_partition(const char *dev_path)
 	return 0;
 }
 
-static int mmc_format_exec(const char *path, int fs)
+static int mmc_format_exec(const char *path)
 {
 	unsigned int size;
 	int mkfs_pid;
@@ -370,12 +370,9 @@ static int mmc_format(int blknum)
 			return r;
 		}
 	}
-
-	_E("insert type : %d", inserted_type);
-
-	r = mmc_format_exec(dev_mmcblkp, inserted_type);
-	if (r < 0) {
-		_E("%s format fail", dev_mmcblkp);
+	r = mmc_format_exec(dev_mmcblkp);
+	if (r != 0) {
+		_E("format_mmc fail");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT, VCONFKEY_SYSMAN_MMC_FORMAT_FAILED);
 		heynoti_publish("mmcblk_remove");
 		return r;
@@ -503,7 +500,7 @@ static int mmc_mount(void)
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED);
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_FAILED);
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_ERR_STATUS, errno);
-	_E("Failed to mount mmc card\n");
+	_E("Failed to mount mmc card");
 	return -1;
 
 mount_complete:
@@ -542,7 +539,7 @@ int ss_mmc_inserted(void)
 	int ret;
 
 	if (mmc_disabled) {
-		_E("mmc is blocked!");
+		_D("mmc is blocked!");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED);
 		return -ENODEV;
 	}
@@ -550,7 +547,7 @@ int ss_mmc_inserted(void)
 	vconf_get_int(VCONFKEY_SYSMAN_MMC_STATUS, &mmc_status);
 
 	if (mmc_status == VCONFKEY_SYSMAN_MMC_MOUNTED) {
-		_D("Mmc is already mounted.\n");
+		_D("Mmc is already mounted");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_ALREADY);
 		return 0;
 	}
@@ -576,7 +573,7 @@ static int ss_mmc_unmounted(int argc, char **argv)
 	}
 
 	if (mmc_umount(MNT_DETACH) != 0) {
-		_E("Failed to unmount mmc card\n");
+		_E("Failed to unmount mmc card");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_UNMOUNT,
 			VCONFKEY_SYSMAN_MMC_UNMOUNT_FAILED);
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_ERR_STATUS, errno);
@@ -619,14 +616,14 @@ static void mmc_init(void *data)
 static void mmc_start(void)
 {
 	mmc_disabled = false;
-	_E("start");
+	_D("start");
 }
 
 static void mmc_stop(void)
 {
 	mmc_disabled = true;
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_REMOVED);
-	_E("stop");
+	_D("stop");
 }
 
 const struct device_ops mmc_device_ops = {
