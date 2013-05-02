@@ -19,6 +19,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+
 #include "display/util.h"
 #include "setting.h"
 #include "conf.h"
@@ -89,10 +91,11 @@ int get_run_timeout(int *timeout)
 
 	ret = vconf_get_int(setting_keys[SETTING_TO_NORMAL], &vconf_timeout);
 
-	if(vconf_timeout == 0)
-		*timeout = 0; //timeout 0 : Always ON (Do not apply dim_timeout)
+	if (ret < 0 || vconf_timeout <= 0)
+		ret = -ERANGE;
 	else
 		*timeout = vconf_timeout - dim_timeout;
+
 	return ret;
 
 }
