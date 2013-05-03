@@ -269,7 +269,6 @@ systemctl daemon-reload
 %license LICENSE.APLv2
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_bindir}/system_server
-/opt/etc/smack/accesses.d/system-server.rule
 %{_libdir}/system-server/shutdown.sh
 %if 0%{?simulator}
 %exclude %{_bindir}/restart
@@ -295,6 +294,7 @@ systemctl daemon-reload
 %{_libdir}/systemd/system/zbooting-done.service
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
+%{_sysconfdir}/smack/accesses2.d/deviced.rule
 
 %files -n sysman
 %manifest sysman.manifest
