@@ -12,6 +12,7 @@ Source3:    sysman.manifest
 Source4:    libslp-pm.manifest
 Source5:    haptic.manifest
 Source6:    devman.manifest
+Source8:    regpmon.service
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -171,10 +172,13 @@ cp %{SOURCE6} .
 rm -rf %{buildroot}
 %make_install
 
-mkdir -p %{buildroot}%{_unitdir}/multi-user.target.wants
-mkdir -p %{buildroot}%{_unitdir}/sockets.target.wants
-ln -s ../system-server.service %{buildroot}%{_unitdir}/multi-user.target.wants/system-server.service
-ln -s ../system-server.service %{buildroot}%{_unitdir}/sockets.target.wants/system-server.socket
+mkdir -p %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants
+mkdir -p %{buildroot}%{_libdir}/systemd/system/sockets.target.wants
+ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/sockets.target.wants/system-server.socket
+install -m 0644 %{SOURCE8} %{buildroot}%{_libdir}/systemd/system/regpmon.service
+ln -s ../regpmon.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/regpmon.service
+mkdir -p %{buildroot}%{_libdir}/systemd/system/graphical.target.wants
 
 %post
 #memory type vconf key init
@@ -246,12 +250,14 @@ fi
 systemctl daemon-reload
 if [ $1 == 1 ]; then
     systemctl restart system-server.service
+    systemctl restart regpmon.service
 fi
 /sbin/ldconfig
 
 %preun
 if [ $1 == 0 ]; then
     systemctl stop system-server.service
+    systemctl stop regpmon.service
 fi
 
 %postun
@@ -279,10 +285,12 @@ systemctl daemon-reload
 %{_bindir}/sys_pci_noti
 %{_bindir}/mmc-smack-label
 %{_bindir}/device-daemon
-%{_unitdir}/multi-user.target.wants/system-server.service
-%{_unitdir}/sockets.target.wants/system-server.socket
-%{_unitdir}/system-server.service
-%{_unitdir}/system-server.socket
+%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+%{_libdir}/systemd/system/sockets.target.wants/system-server.socket
+%{_libdir}/systemd/system/system-server.service
+%{_libdir}/systemd/system/system-server.socket
+%{_libdir}/systemd/system/multi-user.target.wants/regpmon.service
+%{_libdir}/systemd/system/regpmon.service
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
