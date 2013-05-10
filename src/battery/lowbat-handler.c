@@ -17,6 +17,7 @@
  */
 
 
+#include <stdbool.h>
 #include <assert.h>
 #include <limits.h>
 #include <heynoti.h>
@@ -24,7 +25,6 @@
 #include <fcntl.h>
 #include <device-node.h>
 #include <bundle.h>
-#include <stdbool.h>
 
 #include "core/log.h"
 #include "core/launch.h"
@@ -400,7 +400,7 @@ static int check_battery()
 	int ret = -1;
 
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_PRESENT, &ret) < 0) {
-		_E("[BATMON] battery check : %d", ret);
+		_E("FAIL: device_get_property(): [BATMON] battery check : %d", ret);
 	}
 	_D("[BATMON] battery check : %d", ret);
 
@@ -434,7 +434,7 @@ int lowbat_popup(void *data)
 		lowbat_popup_option = 0;
 		bundle_free(b);
 	} else {
-		_E("boot-animation running yet");
+		_D("boot-animation running yet");
 		return 1;
 	}
 
@@ -480,7 +480,7 @@ int lowbat_def_predefine_action(int argc, char **argv)
 				return -1;
 		}
 	} else {
-		_E("boot-animation running yet");
+		_D("boot-animation running yet");
 		lowbat_popup_id = ecore_timer_add(1, lowbat_popup, NULL);
 	}
 	bundle_free(b);
