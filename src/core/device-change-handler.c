@@ -175,7 +175,7 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 	ss_lowbat_monitor(NULL);
 	ss_action_entry_call_internal(PREDEF_USBCON, 0);
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
-		_D("jack - usb changed %d",val);
+		_I("jack - usb changed %d",val);
 		check_lowbat_charge_device(val);
 		if (val==1) {
 			snprintf(params, sizeof(params), "%d", CB_NOTI_BATT_CHARGE);
@@ -214,7 +214,7 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 	ss_lowbat_monitor(NULL);
 
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_TA_ONLINE, &val) == 0) {
-		_D("jack - ta changed %d",val);
+		_I("jack - ta changed %d",val);
 		check_lowbat_charge_device(val);
 		vconf_set_int(VCONFKEY_SYSMAN_CHARGER_STATUS, val);
 		if (val == 0) {
@@ -233,21 +233,21 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 
 static void earjack_chgdet_cb(struct ss_main_data *ad)
 {
-	_D("jack - earjack changed");
+	_I("jack - earjack changed");
 	ss_action_entry_call_internal(PREDEF_EARJACKCON, 0);
 }
 
 static void earkey_chgdet_cb(struct ss_main_data *ad)
 {
 	int val;
-	_D("jack - earkey changed");
+	_I("jack - earkey changed");
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARKEY_ONLINE, &val) == 0)
 		vconf_set_int(VCONFKEY_SYSMAN_EARJACKKEY, val);
 }
 
 static void tvout_chgdet_cb(struct ss_main_data *ad)
 {
-	_D("jack - tvout changed");
+	_I("jack - tvout changed");
 	pm_change_internal(getpid(), LCD_NORMAL);
 }
 
@@ -259,13 +259,13 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 	pm_change_internal(getpid(), LCD_NORMAL);
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_SUPPORT, &val) == 0) {
 		if (val!=1) {
-			_E("target is not support HDMI");
+			_I("target is not support HDMI");
 			vconf_set_int(VCONFKEY_SYSMAN_HDMI, HDMI_NOT_SUPPORTED);
 			return;
 		}
 	}
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_ONLINE, &val) == 0) {
-		_D("jack - hdmi changed %d", val);
+		_I("jack - hdmi changed %d", val);
 		vconf_set_int(VCONFKEY_SYSMAN_HDMI,val);
 		if(val == 1)
 			pm_lock_internal(getpid(), LCD_NORMAL, GOTO_STATE_NOW, 0);
@@ -281,7 +281,7 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 	int val = -1;
 
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_KEYBOARD_ONLINE, &val) == 0) {
-		_D("jack - keyboard changed %d", val);
+		_I("jack - keyboard changed %d", val);
 		if(val != 1)
 			val = 0;
 		vconf_set_int(VCONFKEY_SYSMAN_SLIDING_KEYBOARD, val);
@@ -306,10 +306,10 @@ static void mmc_chgdet_cb(void *data)
 	}
 
 	if (data == NULL) {
-		_D("mmc removed");
+		_I("mmc removed");
 		ss_mmc_removed();
 	} else {
-		_D("mmc added");
+		_I("mmc added");
 		if (inserted)
 			return;
 		inserted = true;
@@ -381,7 +381,7 @@ static void charge_cb(struct ss_main_data *ad)
 	    device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &capacity) != 0)
 		_E("fail to get battery node value");
 	if (charge_now == 0 && capacity == 0) {
-		_E("target will be shut down");
+		_I("target will be shut down");
 		battery_power_off_act(NULL);
 		return;
 	}
@@ -391,19 +391,19 @@ static void charge_cb(struct ss_main_data *ad)
 		_E("fail to get battery present value");
 	if (val == 0 && present_status == 1) {
 		present_status = 0;
-		_E("battery cf is opened");
+		_I("battery cf is opened");
 		if (charge_now)
 			ss_action_entry_call_internal(PREDEF_BATTERY_CF_OPENED, 0);
 	}
 
 	if (val == 1 && present_status == 0) {
 		present_status = 1;
-		_E("battery cf is closed again");
+		_I("battery cf is closed again");
 	}
 
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_HEALTH, &val) == 0) {
 		if (val==BATTERY_OVERHEAT || val==BATTERY_COLD) {
-			_E("Battery health status is not good (%d)", val);
+			_I("Battery health status is not good (%d)", val);
 
 			if (__check_abnormal_popup_launch() != 0)
 				return;
@@ -455,7 +455,6 @@ static void cb_xxxxx_signaled(void *data, DBusMessage * msg)
 
 static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 {
-	_D("ENTER: usb_host_chgdet_cb()");
 	int status;
 	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
 	if (ret != 0) {
@@ -466,20 +465,18 @@ static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 	if(VCONFKEY_SYSMAN_USB_HOST_CONNECTED == status) {
 		int pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
-			_D("usb-server launching failed");
+			_E("usb-server launching failed");
 			return;
 		}
 	}
-	_D("EXIT: usb_host_chgdet_cb()");
 }
 
 static void usb_host_add_cb()
 {
-	_D("ENTER: usb_host_add_cb()");
 	int status;
 	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
 	if (ret != 0) {
-		_D("vconf get failed ()");
+		_E("vconf get failed ()");
 		return;
 	}
 
@@ -493,7 +490,6 @@ static void usb_host_add_cb()
 			_D("Return value of usb-devices: %d\n", ret);
 		}
 	}
-	_D("EXIT: usb_host_add_cb()");
 }
 
 static int uevent_control_stop(int ufd)
@@ -539,7 +535,6 @@ static int uevent_control_start(void)
 		return -EINVAL;
 	}
 
-	_D("success to set receive buffer size");
 	if (udev_monitor_filter_add_match_subsystem_devtype(mon, "platform", NULL) < 0 ||
 		udev_monitor_filter_add_match_subsystem_devtype(mon, "input", NULL) < 0) {
 		_E("error apply subsystem filter");
@@ -618,7 +613,7 @@ static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler)
 		return -1;
 	}
 
-	_D("UEVENT DETECTED (%s)", env_value);
+	_I("UEVENT DETECTED (%s)", env_value);
 	ss_action_entry_call_internal(PREDEF_DEVICE_CHANGED,1,env_value);
 
 	udev_device_unref(dev);
