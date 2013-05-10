@@ -132,6 +132,7 @@ systemctl daemon-reload
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
 %{_sysconfdir}/rc.d/rc5.d/S00system-server
 %{_bindir}/system_server
+/opt/etc/smack/accesses.d/system-server.rule
 %if 0%{?simulator}
 %exclude %{_bindir}/restart
 %else
