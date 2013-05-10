@@ -100,7 +100,7 @@ int handle_timezone(char *str)
 	/* FIXME for debugging purpose */
 	time(&now);
 	ts = localtime(&now);
-	_E("cur local time is %s", asctime(ts));
+	_D("cur local time is %s", asctime(ts));
 
 	/* unlink current link
 	 * eg. rm /opt/etc/localtime */
@@ -130,7 +130,7 @@ int handle_timezone(char *str)
 
 	/* FIXME for debugging purpose */
 	ts = localtime(&now);
-	_E("new local time is %s", asctime(ts));
+	_D("new local time is %s", asctime(ts));
 	return 0;
 }
 
@@ -253,7 +253,6 @@ static int tfd_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	}
 
 	ret = read(tfd,&ticks,sizeof(ticks));
-
 	if (ret < 0 && errno == ECANCELED) {
 		vconf_set_int(VCONFKEY_SYSMAN_STIME, VCONFKEY_SYSMAN_STIME_CHANGED);
 		timerfd_check_stop(tfd);
