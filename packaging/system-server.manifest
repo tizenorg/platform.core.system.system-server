@@ -1,6 +1,6 @@
 <manifest>
 	<define>
-		<domain name="deviced"/>
+		<domain name="deviced" policy="shared"/>
 	</define>
 	<assign>
 		<filesystem path="/etc/init.d/system_server.sh" label="_" exec_label="none" />
