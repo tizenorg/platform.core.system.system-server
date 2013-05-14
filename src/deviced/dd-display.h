@@ -41,6 +41,7 @@ extern "C" {
 #define STAY_CUR_STATE	0x1
 #define GOTO_STATE_NOW	0x2
 #define HOLD_KEY_BLOCK	0x4
+#define STANDBY_MODE    0x8
 
 /* paramters for display_unlock_state() */
 #define PM_SLEEP_MARGIN	0x0	/**< keep guard time for unlock */
