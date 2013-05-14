@@ -61,6 +61,11 @@ typedef enum {
 	FS_MOUNT_SUCCESS = 1,
 } mmc_mount_type;
 
+enum unmount_operation {
+	UNMOUNT_NORMAL,
+	UNMOUNT_FORCE,
+};
+
 static int smack = 0;
 static int mmc_popup_pid = 0;
 static enum mmc_fs_type inserted_type;
@@ -84,7 +89,7 @@ static void __attribute__ ((constructor)) smack_check(void)
 
 	if (ret == 0 && sfs.f_type == SMACKFS_MAGIC)
 		smack = 1;
-	_E("smackfs check %d", smack);
+	_I("smackfs check %d", smack);
 }
 
 static int exec_process(const char **argv)
@@ -244,7 +249,7 @@ static int mmc_check_fs_type(void)
 	}
 
 	if (inserted_type == FS_TYPE_NONE) {
-		_E("set default file system");
+		_D("set default file system");
 		inserted_type = FS_TYPE_FAT;
 		mmc_filesystem = &vfat_ops;
 		if (!mmc_filesystem) {
@@ -279,16 +284,16 @@ static int check_mount_state(void)
 	snprintf(mount_path, sizeof(mount_path), "%s", MMC_MOUNT_POINT);
 
 	if (stat(mount_path, &mount_stat) != 0 || stat(parent_path, &parent_stat) != 0) {
-		_E("get stat error");
+		_I("state : UNMOUNT (get stat error)");
 		return 0;
 	}
 
 	if (mount_stat.st_dev == parent_stat.st_dev) {
-		_E("state : UNMOUNT");
+		_I("state : UNMOUNT");
 		return 0;
 	}
 
-	_E("state : MOUNT");
+	_I("state : MOUNT");
 	return 1;
 }
 
@@ -337,10 +342,10 @@ static int mmc_format_exec(const char *path)
 	}
 
 	snprintf(buf, sizeof(buf), "%s%d", "/proc/", mkfs_pid);
-	_E("child process : %s", buf);
+	_D("child process : %s", buf);
 	while (1) {
 		sleep(1);
-		_E("formatting....");
+		_D("formatting....");
 		if (access(buf, R_OK) != 0)
 			break;
 	}
@@ -353,39 +358,22 @@ static int mmc_format(int blknum)
 	char dev_mmcblkp[NAME_MAX];
 	int fs, r;
 
-	if (check_mount_state() == 1) {
-		_E("Mounted, will be unmounted");
-		r = mmc_umount(MNT_DETACH);
-		if (r != 0) {
-			_E("unmount_mmc fail");
-			vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT,
-				VCONFKEY_SYSMAN_MMC_FORMAT_FAILED);
-			return r;
-		}
-	}
-
 	snprintf(dev_mmcblk, sizeof(dev_mmcblk), "%s%d", MMC_DEV, blknum);
 	snprintf(dev_mmcblkp, sizeof(dev_mmcblkp), "%sp1", dev_mmcblk);
 	if (access(dev_mmcblkp, R_OK) < 0) {
-		_E("%s is not valid, create the primary partition", dev_mmcblkp);
+		_I("%s is not valid, create the primary partition", dev_mmcblkp);
 		r = create_partition(dev_mmcblk);
 		if (r != 0) {
 			_E("create_partition failed");
-			vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT, VCONFKEY_SYSMAN_MMC_FORMAT_FAILED);
-			heynoti_publish("mmcblk_remove");
 			return r;
 		}
 	}
 	r = mmc_format_exec(dev_mmcblkp);
 	if (r != 0) {
 		_E("format_mmc fail");
-		vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT, VCONFKEY_SYSMAN_MMC_FORMAT_FAILED);
-		heynoti_publish("mmcblk_remove");
 		return r;
 	}
 
-	_E("Format Successful");
-	vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT, VCONFKEY_SYSMAN_MMC_FORMAT_COMPLETED);
 	return 0;
 }
 
@@ -395,7 +383,7 @@ int mount_fs(char *path, const char *fs_name, const char *mount_data)
 
 	do {
 		if ((ret = mount(path, MMC_MOUNT_POINT, fs_name, 0, mount_data)) == 0) {
-			_E("Mounted mmc card %s", fs_name);
+			_I("Mounted mmc card %s", fs_name);
 			return 0;
 		}
 		usleep(100000);
@@ -469,10 +457,10 @@ static void mmc_check_fs(void)
 	}
 
 	snprintf(buf, sizeof(buf), "%s%d", "/proc/", pid);
-	_E("child process : %s", buf);
+	_D("child process : %s", buf);
 
 	while (1) {
-		_E("mmc checking ....");
+		_D("mmc checking ....");
 		if (access(buf, R_OK) != 0)
 			break;
 		sleep(1);
@@ -533,7 +521,7 @@ int ss_mmc_removed(void)
 	int mmc_err = 0;
 
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_REMOVED);
-	mmc_err = mmc_umount(MNT_DETACH);
+	mmc_err = mmc_umount(UNMOUNT_NORMAL);
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_ERR_STATUS, mmc_err);
 	mmc_filesystem = NULL;
 	return 0;
@@ -545,7 +533,7 @@ int ss_mmc_inserted(void)
 	int ret;
 
 	if (mmc_disabled) {
-		_D("mmc is blocked!");
+		_I("mmc is blocked!");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED);
 		return -ENODEV;
 	}
@@ -553,7 +541,7 @@ int ss_mmc_inserted(void)
 	vconf_get_int(VCONFKEY_SYSMAN_MMC_STATUS, &mmc_status);
 
 	if (mmc_status == VCONFKEY_SYSMAN_MMC_MOUNTED) {
-		_D("Mmc is already mounted");
+		_I("Mmc is already mounted");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_ALREADY);
 		return 0;
 	}
@@ -578,7 +566,7 @@ static int ss_mmc_unmounted(int argc, char **argv)
 		return -1;
 	}
 
-	if (mmc_umount(MNT_DETACH) != 0) {
+	if (mmc_umount(UNMOUNT_NORMAL) != 0) {
 		_E("Failed to unmount mmc card");
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_UNMOUNT,
 			VCONFKEY_SYSMAN_MMC_UNMOUNT_FAILED);
@@ -595,19 +583,45 @@ static int ss_mmc_unmounted(int argc, char **argv)
 
 static int ss_mmc_format(int argc, char **argv)
 {
-	int ret;
+	int r;
+	int option;
 
-	_E("mmc format called");
-	mmc_umount(MNT_DETACH);
+	if (argc < 1) {
+		_E("Option is wong");
+		r = -EINVAL;
+		goto error;
+	}
+
+	option = atoi(argv[0]);
+	if (option < 0) {
+		_E("Option is wong : %d", option);
+		r = -EINVAL;
+		goto error;
+	}
+
+	_I("Format Start (option:%d)", option);
+	r = mmc_umount(option);
+	if (r != 0)
+		goto error;
 
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS, VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS_NOW);
-	ret = mmc_format(get_mmcblk_num());
+	r = mmc_format(get_mmcblk_num());
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS, VCONFKEY_SYSMAN_MMC_FORMAT_PROGRESS_NONE);
-	if (ret != 0)
-		return ret;
+	if (r != 0)
+		goto error;
 
-	ret = mmc_mount();
-	return ret;
+	r = mmc_mount();
+	if (r != 0)
+		goto error;
+
+	_I("Format Successful");
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT, VCONFKEY_SYSMAN_MMC_FORMAT_COMPLETED);
+	return 0;
+
+error:
+	_E("Format Failed");
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT, VCONFKEY_SYSMAN_MMC_FORMAT_FAILED);
+	return r;
 }
 
 static void mmc_init(void *data)
