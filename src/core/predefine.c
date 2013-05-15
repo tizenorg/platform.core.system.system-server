@@ -144,7 +144,7 @@ void predefine_pm_change_state(unsigned int s_bits)
 	pm_change_internal(getpid(), s_bits);
 }
 
-static void ss_action_entry_load_from_sodir()
+static void action_entry_load_from_sodir()
 {
 	DIR *dp;
 	struct dirent *dentry;
@@ -176,7 +176,7 @@ static void ss_action_entry_load_from_sodir()
 		msg->path = tmp;
 		*ext = 0;
 		msg->type = &(dentry->d_name[3]);
-		ss_action_entry_add(msg);
+		action_entry_add(msg);
 	}
 	free(msg);
 
@@ -185,7 +185,7 @@ static void ss_action_entry_load_from_sodir()
 
 static void predefine_init(void *data)
 {
-	ss_action_entry_load_from_sodir();
+	action_entry_load_from_sodir();
 }
 
 const struct device_ops predefine_device_ops = {
