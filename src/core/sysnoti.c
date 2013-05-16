@@ -106,10 +106,8 @@ static inline char *recv_str(int fd)
 		_E("Read retry failed");
 		return NULL;
 	}
-	if (len <= 0) {
-		_E("str is null");
+	if (len <= 0)
 		return NULL;
-	}
 
 	if (len >= INT_MAX) {
 		_E("size is over INT_MAX");
@@ -147,7 +145,6 @@ static inline char *recv_str(int fd)
 	}
 
 	str[len] = 0;
-
 	return str;
 }
 
