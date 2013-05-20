@@ -365,7 +365,7 @@ static int __check_lowbat_percent(int *pct)
 	return 0;
 }
 
-Eina_Bool ss_lowbat_monitor(void *data)
+int ss_lowbat_monitor(void *data)
 {
 	struct ss_main_data *ad = (struct ss_main_data *)data;
 	int bat_percent, r;
