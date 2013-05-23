@@ -44,7 +44,8 @@ pkg_check_modules(pkgs REQUIRED
 	syspopup-caller
 	notification
 	devman
-	device-node)
+	device-node
+	libsmack)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
@@ -69,7 +70,7 @@ SET(UDEV_RULES udev-rules/91-system-server.rules)
 CONFIGURE_FILE(${UDEV_RULES}.in ${UDEV_RULES} @ONLY)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} "-ldl")
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} "-ldl" "-lsmack")
 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 INSTALL(FILES ${MOVINAND_FORMAT} DESTINATION bin)
@@ -77,6 +78,7 @@ INSTALL(FILES ${UDEV_RULES} DESTINATION ${UDEV_RULES_PATH})
 INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/system_server.sh DESTINATION /etc/rc.d/init.d)
 INSTALL(FILES system-server.conf DESTINATION /etc/dbus-1/system.d)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/packaging/system-server.rule DESTINATION /opt/etc/smack/accesses.d)
+INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/mmc-smack-label DESTINATION bin)
 
 ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)
