@@ -284,6 +284,7 @@ systemctl daemon-reload
 %{_bindir}/sys_pci_noti
 %{_bindir}/mmc-smack-label
 %{_bindir}/device-daemon
+%{_bindir}/fsck_msdosfs
 %{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 %{_libdir}/systemd/system/sockets.target.wants/system-server.socket
 %{_libdir}/systemd/system/system-server.service
@@ -294,6 +295,7 @@ systemctl daemon-reload
 %{_libdir}/systemd/system/zbooting-done.service
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
+%{_datadir}/license/fsck_msdosfs
 %{_sysconfdir}/smack/accesses2.d/deviced.rule
 
 %files -n sysman
