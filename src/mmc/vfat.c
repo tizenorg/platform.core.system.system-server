@@ -27,8 +27,8 @@ static const char *vfat_arg[] = {
 };
 
 static const char *vfat_check_arg[] = {
-	"/sbin/fsck.vfat",
-	"-a", NULL, NULL,
+	"/usr/bin/fsck_msdosfs",
+	"-pf", NULL, NULL,
 };
 
 static struct fs_check fs_vfat_type = {
@@ -72,7 +72,7 @@ out:
 
 static const char ** vfat_check(void)
 {
-	return NULL;
+	return vfat_check_arg;
 }
 
 static int vfat_mount(int smack, void *data)
