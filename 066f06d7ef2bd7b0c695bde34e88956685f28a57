@@ -1,0 +1,8 @@
+Change-Id: I066f06d7ef2bd7b0c695bde34e88956685f28a57
+Code-Review+2: Anas Nashif
+Verified+1: Baptiste DURAND <baptiste.durand@eurogiciel.fr>
+Submitted-by: Anas Nashif
+Submitted-at: Wed, 29 May 2013 06:07:47 -0700
+Reviewed-on: https://review.tizen.org/gerrit/3723
+Project: platform/core/system/system-server
+Branch: refs/heads/tizen
