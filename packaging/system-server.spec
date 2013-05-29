@@ -36,7 +36,7 @@ Description: System server
 
 %prep
 %setup -q
-cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
+%cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 
 %build
 cp %{SOURCE2} .
@@ -51,9 +51,9 @@ ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc3
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/rc5.d/
 ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S00system-server
 
-mkdir -p %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants
-install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.service
-ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+mkdir -p %{buildroot}%{_unitdir}/multi-user.target.wants
+install -m 0644 %{SOURCE1} %{buildroot}%{_unitdir}/system-server.service
+ln -s ../system-server.service %{buildroot}%{_unitdir}/multi-user.target.wants/system-server.service
 
 %post
 
@@ -142,8 +142,8 @@ systemctl daemon-reload
 %{_bindir}/sys_event
 %{_bindir}/sys_device_noti
 %{_bindir}/sys_pci_noti
-%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
-%{_libdir}/systemd/system/system-server.service
+%{_unitdir}/multi-user.target.wants/system-server.service
+%{_unitdir}/system-server.service
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo

@@ -41,8 +41,6 @@
 #include "ss_vibrator.h"
 #include "include/ss_data.h"
 
-#define PREDEFINE_SO_DIR			PREFIX"/lib/ss_predefine/"
-
 #define CALL_EXEC_PATH				PREFIX"/bin/call"
 #define LOWMEM_EXEC_PATH			PREFIX"/bin/lowmem-popup"
 #define LOWBAT_EXEC_PATH			PREFIX"/bin/lowbatt-popup"
