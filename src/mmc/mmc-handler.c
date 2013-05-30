@@ -239,15 +239,6 @@ int get_mmcblk_num(void)
 	return -1;
 }
 
-static int mmc_umount(int option)
-{
-	int ret;
-	ret = umount2(MMC_MOUNT_POINT, option);
-	if (ret != 0)
-		_E("Failed to unmount mmc card");
-	return ret;
-}
-
 static int mmc_check_fs_type(void)
 {
 	int ret;
@@ -328,7 +319,79 @@ static int create_partition(const char *dev_path)
 	return 0;
 }
 
-static int mmc_format_exec(const char *path)
+static int kill_app_accessing_mmc(void)
+{
+	int pid;
+	char *argv[4] = {"/sbin/fuser", "-mk", MMC_MOUNT_POINT, NULL};
+	char buf[256];
+	int retry = 10;
+
+	pid = exec_process(argv);
+	if (pid < 0) {
+		_E("%s fail");
+		return -EINVAL;
+	}
+
+	snprintf(buf, sizeof(buf), "%s%d", "/proc/", pid);
+	_D("child process : %s", buf);
+	while (--retry) {
+		usleep(100000);
+		_D("killing app....");
+		if (access(buf, R_OK) != 0)
+			break;
+	}
+
+	return 0;
+}
+
+static void launch_syspopup(const char *str)
+{
+	bundle *b;
+	int ret;
+	b = bundle_create();
+	if (!b) {
+		_E("error bundle_create()");
+		return;
+	}
+	bundle_add(b, "_SYSPOPUP_CONTENT_", str);
+	ret = syspopup_launch("mmc-syspopup", b);
+	if (ret < 0)
+		_E("popup launch failed");
+	bundle_free(b);
+}
+
+static int mmc_umount(int option)
+{
+	int r, retry = 5;
+
+	if (!check_mount_state())
+		return 0;
+
+	_I("Mounted, will be unmounted");
+	r = umount(MMC_MOUNT_POINT);
+	if (!r || option == UNMOUNT_NORMAL)
+		return r;
+
+	_I("Execute force unmount!");
+
+	/* it notify to other app who already access sdcard */
+	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_INSERTED_NOT_MOUNTED);
+
+	/* it takes some seconds til other app completely clean up */
+	usleep(500000);
+
+	while (--retry) {
+		r = umount2(MMC_MOUNT_POINT, MNT_DETACH);
+		if (!r)
+			break;
+		usleep(500000);
+		_I("umount retry : %d", retry);
+	}
+
+	return r;
+}
+
+static int mmc_format_exec(char *path)
 {
 	unsigned int size;
 	int mkfs_pid;
