@@ -2,7 +2,7 @@
 Name:       system-server
 Summary:    System server
 Version:    0.1.65
-Release:    5
+Release:    6
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
@@ -26,6 +26,7 @@ BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
 BuildRequires:  pkgconfig(device-node)
+BuildRequires:  pkgconfig(libsmack)
 BuildRequires:	gettext
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl
@@ -149,6 +150,7 @@ systemctl daemon-reload
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
 %{_sysconfdir}/rc.d/rc5.d/S00system-server
 %{_bindir}/system_server
+/opt/etc/smack/accesses.d/system-server.rule
 %if 0%{?simulator}
 %exclude %{_bindir}/restart
 %else
@@ -158,6 +160,7 @@ systemctl daemon-reload
 %{_bindir}/sys_event
 %{_bindir}/sys_device_noti
 %{_bindir}/sys_pci_noti
+%{_bindir}/mmc-smack-label
 %{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 %{_libdir}/systemd/system/system-server.service
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png

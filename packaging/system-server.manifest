@@ -1,6 +1,6 @@
 <manifest>
 	<define>
-		<domain name="system-server"/>
+		<domain name="deviced" policy="shared"/>
 	</define>
 	<assign>
 		<filesystem path="/etc/init.d/system_server.sh" label="_" exec_label="none" />
@@ -11,6 +11,6 @@
 		<filesystem path="/usr/lib/systemd/system/multi-user.target.wants/system-server.service" label="_" exec_label="none" />
 	</assign>
 	<request>
-		<domain name="system-server"/>
+		<domain name="deviced"/>
 	</request>
 </manifest>

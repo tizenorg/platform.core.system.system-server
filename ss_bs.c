@@ -393,6 +393,7 @@ static int _get_file_count(char *path)
 		}
 		count++;
 	}
+	closedir(dir);
 	return count;
 }
 /* check disk available size */
