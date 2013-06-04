@@ -150,7 +150,6 @@ static int pmon_process(int pid, void *ad)
 					return -1;
 				}
 				close(fd);
-
 				if ( device_set_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_MP_PNP, new_pid) < 0) {
 					PRT_TRACE_ERR("Write new pid failed");
 				}

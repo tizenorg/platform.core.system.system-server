@@ -30,7 +30,6 @@
 #include <syspopup_caller.h>
 #include <sys/reboot.h>
 #include <sys/time.h>
-#include <devman.h>
 #include <mntent.h>
 #include <sys/mount.h>
 

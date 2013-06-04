@@ -57,7 +57,6 @@ pkg_check_modules(pkgs REQUIRED
 	dlog
 	syspopup-caller
 	notification
-	devman
 	device-node
 	libsmack)
 

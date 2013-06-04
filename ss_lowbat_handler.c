@@ -200,9 +200,7 @@ static int lowbat_process(int bat_percent, void *ad)
 	} else {
 		new_bat_state = BATTERY_NORMAL;
 		if (new_bat_capacity == BATTERY_FULL) {
-			if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &bat_full) < 0) {
-				PRT_TRACE_ERR("fail to read charge full from kernel");
-			}
+			device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &bat_full);
 			if (bat_full == 1) {
 				if (vconf_state != VCONFKEY_SYSMAN_BAT_FULL)
 				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_FULL);
@@ -256,10 +254,7 @@ static int lowbat_read()
 {
 	int bat_percent;
 
-	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent) < 0) {
-		PRT_TRACE_ERR("fail to read power capacity from kernel");
-		return -1;
-	}
+	device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent);
 
 	return bat_percent;
 }

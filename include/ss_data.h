@@ -85,6 +85,8 @@ enum {
 #define PREDEF_DEVICE_CHANGED	"device_changed"
 #define PREDEF_INTERNAL_POWEROFF	"internal_poweroff"
 
+#define PROCESS_GROUP_SET		"process_group_set"
+
 #define OOMADJ_SU                       (-17)
 #define OOMADJ_INIT                     (-16)
 #define OOMADJ_FOREGRD_LOCKED           (-15)
