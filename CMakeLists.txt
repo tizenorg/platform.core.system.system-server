@@ -26,8 +26,8 @@ SET(SRCS
 	ss_procmgr.c
 	ss_timemgr.c
 	ss_cpu_handler.c
-	ss_vibrator.c
-	)
+	ss_common.c
+	ss_vibrator.c)
 
 # libdeviced
 SET(DEVICED_SRCS

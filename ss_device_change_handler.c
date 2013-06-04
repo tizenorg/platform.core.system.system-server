@@ -38,13 +38,17 @@
 #include "include/ss_data.h"
 #include "sys_device_noti/sys_device_noti.h"
 #include "sys_pci_noti/sys_pci_noti.h"
-
+#include "ss_predefine.h"
 #define BUFF_MAX		255
 #define SYS_CLASS_INPUT		"/sys/class/input"
 #define USBCON_EXEC_PATH	PREFIX"/bin/usb-server"
 #define DEFAULT_USB_INFO_PATH	"/tmp/usb_default"
 #define STORE_DEFAULT_USB_INFO	"usb-devices > "DEFAULT_USB_INFO_PATH
 #define HDMI_NOT_SUPPORTED	(-1)
+#ifdef ENABLE_EDBUS_USE
+#include <E_DBus.h>
+static E_DBus_Connection *conn;
+#endif				/* ENABLE_EDBUS_USE */
 
 struct input_event {
 	long dummy[2];
@@ -73,6 +77,9 @@ enum snd_jack_types {
 #define ENV_VALUE_HDMI 		"hdmi"
 #define ENV_VALUE_KEYBOARD 	"keyboard"
 
+
+#define ABNORMAL_POPUP_COUNTER	5
+
 static int input_device_number;
 
 static struct udev_monitor *mon = NULL;
@@ -99,8 +106,8 @@ static int check_lowbat_charge_device(int bInserted)
 				bChargeDeviceInserted = 0;
 				//low bat popup during charging device removing
 				if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state) == 0) {
-					if (bat_state < VCONFKEY_SYSMAN_BAT_NORMAL ||
-					    bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
+					if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL
+					|| bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
 						bundle *b = NULL;
 						b = bundle_create();
 						if(bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF)
@@ -128,13 +135,14 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 {
 	int val = -1;
 	char params[BUFF_MAX];
-	pm_change_state(LCD_NORMAL);
+
+	predefine_pm_change_state(LCD_NORMAL);
+
 	/* check charging now */
 	ss_lowbat_is_charge_in_now();
 	/* check current battery level */
 	ss_lowbat_monitor(NULL);
 	ss_action_entry_call_internal(PREDEF_USBCON, 0);
-
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
 		PRT_TRACE("jack - usb changed %d",val);
 		check_lowbat_charge_device(val);
@@ -147,6 +155,19 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 		PRT_TRACE_ERR("fail to get usb_online status");
 	}
 }
+
+static void __sync_usb_status(void)
+{
+	int val = -1;
+	int status = -1;
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) != 0 ||
+	    vconf_get_int(VCONFKEY_SYSMAN_USB_STATUS,&status) != 0)
+		return;
+	if ((val == 1 && status == VCONFKEY_SYSMAN_USB_DISCONNECTED) ||
+	    (val == 0 && status == VCONFKEY_SYSMAN_USB_AVAILABLE))
+		ss_action_entry_call_internal(PREDEF_USBCON, 0);
+}
+
 static void ta_chgdet_cb(struct ss_main_data *ad)
 {
 	int val = -1;
@@ -154,7 +175,8 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
 	char params[BUFF_MAX];
 
-	pm_change_state(LCD_NORMAL);
+	predefine_pm_change_state(LCD_NORMAL);
+
 	/* check charging now */
 	ss_lowbat_is_charge_in_now();
 	/* check current battery level */
@@ -172,6 +194,7 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 			ss_launch_if_noexist("/usr/bin/sys_device_noti", params);
 			PRT_TRACE("ta device notification");
 		}
+		__sync_usb_status();
 	}
 	else
 		PRT_TRACE_ERR("failed to get ta status\n");
@@ -187,6 +210,7 @@ static void earkey_chgdet_cb(struct ss_main_data *ad)
 {
 	int val;
 	PRT_TRACE("jack - earkey changed\n");
+
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARKEY_ONLINE, &val) == 0)
 		vconf_set_int(VCONFKEY_SYSMAN_EARJACKKEY, val);
 }
@@ -200,6 +224,8 @@ static void tvout_chgdet_cb(struct ss_main_data *ad)
 static void hdmi_chgdet_cb(struct ss_main_data *ad)
 {
 	int val;
+	int ret = -1;
+
 	pm_change_state(LCD_NORMAL);
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_SUPPORT, &val) == 0) {
 		if (val!=1) {
@@ -255,7 +281,24 @@ static void mmc_chgdet_cb(void *data)
 			if (val == VCONFKEY_SYSMAN_MMC_MOUNT_FAILED) {
 				bundle *b = NULL;
 				b = bundle_create();
+				if (b == NULL) {
+					PRT_TRACE_ERR("error bundle_create()");
+					return;
+				}
 				bundle_add(b, "_SYSPOPUP_CONTENT_", "mounterr");
+				ret = syspopup_launch("mmc-syspopup", b);
+				if (ret < 0) {
+					PRT_TRACE_ERR("popup launch failed");
+				}
+				bundle_free(b);
+			} else if (val == VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED) {
+				bundle *b = NULL;
+				b = bundle_create();
+				if (b == NULL) {
+					PRT_TRACE_ERR("error bundle_create()");
+					return;
+				}
+				bundle_add(b, "_SYSPOPUP_CONTENT_", "mountrdonly");
 				ret = syspopup_launch("mmc-syspopup", b);
 				if (ret < 0) {
 					PRT_TRACE_ERR("popup launch failed");
@@ -271,18 +314,48 @@ static void ums_unmount_cb(void *data)
 	umount(MOVINAND_MOUNT_POINT);
 }
 
+static int __check_abnormal_popup_launch(void)
+{
+	static int noti_count = 0;
+	if (noti_count >= ABNORMAL_POPUP_COUNTER) {
+		noti_count = 0;
+		return 0;
+	} else {
+		noti_count++;
+		return -EAGAIN;
+	}
+}
+
 static void charge_cb(struct ss_main_data *ad)
 {
 	int val = -1;
+	int charge_now = -1;
+	int capacity = -1;
 	char params[BUFF_MAX];
 	static int bat_full_noti = 0;
+
 	ss_lowbat_monitor(NULL);
+
+	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &charge_now) != 0 ||
+	    device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &capacity) != 0)
+		PRT_TRACE_ERR("fail to get battery node value");
+	if (charge_now == 0 && capacity == 0) {
+		PRT_TRACE_ERR("target will be shut down");
+		ss_action_entry_call_internal(PREDEF_LOWBAT, 1, POWER_OFF_BAT_ACT);
+		return;
+	}
 
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_HEALTH, &val) == 0) {
 		if (val==BATTERY_OVERHEAT || val==BATTERY_COLD) {
 			PRT_TRACE_ERR("Battery health status is not good (%d)", val);
-			ss_action_entry_call_internal(PREDEF_LOWBAT, 1, CHARGE_ERROR_ACT);
 
+			if (__check_abnormal_popup_launch() != 0)
+				return;
+
+			if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &val) == 0 && val <= 0)
+				ss_action_entry_call_internal(PREDEF_LOWBAT, 1, POWER_OFF_BAT_ACT);
+			else
+				ss_action_entry_call_internal(PREDEF_LOWBAT, 1, CHARGE_ERROR_ACT);
 			return;
 		}
 	} else {
@@ -304,6 +377,25 @@ static void charge_cb(struct ss_main_data *ad)
 		}
 	}
 }
+
+#ifdef ENABLE_EDBUS_USE
+static void cb_xxxxx_signaled(void *data, DBusMessage * msg)
+{
+	char *args;
+	DBusError err;
+	struct ss_main_data *ad;
+
+	ad = data;
+
+	dbus_error_init(&err);
+	if (dbus_message_get_args
+	    (msg, &err, DBUS_TYPE_STRING, &args, DBUS_TYPE_INVALID)) {
+		if (!strcmp(args, "action")) ;	/* action */
+	}
+
+	return;
+}
+#endif				/* ENABLE_EDBUS_USE */
 
 static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 {
@@ -530,6 +622,17 @@ int ss_device_change_init(struct ss_main_data *ad)
 	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_USB_HOST_STATUS, usb_host_chgdet_cb, NULL) < 0) {
 		PRT_TRACE_ERR("vconf key notify failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");
 	}
+	/* dbus noti change cb */
+#ifdef ENABLE_EDBUS_USE
+	e_dbus_init();
+	conn = e_dbus_bus_get(DBUS_BUS_SYSTEM);
+	if (!conn)
+		PRT_TRACE_ERR("check system dbus running!\n");
+
+	e_dbus_signal_handler_add(conn, NULL, "/system/uevent/xxxxx",
+				  "system.uevent.xxxxx",
+				  "Change", cb_xxxxx_signaled, ad);
+#endif				/* ENABLE_EDBUS_USE */
 
 	/* set initial state for devices */
 	input_device_number = 0;

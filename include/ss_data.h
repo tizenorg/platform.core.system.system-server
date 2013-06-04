@@ -83,6 +83,7 @@ enum {
 #define PREDEF_FLIGHT_MODE		"flightmode"
 
 #define PREDEF_DEVICE_CHANGED	"device_changed"
+#define PREDEF_INTERNAL_POWEROFF	"internal_poweroff"
 
 #define OOMADJ_SU                       (-17)
 #define OOMADJ_INIT                     (-16)

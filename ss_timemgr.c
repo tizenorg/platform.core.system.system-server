@@ -178,7 +178,7 @@ int set_timezone_action(int argc, char **argv)
 
 static int timerfd_check_start(void)
 {
-	int tfd = -1;
+	int tfd;
 	struct itimerspec tmr;
 
 	if ((tfd = timerfd_create(CLOCK_REALTIME,TFD_NONBLOCK|TFD_CLOEXEC)) == -1) {

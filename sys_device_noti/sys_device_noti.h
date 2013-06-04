@@ -35,10 +35,11 @@ typedef enum {
 	CB_NOTI_BATT_LOW,
 	CB_NOTI_BATT_FULL,
 	CB_NOTI_MAX
-}cb_noti_type;
+} cb_noti_type;
+
 typedef enum {
 	CB_NOTI_OFF	= 0,
 	CB_NOTI_ON	= 1
-}cb_noti_onoff_type;
+} cb_noti_onoff_type;
 
 #endif /* __SYS_DEVICE__NOTI_H__ */

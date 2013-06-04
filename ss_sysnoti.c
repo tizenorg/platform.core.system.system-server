@@ -26,11 +26,16 @@
 #include "ss_queue.h"
 
 #define SYSNOTI_SOCKET_PATH "/tmp/sn"
-
+#define RETRY_READ_COUNT	5
 enum sysnoti_cmd {
 	ADD_SYSMAN_ACTION,
 	CALL_SYSMAN_ACTION
 };
+
+static Ecore_Fd_Handler *sysnoti_efd = NULL;
+
+static int __sysnoti_start(void);
+static int __sysnoti_stop(int fd);
 
 static void print_sysnoti_msg(const char *title, struct sysnoti *msg)
 {
@@ -40,25 +45,20 @@ static void print_sysnoti_msg(const char *title, struct sysnoti *msg)
 	if (sysman_get_cmdline_name(msg->pid, exe_name, PATH_MAX) < 0)
 		snprintf(exe_name, sizeof(exe_name), "Unknown (maybe dead)");
 
-	PRT_TRACE_ERR("=====================");
-	PRT_TRACE_ERR("pid : %d", msg->pid);
-	PRT_TRACE_ERR("process name : %s", exe_name);
-	PRT_TRACE_ERR("cmd : %d", msg->cmd);
-	PRT_TRACE_ERR("type : %s", msg->type);
-	PRT_TRACE_ERR("path : %s", msg->path);
-	for (i = 0; i < msg->argc; i++)
-		PRT_TRACE_ERR("arg%d : %s", i, msg->argv[i]);
-	PRT_TRACE_ERR("=====================");
+	PRT_TRACE_ERR("pid : %d name: %s cmd : %d type : %s path : %s",
+			msg->pid, exe_name, msg->cmd, msg->type, msg->path);
 }
 
 static inline int recv_int(int fd)
 {
 	int val, r = -1;
-	while(1) {
+	int retry_count = 0;
+	while (retry_count < RETRY_READ_COUNT) {
 		r = read(fd, &val, sizeof(int));
 		if (r < 0) {
 			if(errno == EINTR) {
 				PRT_TRACE_ERR("Re-read for error(EINTR)");
+				retry_count++;
 				continue;
 			}
 			else {
@@ -69,18 +69,21 @@ static inline int recv_int(int fd)
 			return val;
 		}
 	}
+	return -1;
 }
 
 static inline char *recv_str(int fd)
 {
 	int len, r = -1;
+	int retry_count = 0;
 	char *str;
 
-	while(1) {
+	while (retry_count < RETRY_READ_COUNT) {
 		r = read(fd, &len, sizeof(int));
 		if (r < 0) {
 			if(errno == EINTR) {
 				PRT_TRACE_ERR("Re-read for error(EINTR)");
+				retry_count++;
 				continue;
 			}
 			else {
@@ -90,7 +93,10 @@ static inline char *recv_str(int fd)
 		} else
 			break;
 	}
-
+	if (retry_count == RETRY_READ_COUNT) {
+		PRT_TRACE_ERR("Read retry failed");
+		return NULL;
+	}
 	if (len <= 0) {
 		PRT_TRACE_ERR("str is null");
 		return NULL;
@@ -106,12 +112,13 @@ static inline char *recv_str(int fd)
 		PRT_TRACE_ERR("Not enough memory");
 		return NULL;
 	}
-
-	while(1) {
+	retry_count = 0;
+	while (retry_count < RETRY_READ_COUNT) {
 		r = read(fd, str, len);
 		if(r < 0) {
 			if(errno == EINTR) {
 				PRT_TRACE_ERR("Re-read for error(EINTR)");
+				retry_count++;
 				continue;                       
 			}                                               
 			else {      
@@ -123,6 +130,13 @@ static inline char *recv_str(int fd)
 		} else
 			break;
 	}
+	if (retry_count == RETRY_READ_COUNT) {
+		PRT_TRACE_ERR("Read retry failed");
+		free(str);
+		str = NULL;
+		return NULL;
+	}
+
 	str[len] = 0;
 
 	return str;
@@ -132,14 +146,17 @@ static int read_message(int fd, struct sysnoti *msg)
 {
 	int i;
 
-	msg->pid = recv_int(fd);
-	msg->cmd = recv_int(fd);
-	msg->type = recv_str(fd);
+	if ((msg->pid = recv_int(fd)) == -1)
+		return -1;
+	if ((msg->cmd = recv_int(fd)) == -1)
+		return -1;
+	if ((msg->type = recv_str(fd)) == NULL)
+		return -1;
 	msg->path = recv_str(fd);
 	msg->argc = recv_int(fd);
 
 	if (msg->argc < 0)
-		return 0;
+		return -1;
 	for (i = 0; i < msg->argc; i++)
 		msg->argv[i] = recv_str(fd);
 
@@ -148,7 +165,7 @@ static int read_message(int fd, struct sysnoti *msg)
 
 static inline void internal_free(char *str)
 {
-	if (!str)
+	if (str)
 		free(str);
 }
 
@@ -175,7 +192,6 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	}
 
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
-
 	msg = malloc(sizeof(struct sysnoti));
 	if (msg == NULL) {
 		PRT_TRACE_ERR("%s : Not enough memory", __FUNCTION__);
@@ -183,21 +199,22 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	}
 
 	client_len = sizeof(client_address);
-	client_sockfd =
-	    accept(fd, (struct sockaddr *)&client_address,
-		   (socklen_t *)&client_len);
-	if(client_sockfd == -1) {
+	client_sockfd = accept(fd, (struct sockaddr *)&client_address, (socklen_t *)&client_len);
+
+	if (client_sockfd == -1) {
 		PRT_TRACE_ERR("socket accept error");
 		free(msg);
-		return 1;
+		return -1;
 	}
-
 	if (read_message(client_sockfd, msg) < 0) {
 		PRT_TRACE_ERR("%s : recv error msg", __FUNCTION__);
+		print_sysnoti_msg(__FUNCTION__, msg);
 		free_message(msg);
 		write(client_sockfd, &ret, sizeof(int));
 		close(client_sockfd);
-		return 1;
+		__sysnoti_stop(fd);
+		__sysnoti_start();
+		return -1;
 	}
 
 	print_sysnoti_msg(__FUNCTION__, msg);
@@ -206,7 +223,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 		free_message(msg);
 		write(client_sockfd, &ret, sizeof(int));
 		close(client_sockfd);
-		return 1;
+		return -1;
 	}
 
 	switch (msg->cmd) {
@@ -216,6 +233,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	default:
 		ret = -1;
 	}
+
 
 	write(client_sockfd, &ret, sizeof(int));
 	close(client_sockfd);
@@ -238,7 +256,6 @@ static int ss_sysnoti_server_init(void)
 		PRT_ERR("%s: socket create failed\n", __FUNCTION__);
 		return -1;
 	}
-
 	if((fsetxattr(fd, "security.SMACK64IPOUT", "@", 2, 0)) < 0 ) {
 		PRT_ERR("%s: Socket SMACK labeling failed\n", __FUNCTION__);
 		if(errno != EOPNOTSUPP) {
@@ -260,8 +277,7 @@ static int ss_sysnoti_server_init(void)
 	strncpy(serveraddr.sun_path, SYSNOTI_SOCKET_PATH,
 		sizeof(serveraddr.sun_path));
 
-	if (bind(fd, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr)) <
-	    0) {
+	if (bind(fd, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr)) < 0) {
 		PRT_ERR("%s: socket bind failed\n", __FUNCTION__);
 		close(fd);
 		return -1;
@@ -282,11 +298,33 @@ static int ss_sysnoti_server_init(void)
 
 int ss_sysnoti_init(void)
 {
+	return __sysnoti_start();
+}
+
+static int __sysnoti_start(void)
+{
 	int fd;
 	fd = ss_sysnoti_server_init();
 	if ( fd < 0 )
 		return -1;
-	ecore_main_fd_handler_add(fd, ECORE_FD_READ, sysnoti_cb, NULL, NULL,
+	sysnoti_efd = ecore_main_fd_handler_add(fd, ECORE_FD_READ, sysnoti_cb, NULL, NULL,
 				  NULL);
+	if (!sysnoti_efd) {
+		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		return -1;
+	}
 	return fd;
+}
+
+static int __sysnoti_stop(int fd)
+{
+	if (sysnoti_efd) {
+		ecore_main_fd_handler_del(sysnoti_efd);
+		sysnoti_efd = NULL;
+	}
+	if (fd >=0) {
+		close(fd);
+		fd = -1;
+	}
+	return 0;
 }
