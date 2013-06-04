@@ -341,7 +341,7 @@ static void charge_cb(struct ss_main_data *ad)
 		PRT_TRACE_ERR("fail to get battery node value");
 	if (charge_now == 0 && capacity == 0) {
 		PRT_TRACE_ERR("target will be shut down");
-		ss_action_entry_call_internal(PREDEF_LOWBAT, 1, POWER_OFF_BAT_ACT);
+		powerdown_ap_by_force(NULL);
 		return;
 	}
 

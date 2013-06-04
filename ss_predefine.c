@@ -90,6 +90,47 @@ static Ecore_Timer *poweroff_timer_id = NULL;
 static TapiHandle *tapi_handle = NULL;
 static int power_off = 0;
 
+static int __predefine_get_pid(const char *execpath)
+{
+	DIR *dp;
+	struct dirent *dentry;
+	int pid = -1, fd;
+	char buf[PATH_MAX];
+	char buf2[PATH_MAX];
+
+	dp = opendir("/proc");
+	if (!dp) {
+		PRT_TRACE_ERR("open /proc");
+		return -1;
+	}
+
+	while ((dentry = readdir(dp)) != NULL) {
+		if (!isdigit(dentry->d_name[0]))
+			continue;
+
+		pid = atoi(dentry->d_name);
+
+		snprintf(buf, PATH_MAX, "/proc/%d/cmdline", pid);
+		fd = open(buf, O_RDONLY);
+		if (fd < 0)
+			continue;
+		if (read(fd, buf2, PATH_MAX) < 0) {
+			close(fd);
+			continue;
+		}
+		close(fd);
+
+		if (!strcmp(buf2, execpath)) {
+			closedir(dp);
+			return pid;
+		}
+	}
+
+	errno = ESRCH;
+	closedir(dp);
+	return -1;
+}
+
 int is_power_off(void)
 {
 	return power_off;
@@ -299,10 +340,19 @@ int lowbat_popup(void *data)
 	return 0;
 }
 
+
 int predefine_control_launch(char *name, bundle *b)
 {
+	int pid;
 	//lowbat-popup
 	if (strncmp(name, LOWBAT_POPUP_NAME, strlen(LOWBAT_POPUP_NAME)) == 0) {
+		if (lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
+			pid = __predefine_get_pid(LOWBAT_EXEC_PATH);
+			if (pid > 0) {
+				PRT_TRACE_ERR("pre launched %s destroy", LOWBAT_EXEC_PATH);
+				kill(pid, SIGTERM);
+			}
+		}
 		if (syspopup_launch(name, b) < 0)
 			return -1;
 	}
@@ -367,7 +417,7 @@ int lowbat_def_predefine_action(int argc, char **argv)
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		if (predefine_control_launch("lowbat-syspopup", b) < 0) {
-				PRT_TRACE_EM("popup lauch failed\n");
+				PRT_TRACE_ERR("popup lauch failed\n");
 				bundle_free(b);
 				lowbat_popup_option = 0;
 				return -1;
