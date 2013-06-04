@@ -25,6 +25,7 @@ BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
+BuildRequires:  pkgconfig(udev)
 BuildRequires:  pkgconfig(device-node)
 BuildRequires:  pkgconfig(libsmack)
 BuildRequires:	gettext
@@ -109,15 +110,7 @@ heynotitool set power_off_start
 
 heynotitool set mmcblk_add
 heynotitool set mmcblk_remove
-
-heynotitool set device_usb_chgdet
-heynotitool set device_ta_chgdet
-heynotitool set device_earjack_chgdet
-heynotitool set device_earkey_chgdet
-heynotitool set device_tvout_chgdet
-heynotitool set device_hdmi_chgdet
 heynotitool set device_charge_chgdet
-heynotitool set device_keyboard_chgdet
 heynotitool set device_usb_host_add
 heynotitool set device_usb_host_remove
 heynotitool set device_pci_keyboard_add

@@ -29,7 +29,7 @@
 #include <aul.h>
 #include <bundle.h>
 #include <dirent.h>
-
+#include <libudev.h>
 #include "ss_queue.h"
 #include "ss_log.h"
 #include "ss_device_handler.h"
@@ -63,8 +63,24 @@ enum snd_jack_types {
 	SND_JACK_AVOUT = SND_JACK_LINEOUT | SND_JACK_VIDEOOUT,
 };
 
+#define CHANGE_ACTION		"change"
+#define ENV_FILTER		"CHGDET"
+#define ENV_VALUE_USB		"usb"
+#define ENV_VALUE_CHARGER 	"charger"
+#define ENV_VALUE_EARJACK 	"earjack"
+#define ENV_VALUE_EARKEY 	"earkey"
+#define ENV_VALUE_TVOUT 	"tvout"
+#define ENV_VALUE_HDMI 		"hdmi"
+#define ENV_VALUE_KEYBOARD 	"keyboard"
 
 static int input_device_number;
+
+static struct udev_monitor *mon = NULL;
+static struct udev *udev = NULL;
+static Ecore_Fd_Handler *ufdh = NULL;
+
+static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler);
+
 static int check_lowbat_charge_device(int bInserted)
 {
 	static int bChargeDeviceInserted = 0;
@@ -112,7 +128,6 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 {
 	int val = -1;
 	char params[BUFF_MAX];
-	PRT_TRACE("jack - usb changed\n");
 	pm_change_state(LCD_NORMAL);
 	/* check charging now */
 	ss_lowbat_is_charge_in_now();
@@ -128,22 +143,22 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 			ss_launch_if_noexist("/usr/bin/sys_device_noti", params);
 			PRT_TRACE("usb device notification");
 		}
+	} else {
+		PRT_TRACE_ERR("fail to get usb_online status");
 	}
 }
-
 static void ta_chgdet_cb(struct ss_main_data *ad)
 {
-	PRT_TRACE("jack - ta changed\n");
+	int val = -1;
+	int ret = -1;
+	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
+	char params[BUFF_MAX];
+
 	pm_change_state(LCD_NORMAL);
 	/* check charging now */
 	ss_lowbat_is_charge_in_now();
 	/* check current battery level */
 	ss_lowbat_monitor(NULL);
-
-	int val = -1;
-	int ret = -1;
-	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
-	char params[BUFF_MAX];
 
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_TA_ONLINE, &val) == 0) {
 		PRT_TRACE("jack - ta changed %d",val);
@@ -184,7 +199,6 @@ static void tvout_chgdet_cb(struct ss_main_data *ad)
 
 static void hdmi_chgdet_cb(struct ss_main_data *ad)
 {
-	PRT_TRACE("jack - hdmi changed\n");
 	int val;
 	pm_change_state(LCD_NORMAL);
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_SUPPORT, &val) == 0) {
@@ -201,14 +215,14 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 			pm_lock_state(LCD_NORMAL, GOTO_STATE_NOW, 0);
 		else
 			pm_unlock_state(LCD_NORMAL, PM_SLEEP_MARGIN);
+	} else {
+		PRT_TRACE_ERR("failed to get hdmi_online status");
 	}
 }
 
 static void keyboard_chgdet_cb(struct ss_main_data *ad)
 {
 	int val = -1;
-	int ret = -1;
-	PRT_TRACE("jack - keyboard changed\n");
 
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_KEYBOARD_ONLINE, &val) == 0) {
 		PRT_TRACE("jack - keyboard changed %d",val);
@@ -334,6 +348,139 @@ static void usb_host_add_cb()
 	PRT_TRACE("EXIT: usb_host_add_cb()\n");
 }
 
+static int uevent_control_stop(int ufd)
+{
+	if (ufdh) {
+		ecore_main_fd_handler_del(ufdh);
+		ufdh = NULL;
+	}
+	if (ufd >= 0) {
+		close(ufd);
+		ufd = -1;
+	}
+	if (mon) {
+		udev_monitor_unref(mon);
+		mon = NULL;
+	}
+	if (udev) {
+		udev_unref(udev);
+		udev = NULL;
+	}
+	return 0;
+}
+
+static int uevent_control_start(void)
+{
+	int ufd = -1;
+
+	udev = udev_new();
+	if (!udev) {
+		PRT_TRACE_ERR("error create udev");
+		return -1;
+	}
+
+	mon = udev_monitor_new_from_netlink(udev, "kernel");
+	if (mon == NULL) {
+		PRT_TRACE_ERR("error udev_monitor create");
+		uevent_control_stop(-1);
+		return -1;
+	}
+
+	udev_monitor_set_receive_buffer_size(mon, 1024);
+	if (udev_monitor_filter_add_match_subsystem_devtype(mon, "platform", NULL) < 0) {
+		PRT_TRACE_ERR("error apply subsystem filter");
+		uevent_control_stop(-1);
+		return -1;
+	}
+
+	ufd = udev_monitor_get_fd(mon);
+	if (ufd == -1) {
+		PRT_TRACE_ERR("error udev_monitor_get_fd");
+		uevent_control_stop(ufd);
+		return -1;
+	}
+
+	ufdh = ecore_main_fd_handler_add(ufd, ECORE_FD_READ, uevent_control_cb, NULL, NULL, NULL);
+	if (!ufdh) {
+		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		uevent_control_stop(ufd);
+		return -1;
+	}
+
+	if (udev_monitor_enable_receiving(mon) < 0) {
+		PRT_TRACE_ERR("error unable to subscribe to udev events");
+		uevent_control_stop(ufd);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler)
+{
+	struct udev_device *dev = NULL;
+	struct udev_list_entry *list_entry = NULL;
+	char *env_name = NULL;
+	char *env_value = NULL;
+	int ufd = -1;
+	int ret = -1;
+
+	if (!ecore_main_fd_handler_active_get(fd_handler,ECORE_FD_READ))
+		return -1;
+	if ((ufd = ecore_main_fd_handler_fd_get(fd_handler)) == -1)
+		return -1;
+	if ((dev = udev_monitor_receive_device(mon)) == NULL)
+		return -1;
+
+	udev_list_entry_foreach(list_entry,udev_device_get_properties_list_entry(dev)) {
+		env_name = udev_list_entry_get_name(list_entry);
+		if (strncmp(env_name, ENV_FILTER, strlen(ENV_FILTER)) == 0) {
+			env_value = udev_list_entry_get_value(list_entry);
+			ret = 0;
+			break;
+		}
+	}
+
+	if (ret != 0) {
+		udev_device_unref(dev);
+		return -1;
+	}
+
+	PRT_TRACE("UEVENT DETECTED (%s)",env_value);
+	ss_action_entry_call_internal(PREDEF_DEVICE_CHANGED,1,env_value);
+
+	udev_device_unref(dev);
+	uevent_control_stop(ufd);
+	uevent_control_start();
+
+	return 0;
+}
+
+int changed_device_def_predefine_action(int argc, char **argv)
+{
+	if (argc != 1 || argv[0] == NULL) {
+		PRT_TRACE_ERR("param is failed");
+		return -1;
+	}
+
+	if (strncmp(argv[0], ENV_VALUE_USB, strlen(ENV_VALUE_USB)) == 0)
+		usb_chgdet_cb(NULL);
+	if (strncmp(argv[0], ENV_VALUE_CHARGER, strlen(ENV_VALUE_CHARGER)) == 0)
+		ta_chgdet_cb(NULL);
+	if (strncmp(argv[0], ENV_VALUE_EARJACK, strlen(ENV_VALUE_EARJACK)) == 0)
+		earjack_chgdet_cb(NULL);
+	if (strncmp(argv[0], ENV_VALUE_EARKEY, strlen(ENV_VALUE_EARKEY)) == 0)
+		earkey_chgdet_cb(NULL);
+	if (strncmp(argv[0], ENV_VALUE_TVOUT, strlen(ENV_VALUE_TVOUT)) == 0)
+		tvout_chgdet_cb(NULL);
+	if (strncmp(argv[0], ENV_VALUE_HDMI, strlen(ENV_VALUE_HDMI)) == 0)
+		hdmi_chgdet_cb(NULL);
+	if (strncmp(argv[0], ENV_VALUE_KEYBOARD, strlen(ENV_VALUE_KEYBOARD)) == 0)
+		keyboard_chgdet_cb(NULL);
+
+	return 0;
+}
+
 static void pci_keyboard_add_cb(struct ss_main_data *ad)
 {
 	char params[BUFF_MAX];
@@ -355,6 +502,12 @@ static void pci_keyboard_remove_cb(struct ss_main_data *ad)
 }
 int ss_device_change_init(struct ss_main_data *ad)
 {
+	ss_action_entry_add_internal(PREDEF_DEVICE_CHANGED, changed_device_def_predefine_action, NULL, NULL);
+
+	if (uevent_control_start() == -1) {
+		PRT_TRACE_ERR("fail uevent control init");
+		return -1;
+	}
 	/* for simple noti change cb */
 	ss_noti_add("device_usb_chgdet", (void *)usb_chgdet_cb, (void *)ad);
 	ss_noti_add("device_ta_chgdet", (void *)ta_chgdet_cb, (void *)ad);
