@@ -95,13 +95,13 @@ static int check_lowbat_charge_device(int bInserted)
 	int bat_state = -1;
 	int ret = -1;
 	if (bInserted == 1) {
-		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
+		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) == 0) {
 			if (val == 1)
 				bChargeDeviceInserted = 1;
 			return 0;
 		}
 	} else if (bInserted == 0) {
-		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
+		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) == 0) {
 			if (val == 0 && bChargeDeviceInserted == 1) {
 				bChargeDeviceInserted = 0;
 				//low bat popup during charging device removing
