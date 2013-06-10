@@ -228,7 +228,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 
 	switch (msg->cmd) {
 	case CALL_SYSMAN_ACTION:
-		ret = ss_action_entry_call(msg, msg->argc, msg->argv);
+		ret = ss_action_entry_call(msg, client_sockfd);
 		break;
 	default:
 		ret = -1;
