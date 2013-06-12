@@ -6,7 +6,6 @@ Release:    6
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
-Source1:    system-server.service
 Source2:    system-server.manifest
 Source3:    deviced.manifest
 BuildRequires:  cmake
@@ -28,6 +27,8 @@ BuildRequires:  pkgconfig(udev)
 BuildRequires:  pkgconfig(device-node)
 BuildRequires:  pkgconfig(libsmack)
 BuildRequires:	gettext
+BuildRequires:  pkgconfig(libsystemd-daemon)
+%{?systemd_requires}
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl
 Requires(post): /usr/bin/vconftool
@@ -70,8 +71,9 @@ mkdir -p %{buildroot}%{_sysconfdir}/rc.d/rc5.d/
 ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S00system-server
 
 mkdir -p %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants
-install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.service
+mkdir -p %{buildroot}%{_libdir}/systemd/system/sockets.target.wants
 ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/sockets.target.wants/system-server.socket
 
 %post
 
@@ -154,7 +156,9 @@ systemctl daemon-reload
 %{_bindir}/sys_pci_noti
 %{_bindir}/mmc-smack-label
 %{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+%{_libdir}/systemd/system/sockets.target.wants/system-server.socket
 %{_libdir}/systemd/system/system-server.service
+%{_libdir}/systemd/system/system-server.socket
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
