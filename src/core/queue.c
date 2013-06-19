@@ -15,7 +15,6 @@
  */
 
 
-#include <sysman.h>
 #include <dlfcn.h>
 #include "data.h"
 #include "core.h"

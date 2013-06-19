@@ -24,7 +24,6 @@
 #include <pmapi.h>
 #include <vconf.h>
 
-#include <sysman.h>
 #include "core/data.h"
 #include "core/queue.h"
 #include "core/log.h"

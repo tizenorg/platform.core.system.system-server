@@ -48,7 +48,7 @@ SET(DEVICED_SRCS
 SET(DEVICED_HEADERS
 	src/deviced/dd-battery.h)
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/deviced)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/deviced ${CMAKE_CURRENT_SOURCE_DIR}/sysman)
 
 SET(MOVINAND_FORMAT scripts/movi_format.sh)
 
@@ -59,7 +59,6 @@ pkg_check_modules(pkgs REQUIRED
 	ecore-x
 	edbus
 	eina
-	sysman
 	vconf
 	heynoti
 	pmapi
@@ -136,3 +135,4 @@ ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)
 ADD_SUBDIRECTORY(pm_event)
 ADD_SUBDIRECTORY(sys_pci_noti)
+ADD_SUBDIRECTORY(sysman)

@@ -20,7 +20,6 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <sysman.h>
 #include <vconf.h>
 #include <pmapi.h>
 #include <ITapiModem.h>
@@ -34,14 +33,15 @@
 #include <sys/mount.h>
 #include <device-node.h>
 
+#include "sysman.h"
 #include "log.h"
 #include "launch.h"
 #include "queue.h"
-#include "device-handler.h"
+#include "device-node.h"
 #include "predefine.h"
 #include "proc/procmgr.h"
 #include "vibrator/vibrator.h"
-#include "data.h"
+#include "core/data.h"
 #include "common.h"
 
 #define CALL_EXEC_PATH			PREFIX"/bin/call"
@@ -240,8 +240,8 @@ int lowmem_def_predefine_action(int argc, char **argv)
 
 	if (!strcmp(argv[0], OOM_MEM_ACT)) {
 		pid = lowmem_get_victim_pid();
-		if (pid > 0 && pid != sysman_get_pid(LOWMEM_EXEC_PATH) && pid != sysman_get_pid(MEMPS_EXEC_PATH)) {
-			if ((sysman_get_cmdline_name(pid, appname, PATH_MAX)) ==
+		if (pid > 0 && pid != get_exec_pid(LOWMEM_EXEC_PATH) && pid != get_exec_pid(MEMPS_EXEC_PATH)) {
+			if ((get_cmdline_name(pid, appname, PATH_MAX)) ==
 			    0) {
 				_I
 				    ("we will kill, lowmem lv2 = %d (%s)\n",

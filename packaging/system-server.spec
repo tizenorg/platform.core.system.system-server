@@ -6,8 +6,9 @@ Release:    7
 Group:      System/Service
 License:    Apache-2.0
 Source0:    system-server-%{version}.tar.gz
-Source2:    system-server.manifest
-Source3:    deviced.manifest
+Source1:    system-server.manifest
+Source2:    deviced.manifest
+Source3:    sysman.manifest
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -35,7 +36,42 @@ Requires(post): /usr/bin/vconftool
 Requires(postun): /usr/bin/systemctl
 
 %description
-Description: System server
+system server
+
+%package system-server
+Summary:    system-server daemon
+Group:      main
+Requires:   %{name} = %{version}-%{release}
+
+%description system-server
+system server daemon.
+
+%package -n sysman
+Summary:    sysman library
+License:    Apache-2.0
+Group:      main
+Requires:   %{name} = %{version}-%{release}
+
+%description -n sysman
+sysman library.
+
+%package -n sysman-devel
+Summary:    sysman devel library
+License:    Apache-2.0
+Group:      main
+Requires:   %{name} = %{version}-%{release}
+
+%description -n sysman-devel
+sysman devel library.
+
+%package -n sysman-internal-devel
+Summary:    sysman internal devel library
+License:    Apache-2.0
+Group:      main
+Requires:   %{name} = %{version}-%{release}
+
+%description -n sysman-internal-devel
+sysman internal devel library.
 
 %package -n libdeviced
 Summary:    Deviced library
@@ -57,6 +93,7 @@ Deviced library for device control (devel)
 %cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 
 %build
+cp %{SOURCE1} .
 cp %{SOURCE2} .
 cp %{SOURCE3} .
 make %{?jobs:-j%jobs}
@@ -152,7 +189,7 @@ fi
 systemctl daemon-reload
 /sbin/ldconfig
 
-%files
+%files -n system-server
 %manifest %{name}.manifest
 %license LICENSE.APLv2
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
@@ -177,6 +214,26 @@ systemctl daemon-reload
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
+
+%files -n sysman
+%manifest sysman.manifest
+%defattr(-,root,root,-)
+%{_libdir}/libsysman.so.*
+%{_bindir}/regpmon
+%{_bindir}/set_pmon
+
+%files -n sysman-devel
+%defattr(-,root,root,-)
+%{_includedir}/sysman/sysman.h
+
+%{_includedir}/sysman/sysman_managed.h
+%{_includedir}/sysman/SLP_sysman_PG.h
+%{_libdir}/pkgconfig/sysman.pc
+%{_libdir}/libsysman.so
+
+%files -n sysman-internal-devel
+%defattr(-,root,root,-)
+%{_includedir}/sysman/sysman-internal.h
 
 %files -n libdeviced
 %defattr(-,root,root,-)

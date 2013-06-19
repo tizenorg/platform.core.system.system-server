@@ -15,7 +15,6 @@
  */
 
 
-#include <sysman.h>
 #include <fcntl.h>
 #include <assert.h>
 #include <limits.h>
@@ -95,7 +94,7 @@ static int pmon_process(int pid, void *ad)
 	int fd;
 	int r;
 
-	if (sysconf_is_vip(pid)) {
+	if (is_vip(pid)) {
 		_E("=======================================");
 		_E("[Process MON] VIP process dead.");
 		_E("=======================================");

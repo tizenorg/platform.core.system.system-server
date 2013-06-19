@@ -22,9 +22,10 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
-#include "data.h"
+#include "core/data.h"
 #include "log.h"
 #include "queue.h"
+#include "common.h"
 
 #define SYSNOTI_SOCKET_PATH "/tmp/sn"
 #define RETRY_READ_COUNT	5
@@ -47,7 +48,7 @@ static void print_sysnoti_msg(const char *title, struct sysnoti *msg)
 {
 	char exe_name[PATH_MAX];
 
-	if (sysman_get_cmdline_name(msg->pid, exe_name, PATH_MAX) < 0)
+	if (get_cmdline_name(msg->pid, exe_name, PATH_MAX) < 0)
 		snprintf(exe_name, sizeof(exe_name), "Unknown (maybe dead)");
 
 	_E("pid : %d name: %s cmd : %d type : %s path : %s",
@@ -186,7 +187,7 @@ static bool check_sync_request(struct sysnoti *msg)
 {
 	char path[PATH_MAX];
 
-	if (sysman_get_cmdline_name(msg->pid, path, PATH_MAX) < 0)
+	if (get_cmdline_name(msg->pid, path, PATH_MAX) < 0)
 		return true;
 
 	_E("path : %s, type : %s", path, msg->type);

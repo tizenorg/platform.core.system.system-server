@@ -15,7 +15,6 @@
  */
 
 
-#include <sysman.h>
 #include "data.h"
 #include "queue.h"
 #include "log.h"
