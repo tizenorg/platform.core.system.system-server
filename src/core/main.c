@@ -20,20 +20,21 @@
 #include <heynoti.h>
 #include <sys/reboot.h>
 
-#include "log.h"
-#include "core.h"
-#include "sig-handler.h"
-#include "device-handler.h"
-#include "proc/pmon-handler.h"
-#include "sysnoti.h"
-#include "noti.h"
-#include "queue.h"
-#include "predefine.h"
-#include "bs/bs.h"
-#include "proc/procmgr.h"
-#include "time/time-handler.h"
-#include "cpu/cpu-handler.h"
-#include "data.h"
+#include "ss_log.h"
+#include "ss_core.h"
+#include "ss_sig_handler.h"
+#include "ss_device_handler.h"
+#include "ss_pmon_handler.h"
+#include "ss_sysnoti.h"
+#include "ss_noti.h"
+#include "ss_queue.h"
+#include "ss_predefine.h"
+#include "ss_bs.h"
+#include "ss_procmgr.h"
+#include "ss_timemgr.h"
+#include "ss_cpu_handler.h"
+#include "include/ss_data.h"
+#include "edbus-handler.h"
 
 static void fini(struct ss_main_data *ad)
 {
@@ -101,7 +102,7 @@ static int system_main(int argc, char **argv)
 		fini(&ad);
 		return 0;
 	}
-
+	edbus_init();
 	system_server_init(&ad);
 	signal(SIGTERM, sig_quit);
 
@@ -112,6 +113,7 @@ static int system_main(int argc, char **argv)
 	ecore_main_loop_begin();
 
 	fini(&ad);
+	edbus_fini();
 	ecore_shutdown();
 
 	return 0;
