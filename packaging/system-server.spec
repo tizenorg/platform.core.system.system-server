@@ -2,7 +2,7 @@
 Name:       system-server
 Summary:    System server
 Version:    0.1.65
-Release:    6
+Release:    7
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
@@ -25,6 +25,7 @@ BuildRequires:  pkgconfig(usbutils)
 BuildRequires:  pkgconfig(udev)
 BuildRequires:  pkgconfig(device-node)
 BuildRequires:  pkgconfig(libsmack)
+BuildRequires:  pkgconfig(sensor)
 BuildRequires:	gettext
 BuildRequires:  pkgconfig(libsystemd-daemon)
 %{?systemd_requires}
@@ -70,7 +71,7 @@ ln -s ../system-server.service %{buildroot}%{_unitdir}/multi-user.target.wants/s
 ln -s ../system-server.service %{buildroot}%{_unitdir}/sockets.target.wants/system-server.socket
 
 %post
-
+#memory type vconf key init
 vconftool set -t int memory/sysman/usbhost_status -1 -i
 vconftool set -t int memory/sysman/mmc 0 -i
 vconftool set -t int memory/sysman/earjack_key 0 -i
@@ -100,6 +101,17 @@ vconftool set -t int memory/sysman/stime_changed 0 -i
 
 #db type vconf key init
 vconftool set -t int db/sysman/mmc_dev_changed 0 -i
+
+vconftool set -t int memory/pm/state 0 -i -g 5000
+vconftool set -t int memory/pm/battery_timetofull -1 -i
+vconftool set -t int memory/pm/battery_timetoempty -1 -i
+vconftool set -t int memory/pm/sip_status 0 -i -g 5000
+vconftool set -t int memory/pm/custom_brightness_status 0 -i -g 5000
+vconftool set -t bool memory/pm/brt_changed_lpm 0 -i
+vconftool set -t int memory/pm/current_brt 60 -i -g 5000
+
+heynotitool set system_wakeup
+heynotitool set pm_event
 
 heynotitool set power_off_start
 
@@ -153,14 +165,17 @@ systemctl daemon-reload
 %endif
 %{_bindir}/movi_format.sh
 %{_bindir}/sys_event
+%{_bindir}/pm_event
 %{_bindir}/sys_pci_noti
 %{_bindir}/mmc-smack-label
+%{_bindir}/device-daemon
 %{_unitdir}/multi-user.target.wants/system-server.service
 %{_unitdir}/sockets.target.wants/system-server.socket
 %{_unitdir}/system-server.service
 %{_unitdir}/system-server.socket
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
+%config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 
 %files -n libdeviced
 %defattr(-,root,root,-)
