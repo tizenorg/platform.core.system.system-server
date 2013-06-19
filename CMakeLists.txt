@@ -30,6 +30,17 @@ SET(SRCS
 	src/vibrator/vibrator.c
 	src/core/edbus-handler.c)
 
+SET(SRCS ${SRCS}
+	display/util.c
+	display/llinterface.c
+	display/conf.c
+	display/setting.c
+	display/poll.c
+	display/core.c
+	display/lsensor.c
+	display/key-filter.c
+	display/battery.c)
+
 # libdeviced
 SET(DEVICED_SRCS
 	src/shared/battery.c)
@@ -55,8 +66,9 @@ pkg_check_modules(pkgs REQUIRED
 	tapi
 	dlog
 	syspopup-caller
-	notification
 	device-node
+	sensor
+	notification
 	libsmack
 	libsystemd-daemon)
 
@@ -75,6 +87,12 @@ ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DPREDEFINE_SO_DIR=\"${LIB_INSTALL_DIR}/ss_predefine/\"")
 ADD_DEFINITIONS("-DLIBPATH=\"${LIB_INSTALL_DIR}/\"")
 ADD_DEFINITIONS("-DFACTORYFS=\"$ENV{FACTORYFS}\"")
+
+ADD_DEFINITIONS("-DENABLE_KEY_FILTER")
+ADD_DEFINITIONS("-DENABLE_X_LCD_ONOFF")
+ADD_DEFINITIONS("-DENABLE_DLOG_OUT")
+ADD_DEFINITIONS("-DENABLE_PM_LOG")
+
 IF( $ENV{ARCH} MATCHES "arm" )
 	ADD_DEFINITIONS("-DTARGET")
 ENDIF()
@@ -84,6 +102,7 @@ SET(UDEV_RULES_PATH share/system-server/udev-rules)
 SET(UDEV_RULES udev-rules/91-system-server.rules)
 
 CONFIGURE_FILE(${UDEV_RULES}.in ${UDEV_RULES} @ONLY)
+CONFIGURE_FILE(device-daemon.in device-daemon @ONLY)
 
 # libdeviced
 ADD_LIBRARY(${DEVICED_NAME} SHARED ${DEVICED_SRCS})
@@ -104,6 +123,7 @@ INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 INSTALL(FILES ${MOVINAND_FORMAT} DESTINATION bin)
 INSTALL(FILES ${UDEV_RULES} DESTINATION ${UDEV_RULES_PATH})
+INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/device-daemon DESTINATION bin)
 INSTALL(FILES system-server.conf DESTINATION /etc/dbus-1/system.d)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/packaging/system-server.rule DESTINATION /opt/etc/smack/accesses.d)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/mmc-smack-label DESTINATION bin)
@@ -114,4 +134,5 @@ INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.socket  DESTINAT
 
 ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)
+ADD_SUBDIRECTORY(pm_event)
 ADD_SUBDIRECTORY(sys_pci_noti)
