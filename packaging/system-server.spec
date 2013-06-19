@@ -25,7 +25,7 @@ BuildRequires:  pkgconfig(usbutils)
 BuildRequires:  pkgconfig(udev)
 BuildRequires:  pkgconfig(device-node)
 BuildRequires:  pkgconfig(libsmack)
-BuildRequires:	gettext
+BuildRequires:  gettext
 BuildRequires:  pkgconfig(libsystemd-daemon)
 %{?systemd_requires}
 Requires(preun): /usr/bin/systemctl
