@@ -45,7 +45,6 @@ static int __sysnoti_stop(int fd);
 
 static void print_sysnoti_msg(const char *title, struct sysnoti *msg)
 {
-	int i;
 	char exe_name[PATH_MAX];
 
 	if (sysman_get_cmdline_name(msg->pid, exe_name, PATH_MAX) < 0)

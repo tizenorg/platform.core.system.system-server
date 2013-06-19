@@ -19,7 +19,6 @@
 #include <fcntl.h>
 #include <heynoti.h>
 #include <sys/reboot.h>
-
 #include "log.h"
 #include "core.h"
 #include "sig-handler.h"
@@ -101,7 +100,7 @@ static int system_main(int argc, char **argv)
 		fini(&ad);
 		return 0;
 	}
-
+	edbus_init();
 	system_server_init(&ad);
 	signal(SIGTERM, sig_quit);
 
@@ -112,6 +111,7 @@ static int system_main(int argc, char **argv)
 	ecore_main_loop_begin();
 
 	fini(&ad);
+	edbus_fini();
 	ecore_shutdown();
 
 	return 0;
