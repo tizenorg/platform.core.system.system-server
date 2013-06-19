@@ -6,29 +6,29 @@ SET(DEVICED_NAME deviced)
 SET(VERSION 0.1.0)
 
 SET(SRCS
-	src/core/main.c
-	src/core/sysnoti.c
-	src/core/launch.c
-	src/core/queue.c
-	src/core/core.c
-	src/core/sig-handler.c
-	src/core/log.c
-	src/core/device-change-handler.c
-	src/core/predefine.c
-	src/core/noti.c
-	src/battery/lowbat-handler.c
-	src/proc/lowmem-handler.c
-	src/proc/pmon-handler.c
-	src/mmc/mmc-handler.c
-	src/usb/usb-handler.c
-	src/ta/ta-handler.c
-	src/bs/bs.c
-	src/proc/procmgr.c
-	src/time/time-handler.c
-	src/cpu/cpu-handler.c
-	src/core/common.c
-	src/vibrator/vibrator.c
-	src/core/edbus-handler.c)
+	ss_main.c
+	ss_sysnoti.c
+	ss_launch.c
+	ss_queue.c
+	ss_core.c
+	ss_sig_handler.c
+	ss_log.c
+	ss_device_change_handler.c
+	ss_predefine.c
+	ss_noti.c
+	ss_lowbat_handler.c
+	ss_lowmem_handler.c
+	ss_pmon_handler.c
+	ss_mmc_handler.c
+	ss_usb_handler.c
+	ss_ta_handler.c
+	ss_bs.c
+	ss_procmgr.c
+	ss_timemgr.c
+	ss_cpu_handler.c
+	ss_common.c
+	ss_vibrator.c
+	edbus-handler.c)
 
 # libdeviced
 SET(DEVICED_SRCS
@@ -37,7 +37,7 @@ SET(DEVICED_SRCS
 SET(DEVICED_HEADERS
 	src/deviced/dd-battery.h)
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 # libdeviced
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src/deviced)
