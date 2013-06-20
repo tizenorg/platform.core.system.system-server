@@ -9,14 +9,13 @@ Source0:    system-server-%{version}.tar.gz
 Source1:    system-server.manifest
 Source2:    deviced.manifest
 Source3:    sysman.manifest
+Source4:    libslp-pm.manifest
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
 BuildRequires:  pkgconfig(heynoti)
 BuildRequires:  pkgconfig(vconf)
-BuildRequires:  pkgconfig(sysman)
 BuildRequires:  pkgconfig(tapi)
-BuildRequires:  pkgconfig(pmapi)
 BuildRequires:  pkgconfig(edbus)
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(syspopup-caller)
@@ -39,50 +38,67 @@ Requires(postun): /usr/bin/systemctl
 system server
 
 %package system-server
-Summary:    system-server daemon
-Group:      main
+Summary:    System-server daemon
+Group:      System/Service
 Requires:   %{name} = %{version}-%{release}
 
 %description system-server
 system server daemon.
 
 %package -n sysman
-Summary:    sysman library
+Summary:    Sysman library
 License:    Apache-2.0
-Group:      main
+Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description -n sysman
 sysman library.
 
 %package -n sysman-devel
-Summary:    sysman devel library
+Summary:    Sysman devel library
 License:    Apache-2.0
-Group:      main
+Group:      System/Development
 Requires:   %{name} = %{version}-%{release}
 
 %description -n sysman-devel
 sysman devel library.
 
 %package -n sysman-internal-devel
-Summary:    sysman internal devel library
+Summary:    Sysman internal devel library
 License:    Apache-2.0
-Group:      main
+Group:      System/Development
 Requires:   %{name} = %{version}-%{release}
 
 %description -n sysman-internal-devel
 sysman internal devel library.
 
+%package -n libslp-pm
+Summary:    SLP power manager client
+Group:      System/Libraries
+Requires:   %{name} = %{version}-%{release}
+
+%description -n libslp-pm
+power-manager library.
+
+%package -n libslp-pm-devel
+Summary:    SLP power manager client (devel)
+Group:      System/Development
+Requires:   %{name} = %{version}-%{release}
+#Requires:   libslp-pm
+
+%description -n libslp-pm-devel
+power-manager devel library.
+
 %package -n libdeviced
 Summary:    Deviced library
-Group:      Development/Libraries
+Group:      System/Libraries
 
 %description -n libdeviced
 Deviced library for device control
 
 %package -n libdeviced-devel
 Summary:    Deviced library for (devel)
-Group:      Development/Libraries
+Group:      System/Development
 Requires:   libdeviced = %{version}-%{release}
 
 %description -n libdeviced-devel
@@ -96,6 +112,7 @@ Deviced library for device control (devel)
 cp %{SOURCE1} .
 cp %{SOURCE2} .
 cp %{SOURCE3} .
+cp %{SOURCE4} .
 make %{?jobs:-j%jobs}
 
 %install
@@ -222,10 +239,15 @@ systemctl daemon-reload
 %{_bindir}/regpmon
 %{_bindir}/set_pmon
 
+%post -n sysman
+/sbin/ldconfig
+
+%postun -n sysman
+/sbin/ldconfig
+
 %files -n sysman-devel
 %defattr(-,root,root,-)
 %{_includedir}/sysman/sysman.h
-
 %{_includedir}/sysman/sysman_managed.h
 %{_includedir}/sysman/SLP_sysman_PG.h
 %{_libdir}/pkgconfig/sysman.pc
@@ -234,6 +256,19 @@ systemctl daemon-reload
 %files -n sysman-internal-devel
 %defattr(-,root,root,-)
 %{_includedir}/sysman/sysman-internal.h
+
+%files -n libslp-pm
+%defattr(-,root,root,-)
+%manifest libslp-pm.manifest
+%{_libdir}/libpmapi.so.*
+
+%files -n libslp-pm-devel
+%defattr(-,root,root,-)
+%{_includedir}/pmapi/pmapi.h
+%{_includedir}/pmapi/pmapi_managed.h
+%{_includedir}/pmapi/SLP_pm_PG.h
+%{_libdir}/pkgconfig/pmapi.pc
+%{_libdir}/libpmapi.so
 
 %files -n libdeviced
 %defattr(-,root,root,-)

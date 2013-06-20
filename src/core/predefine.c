@@ -21,7 +21,6 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <vconf.h>
-#include <pmapi.h>
 #include <ITapiModem.h>
 #include <TelPower.h>
 #include <tapi_event.h>
@@ -31,8 +30,6 @@
 #include <sys/time.h>
 #include <mntent.h>
 #include <sys/mount.h>
-#include <device-node.h>
-
 #include "sysman.h"
 #include "log.h"
 #include "launch.h"
@@ -43,6 +40,7 @@
 #include "vibrator/vibrator.h"
 #include "core/data.h"
 #include "common.h"
+#include "display/poll.h"
 
 #define CALL_EXEC_PATH			PREFIX"/bin/call"
 #define LOWMEM_EXEC_PATH		PREFIX"/bin/lowmem-popup"
@@ -292,7 +290,7 @@ int usbcon_def_predefine_action(int argc, char **argv)
 		if (val == 0) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
-			pm_unlock_state(LCD_OFF, STAY_CUR_STATE);
+			pm_unlock_internal(LCD_OFF, STAY_CUR_STATE);
 			return 0;
 		}
 
@@ -301,7 +299,7 @@ int usbcon_def_predefine_action(int argc, char **argv)
 
 		vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 			      VCONFKEY_SYSMAN_USB_AVAILABLE);
-		pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
+		pm_lock_internal(LCD_OFF, STAY_CUR_STATE, 0);
 		pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
 			_E("usb predefine action failed\n");
@@ -408,7 +406,7 @@ int predefine_control_launch(char *name, bundle *b)
 
 void predefine_pm_change_state(unsigned int s_bits)
 {
-	pm_change_state(s_bits);
+	pm_change_internal(s_bits);
 }
 
 int lowbat_def_predefine_action(int argc, char **argv)
@@ -616,14 +614,14 @@ int entersleep_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
-	pm_change_state(LCD_NORMAL);
+	pm_change_internal(LCD_NORMAL);
 	sync();
 
 	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_ENTER, enter_flight_mode_cb, NULL);
 	_E("request for changing into flight mode : %d\n", ret);
 
 	system("/etc/rc.d/rc.entersleep");
-	pm_change_state(POWER_OFF);
+	pm_change_internal(POWER_OFF);
 
 	return 0;
 }
@@ -632,7 +630,7 @@ int leavesleep_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
-	pm_change_state(LCD_NORMAL);
+	pm_change_internal(LCD_NORMAL);
 	sync();
 
 	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_LEAVE, leave_flight_mode_cb, NULL);
@@ -730,7 +728,7 @@ int restart_def_predefine_action(int argc, char **argv)
 	int ret;
 
 	heynoti_publish(POWEROFF_NOTI_NAME);
-	pm_change_state(LCD_NORMAL);
+	pm_change_internal(LCD_NORMAL);
 	system(LIBPATH"/system-server/shutdown.sh &");
 	sync();
 
