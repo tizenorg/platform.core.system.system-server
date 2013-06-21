@@ -290,7 +290,7 @@ int usbcon_def_predefine_action(int argc, char **argv)
 		if (val == 0) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
-			pm_unlock_internal(LCD_OFF, STAY_CUR_STATE);
+			pm_unlock_internal(getpid(), LCD_OFF, STAY_CUR_STATE);
 			return 0;
 		}
 
@@ -299,7 +299,7 @@ int usbcon_def_predefine_action(int argc, char **argv)
 
 		vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 			      VCONFKEY_SYSMAN_USB_AVAILABLE);
-		pm_lock_internal(LCD_OFF, STAY_CUR_STATE, 0);
+		pm_lock_internal(getpid(), LCD_OFF, STAY_CUR_STATE, 0);
 		pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
 			_E("usb predefine action failed\n");
@@ -406,7 +406,7 @@ int predefine_control_launch(char *name, bundle *b)
 
 void predefine_pm_change_state(unsigned int s_bits)
 {
-	pm_change_internal(s_bits);
+	pm_change_internal(getpid(), s_bits);
 }
 
 int lowbat_def_predefine_action(int argc, char **argv)
@@ -614,14 +614,14 @@ int entersleep_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
-	pm_change_internal(LCD_NORMAL);
+	pm_change_internal(getpid(), LCD_NORMAL);
 	sync();
 
 	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_ENTER, enter_flight_mode_cb, NULL);
 	_E("request for changing into flight mode : %d\n", ret);
 
 	system("/etc/rc.d/rc.entersleep");
-	pm_change_internal(POWER_OFF);
+	pm_change_internal(getpid(), POWER_OFF);
 
 	return 0;
 }
@@ -630,7 +630,7 @@ int leavesleep_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
-	pm_change_internal(LCD_NORMAL);
+	pm_change_internal(getpid(), LCD_NORMAL);
 	sync();
 
 	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_LEAVE, leave_flight_mode_cb, NULL);
@@ -728,7 +728,7 @@ int restart_def_predefine_action(int argc, char **argv)
 	int ret;
 
 	heynoti_publish(POWEROFF_NOTI_NAME);
-	pm_change_internal(LCD_NORMAL);
+	pm_change_internal(getpid(), LCD_NORMAL);
 	system(LIBPATH"/system-server/shutdown.sh &");
 	sync();
 

@@ -20,7 +20,8 @@
 #include <sys/wait.h>
 #include <vconf.h>
 #include "core.h"
-#include "edbus-handler.h"
+#include "core/edbus-handler.h"
+#include "display/poll.h"
 
 #define _E(format, args...) do { \
 	char buf[255];\
@@ -106,5 +107,9 @@ void ss_signal_init(void)
 	sig_act.sa_flags = SA_SIGINFO;
 	sigemptyset(&sig_act.sa_mask);
 	sigaction(SIGPIPE, &sig_act, &sig_pipe_old_act);
-	register_edbus_signal_handler(SIGNAL_NAME_POWEROFF_POPUP, (void *)poweroff_popup_edbus_signal_handler);
+	register_edbus_signal_handler(SIGNAL_NAME_POWEROFF_POPUP,
+		    (void *)poweroff_popup_edbus_signal_handler);
+	register_edbus_signal_handler(SIGNAL_NAME_LCD_CONTROL,
+		    (void *)lcd_control_edbus_signal_handler);
+
 }
