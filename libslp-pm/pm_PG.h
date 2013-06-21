@@ -40,14 +40,14 @@ The scope of this document is limited to Power Manager API usage.
 The Power Manager (PM) consists of a client API library and a Power Manager daemon.
 
 <h3 class="pg" align="center">Power Manager Architecture</h3>
-@image html SLP_pm_PG_architecture.png
+@image html pm_PG_architecture.png
 <br>
 Power Manager daemon controls a kernel power management module and peripheral device drivers to save system power consumption. 
 It manages the system power states and makes state transitions according to the events. <br>
 There are four power states ? Normal (i.e. LCD on), LCD dimming, LCD off and Sleep.
 
 <h3 class="pg" align="center">Power Manager State Diagram</h3>
-@image html SLP_pm_PG_state_diagram.png
+@image html pm_PG_state_diagram.png
 
 Applications can put conditions on specific state transitions. For example, Video Player applications do not want the Power Manager 
 to allow the LCD to be in a dimming state or to turn off the LCD backlight. 

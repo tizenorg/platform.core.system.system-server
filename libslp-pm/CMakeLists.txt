@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(pmapi C)
 
 SET(SRCS pm.c)
-SET(HEADERS pmapi.h pmapi_managed.h SLP_pm_PG.h)
+SET(HEADERS pmapi.h pmapi_managed.h pm_PG.h)
 
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
 SET(EXEC_PREFIX "\${prefix}")
