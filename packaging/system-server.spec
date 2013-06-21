@@ -113,7 +113,7 @@ cp %{SOURCE1} .
 cp %{SOURCE2} .
 cp %{SOURCE3} .
 cp %{SOURCE4} .
-make %{?jobs:-j%jobs}
+%cmake .
 
 %install
 rm -rf %{buildroot}
