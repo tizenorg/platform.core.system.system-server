@@ -28,6 +28,7 @@
 #include <aul.h>
 #include <bundle.h>
 #include <dirent.h>
+#include "dd-system.h"
 #include <libudev.h>
 #include <device-node.h>
 #include "queue.h"
