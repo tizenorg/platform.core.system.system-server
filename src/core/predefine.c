@@ -41,6 +41,7 @@
 #include "core/data.h"
 #include "common.h"
 #include "display/poll.h"
+#include "led/led.h"
 
 #define CALL_EXEC_PATH			PREFIX"/bin/call"
 #define LOWMEM_EXEC_PATH		PREFIX"/bin/lowmem-popup"
@@ -903,6 +904,9 @@ void ss_predefine_internal_init(void)
 				     internal_poweroff_def_predefine_action, NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_HAPTIC, haptic_def_predefine_action,
 					NULL, NULL);
+
+	ss_action_entry_add_internal(PREDEF_LED,
+					led_def_predefine_action, NULL, NULL);
 
 	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void *)poweroff_control_cb, NULL) < 0) {
 		_E("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_POWER_OFF_STATUS);
