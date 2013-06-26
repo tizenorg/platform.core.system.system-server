@@ -21,6 +21,7 @@
 #include <vconf.h>
 #include <fcntl.h>
 #include <device-node.h>
+#include <bundle.h>
 #include "core/log.h"
 #include "core/launch.h"
 #include "core/noti.h"
@@ -28,27 +29,39 @@
 #include "core/data.h"
 #include "display/setting.h"
 
+#define PREDEF_LOWBAT			"lowbat"
+
 #define BAT_MON_INTERVAL		30
-#define BAT_MON_INTERVAL_MIN		2
+#define BAT_MON_INTERVAL_MIN	2
 
 #define BATTERY_CHARGING		65535
-#define BATTERY_UNKNOWN			-1
-#define	BATTERY_FULL			100
-#define	BATTERY_NORMAL			100
-#define	BATTERY_WARNING_LOW		15
-#define	BATTERY_CRITICAL_LOW		5
-#define	BATTERY_POWER_OFF		1
-#define	BATTERY_REAL_POWER_OFF	0
+#define BATTERY_UNKNOWN		-1
+#define BATTERY_FULL			100
+#define BATTERY_NORMAL			100
+#define BATTERY_WARNING_LOW	15
+#define BATTERY_CRITICAL_LOW	5
+#define BATTERY_POWER_OFF		1
+#define BATTERY_REAL_POWER_OFF	0
 
 #define MAX_BATTERY_ERROR		10
 #define RESET_RETRY_COUNT		3
 
-#define LOWBAT_EXEC_PATH		PREFIX"/bin/lowbatt-popup"
+#define BATTERY_LEVEL_CHECK_FULL	95
+#define BATTERY_LEVEL_CHECK_HIGH	15
+#define BATTERY_LEVEL_CHECK_LOW		5
+#define BATTERY_LEVEL_CHECK_CRITICAL	1
 
-#define	BATTERY_LEVEL_CHECK_FULL	95
-#define	BATTERY_LEVEL_CHECK_HIGH	15
-#define	BATTERY_LEVEL_CHECK_LOW		5
-#define	BATTERY_LEVEL_CHECK_CRITICAL	1
+#define LOWBAT_OPT_WARNING		1
+#define LOWBAT_OPT_POWEROFF		2
+#define LOWBAT_OPT_CHARGEERR		3
+#define LOWBAT_OPT_CHECK		4
+
+#define WARNING_LOW_BAT_ACT		"warning_low_bat_act"
+#define CRITICAL_LOW_BAT_ACT		"critical_low_bat_act"
+#define POWER_OFF_BAT_ACT		"power_off_bat_act"
+#define CHARGE_BAT_ACT			"charge_bat_act"
+#define CHARGE_CHECK_ACT			"charge_check_act"
+#define CHARGE_ERROR_ACT			"charge_error_act"
 
 #define _SYS_LOW_POWER "LOW_POWER"
 
@@ -64,9 +77,12 @@ static int cur_bat_capacity = -1;
 
 static int bat_err_count = 0;
 
-static int battery_warning_low_act(void *ad);
-static int battery_critical_low_act(void *ad);
-static int battery_power_off_act(void *ad);
+static Ecore_Timer *lowbat_popup_id = NULL;
+static int lowbat_popup_option = 0;
+
+int battery_warning_low_act(void *ad);
+int battery_critical_low_act(void *ad);
+int battery_power_off_act(void *ad);
 
 static struct lowbat_process_entry lpe[] = {
 	{BATTERY_NORMAL, BATTERY_WARNING_LOW, battery_warning_low_act},
@@ -93,7 +109,7 @@ static void print_lowbat_state(unsigned int bat_percent)
 #endif
 }
 
-static int battery_warning_low_act(void *data)
+int battery_warning_low_act(void *data)
 {
 	char lowbat_noti_name[NAME_MAX];
 
@@ -104,17 +120,24 @@ static int battery_warning_low_act(void *data)
 	return 0;
 }
 
-static int battery_critical_low_act(void *data)
+int battery_critical_low_act(void *data)
 {
 	ss_action_entry_call_internal(PREDEF_LOWBAT, 1, CRITICAL_LOW_BAT_ACT);
 	return 0;
 }
 
-static int battery_power_off_act(void *data)
+int battery_power_off_act(void *data)
 {
 	ss_action_entry_call_internal(PREDEF_LOWBAT, 1,	POWER_OFF_BAT_ACT);
 	return 0;
 }
+
+int battery_charge_err_act(void *data)
+{
+	ss_action_entry_call_internal(PREDEF_LOWBAT, 1, CHARGE_ERROR_ACT);
+	return 0;
+}
+
 
 static int battery_charge_act(void *data)
 {
@@ -368,6 +391,92 @@ static int check_battery()
 	_D("[BATMON] battery check : %d", ret);
 
 	return ret;
+}
+
+int lowbat_popup(void *data)
+{
+	int ret = -1, state = 0;
+	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
+	if (state == 1 || ret != 0) {
+		bundle *b = NULL;
+		b = bundle_create();
+		if (lowbat_popup_option == LOWBAT_OPT_WARNING || lowbat_popup_option == LOWBAT_OPT_CHECK) {
+			bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+		} else if(lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
+			bundle_add(b, "_SYSPOPUP_CONTENT_", "poweroff");
+		} else if(lowbat_popup_option == LOWBAT_OPT_CHARGEERR) {
+			bundle_add(b, "_SYSPOPUP_CONTENT_", "chargeerr");
+		} else {
+			bundle_add(b, "_SYSPOPUP_CONTENT_", "check");
+		}
+
+		ret = syspopup_launch("lowbat-syspopup", b);
+		if (ret < 0) {
+			PRT_TRACE_EM("popup lauch failed\n");
+			bundle_free(b);
+			return 1;
+		}
+		lowbat_popup_id = NULL;
+		lowbat_popup_option = 0;
+		bundle_free(b);
+	} else {
+		PRT_TRACE_EM("boot-animation running yet");
+		return 1;
+	}
+
+	return 0;
+}
+
+int lowbat_def_predefine_action(int argc, char **argv)
+{
+	int ret, state=0;
+	char argstr[128];
+	char* option = NULL;
+
+	if (argc < 1)
+		return -1;
+
+	if (lowbat_popup_id != NULL) {
+		ecore_timer_del(lowbat_popup_id);
+		lowbat_popup_id = NULL;
+	}
+
+	bundle *b = NULL;
+	b = bundle_create();
+	if (!strcmp(argv[0],CRITICAL_LOW_BAT_ACT)) {
+		bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+		lowbat_popup_option = LOWBAT_OPT_CHECK;
+	} else if(!strcmp(argv[0],WARNING_LOW_BAT_ACT)) {
+		bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+		lowbat_popup_option = LOWBAT_OPT_WARNING;
+	} else if(!strcmp(argv[0],POWER_OFF_BAT_ACT)) {
+		bundle_add(b, "_SYSPOPUP_CONTENT_", "poweroff");
+		lowbat_popup_option = LOWBAT_OPT_POWEROFF;
+	} else if(!strcmp(argv[0],CHARGE_ERROR_ACT)) {
+		bundle_add(b, "_SYSPOPUP_CONTENT_", "chargeerr");
+		lowbat_popup_option = LOWBAT_OPT_CHARGEERR;
+	}
+
+	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
+	if (state == 1 || ret != 0) {
+		if (predefine_control_launch("lowbat-syspopup", b, lowbat_popup_option) < 0) {
+				PRT_TRACE_ERR("popup lauch failed\n");
+				bundle_free(b);
+				lowbat_popup_option = 0;
+				return -1;
+		}
+	} else {
+		PRT_TRACE_EM("boot-animation running yet");
+		lowbat_popup_id = ecore_timer_add(1, lowbat_popup, NULL);
+	}
+	bundle_free(b);
+	return 0;
+}
+
+void ss_predefine_lowbat_init(void)
+{
+	ss_action_entry_add_internal(PREDEF_LOWBAT, lowbat_def_predefine_action,
+				     NULL, NULL);
 }
 
 int ss_lowbat_init(struct ss_main_data *ad)

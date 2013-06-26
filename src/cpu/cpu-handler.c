@@ -16,11 +16,16 @@
 
 
 #include <fcntl.h>
-#include <device-node.h>
-#include <vconf.h>
 
+#include "device-node.h"
 #include "core/log.h"
 #include "core/data.h"
+#include "vconf.h"
+
+#define PREDEF_SET_MAX_FREQUENCY	"set_max_frequency"
+#define PREDEF_SET_MIN_FREQUENCY	"set_min_frequency"
+#define PREDEF_RELEASE_MAX_FREQUENCY	"release_max_frequency"
+#define PREDEF_RELEASE_MIN_FREQUENCY	"release_min_frequency"
 
 #define DEFAULT_MAX_CPU_FREQ		1200000
 #define DEFAULT_MIN_CPU_FREQ		100000
@@ -220,7 +225,7 @@ static int power_saving_cpu_cb(keynode_t *key_nodes, void *data)
 int ss_cpu_handler_init(void)
 {
 	__set_freq_limit();
-	
+
 	ss_action_entry_add_internal(PREDEF_SET_MAX_FREQUENCY, set_max_frequency_action, NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_SET_MIN_FREQUENCY, set_min_frequency_action, NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_RELEASE_MAX_FREQUENCY, release_max_frequency_action, NULL, NULL);
@@ -348,10 +353,6 @@ static int __add_entry_to_max_cpu_freq_list(int pid, int freq)
 		_E("Remove duplicated entry failed");
 	}
 
-	if (freq < cur_max_cpu_freq) {
-		cur_max_cpu_freq = freq;
-	}
-
 	entry = malloc(sizeof(struct cpu_freq_entry));
 	if (!entry) {
 		_E("Malloc failed");
@@ -366,7 +367,9 @@ static int __add_entry_to_max_cpu_freq_list(int pid, int freq)
 		_E("eina_list_prepend failed");
 		return -1;
 	}
-
+	if (freq < cur_max_cpu_freq) {
+		cur_max_cpu_freq = freq;
+	}
 	return 0;
 }
 
@@ -378,10 +381,6 @@ static int __add_entry_to_min_cpu_freq_list(int pid, int freq)
 	r = __remove_entry_from_min_cpu_freq_list(pid);
 	if (r < 0) {
 		_E("Remove duplicated entry failed");
-	}
-
-	if (freq > cur_min_cpu_freq) {
-		cur_min_cpu_freq = freq;
 	}
 
 	entry = malloc(sizeof(struct cpu_freq_entry));
@@ -398,7 +397,9 @@ static int __add_entry_to_min_cpu_freq_list(int pid, int freq)
 		_E("eina_list_prepend failed");
 		return -1;
 	}
-	
+	if (freq > cur_min_cpu_freq) {
+		cur_min_cpu_freq = freq;
+	}
 	return 0;
 }
 

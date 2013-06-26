@@ -20,7 +20,7 @@
 
 #include "core/log.h"
 #include "core/data.h"
-#include "edbus-handler.h"
+#include "core/edbus-handler.h"
 
 #define EDBUS_INIT_RETRY_COUNT 5
 
@@ -69,6 +69,7 @@ int register_edbus_signal_handler(char *signal_name, E_DBus_Signal_Cb cb)
 	}
 
 	_D("add edbus service: %s", signal_name);
+	PRT_TRACE_ERR("add edbus service: %s", signal_name);
 
 	entry = malloc(sizeof(struct edbus_list));
 

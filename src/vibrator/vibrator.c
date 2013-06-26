@@ -26,6 +26,8 @@
 #define MERGE_BTW_APPLICATIONS
 #endif
 
+#define PREDEF_HAPTIC			"haptic"
+
 enum {
 	OPEN = 0,
 	CLOSE,
@@ -309,4 +311,10 @@ int haptic_def_predefine_action(int argc, char **argv)
 	}
 
 	return -1;
+}
+
+int vibrator_init(void)
+{
+	ss_action_entry_add_internal(PREDEF_HAPTIC, haptic_def_predefine_action,
+					NULL, NULL);
 }

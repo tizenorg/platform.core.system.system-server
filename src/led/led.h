@@ -20,5 +20,5 @@
 #define __LED_H__
 
 int led_def_predefine_action(int argc, char **argv);
-
+int led_init(void);
 #endif

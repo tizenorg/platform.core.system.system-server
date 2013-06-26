@@ -33,6 +33,16 @@
 #include "time/time-handler.h"
 #include "cpu/cpu-handler.h"
 #include "data.h"
+#include "cpu/cpu-handler.h"
+#include "data.h"
+#include "led/led.h"
+#include "proc/lowmem-handler.h"
+#include "battery/lowbat-handler.h"
+#include "proc/pmon-handler.h"
+#include "proc/proc-handler.h"
+#include "time/time-handler.h"
+#include "vibrator/vibrator.h"
+#include "sysnoti.h"
 
 static void fini(struct ss_main_data *ad)
 {
@@ -64,26 +74,31 @@ static void system_server_init(struct ss_main_data *ad)
 	ss_core_init(ad);
 	ss_signal_init();
 	ss_predefine_internal_init();
+	ss_predefine_lowmem_init();
+	ss_predefine_lowbat_init();
+	ss_predefine_device_change_init();
+	ss_predefine_power_init();
 	ss_process_manager_init();
 	ss_time_manager_init();
 	ss_cpu_handler_init();
 
 	ss_lowmem_init(ad);
 	ss_lowbat_init(ad);
+	ss_power_init(ad);
 	ss_usb_init();
 	ss_ta_init();
 	ss_pmon_init(ad);
 	ss_device_change_init(ad);
+	led_init();
 	ss_mmc_init();
 	ss_bs_init();
+	vibrator_init();
 }
 
 #define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
 static void sig_quit(int signo)
 {
-	_E("received SIGTERM signal %d", signo);
-	if (is_power_off() == 1)
-		reboot(RB_POWER_OFF);
+	PRT_TRACE_ERR("received SIGTERM signal %d", signo);
 }
 static int system_main(int argc, char **argv)
 {

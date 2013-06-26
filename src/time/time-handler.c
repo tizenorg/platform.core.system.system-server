@@ -34,6 +34,9 @@
 #include <fcntl.h>
 #include <sys/timerfd.h>
 
+#define PREDEF_SET_DATETIME		"set_datetime"
+#define PREDEF_SET_TIMEZONE		"set_timezone"
+
 #ifndef TFD_TIMER_CANCELON_SET
 #define TFD_TIMER_CANCELON_SET (1<<1)
 #endif

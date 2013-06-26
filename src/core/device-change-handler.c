@@ -28,6 +28,7 @@
 #include <aul.h>
 #include <bundle.h>
 #include <dirent.h>
+#include "dd-deviced.h"
 #include <libudev.h>
 #include <device-node.h>
 #include "queue.h"
@@ -39,6 +40,7 @@
 #include "predefine.h"
 #include "display/poll.h"
 
+#define MOVINAND_MOUNT_POINT		"/opt/media"
 #define BUFF_MAX		255
 #define SYS_CLASS_INPUT		"/sys/class/input"
 #define USBCON_EXEC_PATH	PREFIX"/bin/usb-server"
@@ -92,6 +94,8 @@ enum snd_jack_types {
 
 #define ABNORMAL_POPUP_COUNTER	5
 
+static int ss_flags = 0;
+
 static int input_device_number;
 
 static struct udev_monitor *mon = NULL;
@@ -99,7 +103,8 @@ static struct udev *udev = NULL;
 static Ecore_Fd_Handler *ufdh = NULL;
 
 static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler);
-
+extern int battery_power_off_act(void *data);
+extern int battery_charge_err_act(void *data);
 static int check_lowbat_charge_device(int bInserted)
 {
 	static int bChargeDeviceInserted = 0;
@@ -367,7 +372,7 @@ static void charge_cb(struct ss_main_data *ad)
 		_E("fail to get battery node value");
 	if (charge_now == 0 && capacity == 0) {
 		_E("target will be shut down");
-		ss_action_entry_call_internal(PREDEF_LOWBAT, 1, POWER_OFF_BAT_ACT);
+		battery_power_off_act(NULL);
 		return;
 	}
 
@@ -379,9 +384,9 @@ static void charge_cb(struct ss_main_data *ad)
 				return;
 
 			if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &val) == 0 && val <= 0)
-				ss_action_entry_call_internal(PREDEF_LOWBAT, 1, POWER_OFF_BAT_ACT);
+				battery_power_off_act(NULL);
 			else
-				ss_action_entry_call_internal(PREDEF_LOWBAT, 1, CHARGE_ERROR_ACT);
+				battery_charge_err_act(NULL);
 			return;
 		}
 	} else {
@@ -599,6 +604,51 @@ int changed_device_def_predefine_action(int argc, char **argv)
 	return 0;
 }
 
+int usbcon_def_predefine_action(int argc, char **argv)
+{
+	int pid;
+	int val = -1;
+	int ret = -1;
+	int bat_state = VCONFKEY_SYSMAN_BAT_NORMAL;
+
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
+		if (val == 0) {
+			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
+				      VCONFKEY_SYSMAN_USB_DISCONNECTED);
+			pm_unlock_internal(getpid(), LCD_OFF, STAY_CUR_STATE);
+			return 0;
+		}
+
+		if ( vconf_get_int(VCONFKEY_SYSMAN_USB_STATUS, &val) == 0 && val == VCONFKEY_SYSMAN_USB_AVAILABLE)
+			return 0;
+
+		vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
+			      VCONFKEY_SYSMAN_USB_AVAILABLE);
+		pm_lock_internal(getpid(), LCD_OFF, STAY_CUR_STATE, 0);
+		pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
+		if (pid < 0) {
+			PRT_TRACE_ERR("usb predefine action failed\n");
+			return -1;
+		}
+		return pid;
+	}
+	PRT_TRACE_ERR("failed to get usb status\n");
+	return -1;
+}
+
+int earjackcon_def_predefine_action(int argc, char **argv)
+{
+	int val;
+
+	PRT_TRACE_EM("earjack_normal predefine action\n");
+	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARJACK_ONLINE, &val) == 0) {
+		return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, val);
+	}
+
+	return -1;
+}
+
+
 static void pci_keyboard_add_cb(struct ss_main_data *ad)
 {
 	char params[BUFF_MAX];
@@ -618,6 +668,13 @@ static void pci_keyboard_remove_cb(struct ss_main_data *ad)
 	snprintf(params, sizeof(params), "%d", CB_NOTI_PCI_REMOVED);
 	ss_launch_if_noexist("/usr/bin/sys_pci_noti", params);
 }
+
+void ss_predefine_device_change_init(void)
+{
+	ss_action_entry_add_internal(PREDEF_USBCON, usbcon_def_predefine_action, NULL, NULL);
+	ss_action_entry_add_internal(PREDEF_EARJACKCON, earjackcon_def_predefine_action, NULL, NULL);
+}
+
 int ss_device_change_init(struct ss_main_data *ad)
 {
 	ss_action_entry_add_internal(PREDEF_DEVICE_CHANGED, changed_device_def_predefine_action, NULL, NULL);
@@ -648,6 +705,9 @@ int ss_device_change_init(struct ss_main_data *ad)
 	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_USB_HOST_STATUS, usb_host_chgdet_cb, NULL) < 0) {
 		_E("vconf key notify failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");
 	}
+
+	/* check and set earjack init status */
+	earjackcon_def_predefine_action(0, NULL);
 	/* dbus noti change cb */
 #ifdef ENABLE_EDBUS_USE
 	e_dbus_init();

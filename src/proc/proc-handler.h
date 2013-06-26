@@ -15,10 +15,12 @@
  */
 
 
-#ifndef __VIBRATOR_H__
-#define __VIBRATOR_H__
+#ifndef __SS_PROCMGR_H__
+#define __SS_PROCMGR_H__
 
-int haptic_def_predefine_action(int argc, char **argv);
-int vibrator_init(void);
+int ss_process_manager_init(void);
 
-#endif /* __VIBRATOR_H__ */
+int get_app_oomadj(int pid, int *oomadj);
+int set_app_oomadj(int pid, int new_oomadj);
+
+#endif /* __SS_PROCMGR_H__ */

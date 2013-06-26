@@ -27,9 +27,16 @@
 #include <bundle.h>
 #include "core/log.h"
 #include "core/device-handler.h"
-#include "core/predefine.h"
+#include "core/common.h"
 
 #define VCONFKEY_INTERNAL_PRIVATE_MMC_ID	"db/private/sysman/mmc_device_id"
+
+#define PREDEF_MOUNT_MMC		"mountmmc"
+#define PREDEF_UNMOUNT_MMC		"unmountmmc"
+#define PREDEF_FORMAT_MMC		"formatmmc"
+#define PREDEF_CHECK_SMACK_MMC	"checksmackmmc"
+#define PREDEF_CHECK_MMC		"checkmmc"
+#define PREDEF_CHECK_MMC_PROC	"checkmmcproc"
 
 #define MMC_MOUNT_POINT			"/opt/storage/sdcard"
 
@@ -59,8 +66,6 @@
 #define BUF_LEN             20
 
 #define MMC_32GB_SIZE           61315072
-
-#define ARRAY_SIZE(name) (sizeof(name)/sizeof(name[0]))
 
 typedef enum {
 	FS_TYPE_NONE = 0,

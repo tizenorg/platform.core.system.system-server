@@ -11,6 +11,8 @@ SET(DEVICED_NAME deviced)
 SET(VERSION 0.1.0)
 
 SET(SRCS
+	src/battery/lowbat-handler.c
+	src/bs/bs.c
 	src/core/main.c
 	src/core/sysnoti.c
 	src/core/launch.c
@@ -21,19 +23,19 @@ SET(SRCS
 	src/core/device-change-handler.c
 	src/core/predefine.c
 	src/core/noti.c
-	src/battery/lowbat-handler.c
+	src/core/common.c
+	src/core/edbus-handler.c
+	src/cpu/cpu-handler.c
+	src/mmc/mmc-handler.c
+	src/power/power-handler.c
 	src/proc/lowmem-handler.c
 	src/proc/pmon-handler.c
-	src/mmc/mmc-handler.c
-	src/usb/usb-handler.c
+	src/proc/proc-handler.c
 	src/ta/ta-handler.c
-	src/bs/bs.c
-	src/proc/procmgr.c
 	src/time/time-handler.c
-	src/cpu/cpu-handler.c
-	src/core/common.c
+	src/usb/usb-handler.c
 	src/vibrator/vibrator.c
-	src/core/edbus-handler.c)
+)
 
 SET(SRCS ${SRCS}
 	display/util.c

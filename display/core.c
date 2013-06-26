@@ -122,6 +122,9 @@ static int trans_table[S_END][EVENT_END] = {
 #define LOCK_SCREEN_WATING_MAX_COUNT	14	/* 50 * 14 : 700 ms at worst */
 #define MASK32				0xffffffff
 
+#define ACTIVE_ACT "active"
+#define INACTIVE_ACT "inactive"
+
 static int received_sleep_cmd = 0;
 
 typedef struct _pm_lock_node {
@@ -139,7 +142,7 @@ void set_process_active(bool flag, pid_t pid)
 
 	sprintf(str, "%d", (int)pid);
 	ss_action_entry_call_internal(
-	    (flag ? PREDEF_ACTIVE : PREDEF_INACTIVE), 1, str);
+	    (flag ? ACTIVE_ACT : INACTIVE_ACT), 1, str);
 }
 
 static int refresh_app_cond()

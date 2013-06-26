@@ -21,7 +21,6 @@
 
 int call_predefine_action(int argc, char **argv);
 void ss_predefine_internal_init(void);
-int is_power_off(void);
 void predefine_pm_change_state(unsigned int s_bits);
-int predefine_control_launch(char *popup_name, bundle *b);
+int predefine_control_launch(char *popup_name, bundle *b, int option);
 #endif /* __PREDEFINE_H__ */

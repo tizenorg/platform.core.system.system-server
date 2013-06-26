@@ -28,7 +28,6 @@
 #include <grp.h>
 #include <dirent.h>
 #include <Ecore_File.h>
-
 #include "core/log.h"
 #include "core/launch.h"
 

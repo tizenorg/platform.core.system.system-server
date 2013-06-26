@@ -233,7 +233,6 @@ static int __pmon_start(struct ss_main_data *ad)
 {
 	int pmon_fd = -1;
 	char pmon_dev_node[PATH_MAX];
-
 	if (device_get_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_NODE, pmon_dev_node) < 0) {
 		_E("ss_pmon_init get dev node path failed");
 		return -1;

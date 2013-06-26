@@ -21,16 +21,26 @@
 #include <heynoti.h>
 #include <vconf.h>
 #include <sys/types.h>
+#include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <sys/shm.h>
 #include <device-node.h>
+#include <time.h>
 
 #include "core/log.h"
 #include "core/noti.h"
 #include "core/queue.h"
+#include "core/predefine.h"
 #include "core/data.h"
 
+#define PREDEF_LOWMEM			"lowmem"
+#define OOM_MEM_ACT			"oom_mem_act"
 #define DELETE_SM		"sh -c "PREFIX"/bin/delete.sm"
+#define LOWMEM_EXEC_PATH		PREFIX"/bin/lowmem-popup"
+#define MEMPS_LOG_FILE			"/var/log/memps"
+#define MEMPS_EXEC_PATH			PREFIX"/bin/memps"
+/* wait for 5 sec as victim process be dead */
+#define WAITING_INTERVAL		5
 
 #define MEMNOTIFY_NORMAL	0x0000
 #define MEMNOTIFY_LOW		0xfaac
@@ -205,7 +215,6 @@ static int memory_low_act(void *data)
 	_D("[LOW MEM STATE] memory low state");
 	make_LMM_log("/var/log/memps", 1, "LOWMEM_WARNING");
 	remove_shm();
-
 	heynoti_get_snoti_name(_SYS_RES_CLEANUP, lowmem_noti_name, NAME_MAX);
 	ss_noti_send(lowmem_noti_name);
 	vconf_set_int(VCONFKEY_SYSMAN_LOW_MEMORY,
@@ -271,10 +280,12 @@ static int lowmem_process(unsigned int mem_state, void *ad)
 static unsigned int lowmem_read(int fd)
 {
 	unsigned int mem_state;
-	read(fd, &mem_state, sizeof(mem_state));
+	if (read(fd, &mem_state, sizeof(mem_state)) < 0) {
+		PRT_TRACE_ERR("error lowmem state");
+		return -1;
+	}
 	return mem_state;
 }
-
 static int lowmem_cb(void *data, Ecore_Fd_Handler * fd_handler)
 {
 	int fd;
@@ -284,13 +295,13 @@ static int lowmem_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
 		_E
 		    ("ecore_main_fd_handler_active_get error , return\n");
-		return 1;
+		return -1;
 	}
 
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
 	if (fd < 0) {
 		_E("ecore_main_fd_handler_fd_get error , return");
-		return 1;
+		return -1;
 	}
 	mem_state = lowmem_read(fd);
 	print_lowmem_state(mem_state);
@@ -313,6 +324,123 @@ static int set_threshold()
 	}
 
 	return 0;
+}
+
+static void make_memps_log(char *file, pid_t pid, char *victim_name)
+{
+	time_t now;
+	struct tm *cur_tm;
+	char params[4096];
+	char new_log[NAME_MAX];
+	static pid_t old_pid = 0;
+	int ret=-1;
+
+	if (old_pid == pid)
+		return;
+	old_pid = pid;
+
+	now = time(NULL);
+	cur_tm = (struct tm *)malloc(sizeof(struct tm));
+	if (cur_tm == NULL) {
+		PRT_TRACE_ERR("Fail to memory allocation");
+		return;
+	}
+
+	if (localtime_r(&now, cur_tm) == NULL) {
+		PRT_TRACE_ERR("Fail to get localtime");
+		free(cur_tm);
+		return;
+	}
+
+	PRT_TRACE("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
+		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
+		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
+		 cur_tm->tm_sec);
+	snprintf(new_log, sizeof(new_log),
+		 "%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
+		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
+		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
+		 cur_tm->tm_sec);
+
+	snprintf(params, sizeof(params), "-f %s", new_log);
+	ret = ss_launch_evenif_exist(MEMPS_EXEC_PATH, params);
+	/* will be removed, just for debugging */
+	if(ret > 0) {
+		FILE *fp;
+		fp = open_proc_oom_adj_file(ret, "w");
+		if (fp != NULL) {
+			fprintf(fp, "%d", (-17));
+			fclose(fp);
+		}
+	}
+	free(cur_tm);
+}
+
+static int lowmem_get_victim_pid()
+{
+	pid_t pid;
+	int fd;
+
+	if (device_get_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_VICTIM_TASK, &pid) < 0) {
+		PRT_TRACE_ERR("Get victim task failed");
+		return -1;
+	}
+
+	return pid;
+}
+
+int lowmem_def_predefine_action(int argc, char **argv)
+{
+	int pid, ret, oom_adj;
+	char appname[PATH_MAX];
+
+	if (argc < 1)
+		return -1;
+
+	if (!strcmp(argv[0], OOM_MEM_ACT)) {
+		pid = lowmem_get_victim_pid();
+		if (pid > 0 && pid != get_exec_pid(LOWMEM_EXEC_PATH) && pid != get_exec_pid(MEMPS_EXEC_PATH)) {
+			if ((get_cmdline_name(pid, appname, PATH_MAX)) ==
+			    0) {
+				PRT_TRACE_EM
+				    ("we will kill, lowmem lv2 = %d (%s)\n",
+				     pid, appname);
+				make_memps_log(MEMPS_LOG_FILE, pid, appname);
+
+				if(get_app_oomadj(pid, &oom_adj) < 0) {
+					PRT_TRACE_ERR("Failed to get oom_adj");
+					return -1;
+				}
+				PRT_TRACE("%d will be killed with %d oom_adj value", pid, oom_adj);
+
+				kill(pid, SIGTERM);
+
+				if (check_oomadj(oom_adj) == 0)
+					return 0;
+
+				bundle *b = NULL;
+
+				b = bundle_create();
+				bundle_add(b, "_APP_NAME_", appname);
+				ret = syspopup_launch("lowmem-syspopup", b);
+				bundle_free(b);
+				if (ret < 0) {
+					PRT_TRACE_EM("popup lauch failed\n");
+					return -1;
+				}
+
+				if (set_su_oomadj(ret) < 0) {
+					PRT_TRACE_ERR("Failed to set oom_adj");
+				}
+			}
+		}
+	}
+	return 0;
+}
+int ss_predefine_lowmem_init(void)
+{
+	ss_action_entry_add_internal(PREDEF_LOWMEM, lowmem_def_predefine_action,
+				     NULL, NULL);
 }
 
 int ss_lowmem_init(struct ss_main_data *ad)
