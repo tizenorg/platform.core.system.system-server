@@ -245,11 +245,6 @@ heynotitool set device_hdmi_chgdet
 heynotitool set device_keyboard_chgdet
 
 
-mkdir -p /etc/udev/rules.d
-if ! [ -L /etc/udev/rules.d/91-system-server.rules ]; then
-        ln -s %{_datadir}/system-server/udev-rules/91-system-server.rules /etc/udev/rules.d/91-system-server.rules
-fi
-
 systemctl daemon-reload
 if [ $1 == 1 ]; then
     systemctl restart system-server.service
@@ -298,7 +293,6 @@ systemctl daemon-reload
 %{_libdir}/systemd/system/regpmon.service
 %{_libdir}/systemd/system/graphical.target.wants/zbooting-done.service
 %{_libdir}/systemd/system/zbooting-done.service
-%{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 

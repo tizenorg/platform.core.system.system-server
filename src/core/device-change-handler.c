@@ -46,6 +46,7 @@
 #include "sys_pci_noti/sys_pci_noti.h"
 #include "udev.h"
 #include "common.h"
+#include "proc/proc-handler.h"
 
 #define PREDEF_USBCON			"usbcon"
 #define PREDEF_EARJACKCON		"earjack_predef_internal"
