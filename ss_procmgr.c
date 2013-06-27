@@ -186,11 +186,7 @@ int check_and_set_old_backgrd()
 			pid = buckets[oom_adj][i];
 			if (!pid)
 				break;
-			if (new_oomadj >= MAX_BACKGRD_OOMADJ) {
-				PRT_TRACE("BACKGRD MANAGE : kill the process %d (oom_adj %d)", pid, MAX_BACKGRD_OOMADJ);
-				kill(pid, SIGTERM);
-			}
-			else {
+			if (new_oomadj < MAX_BACKGRD_OOMADJ) {
 				if (new_oomadj != oom_adj)
 					update_backgrd_app_oomadj(pid, new_oomadj);
 				new_oomadj++;
@@ -356,7 +352,6 @@ int set_backgrd_action(int argc, char **argv)
 		ret = set_app_oomadj((pid_t) pid, OOMADJ_BACKGRD_UNLOCKED);
 		break;
 	case OOMADJ_INIT:
-		check_and_set_old_backgrd();
 		ret = set_app_oomadj((pid_t) pid, OOMADJ_BACKGRD_UNLOCKED);
 		break;
 	default:

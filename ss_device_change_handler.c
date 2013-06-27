@@ -266,13 +266,19 @@ static void mmc_chgdet_cb(void *data)
 	int val = -1;
 
 	if (data == NULL) {
+		/* when removed mmc, emul kernel notify twice
+		 * So this code ignores second event */
+		if (!inserted)
+			return;
 		PRT_TRACE("mmc removed");
 		ss_mmc_removed();
 		inserted = 0;
 	} else {
-		PRT_TRACE("mmc added");
+		/* when inserted mmc, emul kernel notify twice(insert, changed)
+		 * So this code ignores second event */
 		if (inserted)
 			return;
+		PRT_TRACE("mmc added");
 		inserted = 1;
 		ret = ss_mmc_inserted();
 		if (ret == -1) {
