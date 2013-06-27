@@ -311,8 +311,12 @@ static int __check_mmc_fs_type(const char *path)
 	/* check fs type with magic code */
 	for (i = 0; i < ARRAY_SIZE(fs_types); i++)
 	{
-		lseek(fd, fs_types[i].offset, SEEK_SET);
+		ret = lseek(fd, fs_types[i].offset, SEEK_SET);
+		if (ret < 0)
+			goto check_return;
 		ret = read(fd, buf, 2);
+		if (ret < 0)
+			goto check_return;
 		PRT_TRACE("mmc search magic : 0x%2x, 0x%2x", buf[0],buf[1]);
 		if (!memcmp(buf, fs_types[i].magic, fs_types[i].magic_sz)) {
 			inserted_type =  fs_types[i].type;
@@ -712,7 +716,8 @@ static int __check_mmc_fs(void)
 		PRT_TRACE_ERR("can't open the '%s': %s", buf, strerror(errno));
 		snprintf(buf, sizeof(buf), "%s%d", MMC_DEV, blk_num);
 	}
-	close(fd);
+	else
+		close(fd);
 
 	if (__check_mmc_fs_type(buf) != 0) {
 		PRT_TRACE_ERR("fail to check mount point %s", buf);
@@ -771,10 +776,9 @@ static int ss_mmc_format(int argc, char **argv)
 
 static int ss_mmc_check_smack(int argc, char **argv)
 {
-	int smack_checked;
 	int pid;
 	system(FS_EXT4_SMACK_LABEL);
-	PRT_TRACE_ERR("smack labeling script is run(%d)", smack_checked);
+	PRT_TRACE_ERR("smack labeling script is run");
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_STATUS, VCONFKEY_SYSMAN_MMC_MOUNTED);
 	vconf_set_int(VCONFKEY_SYSMAN_MMC_MOUNT, VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED);
 	if (mmc_popup_pid > 0) {
