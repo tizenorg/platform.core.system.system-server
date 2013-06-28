@@ -126,7 +126,7 @@ systemctl daemon-reload
 
 
 %files
-%manifest system-server.manifest
+%manifest %{name}.manifest
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_sysconfdir}/rc.d/init.d/system_server.sh
 %{_sysconfdir}/rc.d/rc3.d/S35system-server
