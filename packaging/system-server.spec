@@ -6,8 +6,8 @@ Release:    6
 Group:      Framework/system
 License:    Apache License, Version 2.0
 Source0:    system-server-%{version}.tar.gz
-Source1:    system-server.service
 Source2:    system-server.manifest
+Source3:    deviced.manifest
 BuildRequires:  cmake
 BuildRequires:  libattr-devel
 BuildRequires:  pkgconfig(ecore)
@@ -15,7 +15,6 @@ BuildRequires:  pkgconfig(heynoti)
 BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(sysman)
 BuildRequires:  pkgconfig(tapi)
-BuildRequires:  pkgconfig(devman)
 BuildRequires:  pkgconfig(pmapi)
 BuildRequires:  pkgconfig(edbus)
 BuildRequires:  pkgconfig(dlog)
@@ -24,9 +23,12 @@ BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(svi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(usbutils)
+BuildRequires:  pkgconfig(udev)
 BuildRequires:  pkgconfig(device-node)
 BuildRequires:  pkgconfig(libsmack)
 BuildRequires:	gettext
+BuildRequires:  pkgconfig(libsystemd-daemon)
+%{?systemd_requires}
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl
 Requires(post): /usr/bin/vconftool
@@ -35,12 +37,28 @@ Requires(postun): /usr/bin/systemctl
 %description
 Description: System server
 
+%package -n libdeviced
+Summary:    Deviced library
+Group:      Development/Libraries
+
+%description -n libdeviced
+Deviced library for device control
+
+%package -n libdeviced-devel
+Summary:    Deviced library for (devel)
+Group:      Development/Libraries
+Requires:   libdeviced = %{version}-%{release}
+
+%description -n libdeviced-devel
+Deviced library for device control (devel)
+
 %prep
 %setup -q
 cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 
 %build
 cp %{SOURCE2} .
+cp %{SOURCE3} .
 make %{?jobs:-j%jobs}
 
 %install
@@ -53,8 +71,9 @@ mkdir -p %{buildroot}%{_sysconfdir}/rc.d/rc5.d/
 ln -s %{_sysconfdir}/init.d/system_server.sh %{buildroot}%{_sysconfdir}/rc.d/rc5.d/S00system-server
 
 mkdir -p %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants
-install -m 0644 %{SOURCE1} %{buildroot}%{_libdir}/systemd/system/system-server.service
+mkdir -p %{buildroot}%{_libdir}/systemd/system/sockets.target.wants
 ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/sockets.target.wants/system-server.socket
 
 %post
 
@@ -92,15 +111,7 @@ heynotitool set power_off_start
 
 heynotitool set mmcblk_add
 heynotitool set mmcblk_remove
-
-heynotitool set device_usb_chgdet
-heynotitool set device_ta_chgdet
-heynotitool set device_earjack_chgdet
-heynotitool set device_earkey_chgdet
-heynotitool set device_tvout_chgdet
-heynotitool set device_hdmi_chgdet
 heynotitool set device_charge_chgdet
-heynotitool set device_keyboard_chgdet
 heynotitool set device_usb_host_add
 heynotitool set device_usb_host_remove
 heynotitool set device_pci_keyboard_add
@@ -145,8 +156,21 @@ systemctl daemon-reload
 %{_bindir}/sys_pci_noti
 %{_bindir}/mmc-smack-label
 %{_libdir}/systemd/system/multi-user.target.wants/system-server.service
+%{_libdir}/systemd/system/sockets.target.wants/system-server.socket
 %{_libdir}/systemd/system/system-server.service
+%{_libdir}/systemd/system/system-server.socket
 %{_datadir}/system-server/sys_device_noti/batt_full_icon.png
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
+
+%files -n libdeviced
+%defattr(-,root,root,-)
+%{_libdir}/libdeviced.so.*
+%manifest deviced.manifest
+
+%files -n libdeviced-devel
+%defattr(-,root,root,-)
+%{_includedir}/deviced/dd-battery.h
+%{_libdir}/libdeviced.so
+%{_libdir}/pkgconfig/deviced.pc

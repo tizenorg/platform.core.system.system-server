@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <device-node.h>
 
 #include <sysman.h>
 #include "include/ss_data.h"
@@ -28,6 +29,8 @@
 
 #define LIMITED_BACKGRD_NUM 15
 #define MAX_BACKGRD_OOMADJ (OOMADJ_BACKGRD_UNLOCKED + LIMITED_BACKGRD_NUM)
+#define PROCESS_VIP		"process_vip"
+#define PROCESS_PERMANENT	"process_permanent"
 
 int get_app_oomadj(int pid, int *oomadj)
 {
@@ -363,6 +366,28 @@ int set_backgrd_action(int argc, char **argv)
 	return ret;
 }
 
+int set_process_group_action(int argc, char **argv)
+{
+	int pid = -1;
+	int ret = -1;
+
+	if (argc != 2)
+		return -1;
+	if ((pid = atoi(argv[0])) < 0)
+		return -1;
+
+	if (strncmp(argv[1], PROCESS_VIP, strlen(PROCESS_VIP)) == 0)
+		ret = device_set_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_MP_VIP, pid);
+	else if (strncmp(argv[1], PROCESS_PERMANENT, strlen(PROCESS_PERMANENT)) == 0)
+		ret = device_set_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_MP_PNP, pid);
+
+	if (ret == 0)
+		PRT_TRACE_ERR("%s : pid %d", argv[1], pid);
+	else
+		PRT_TRACE_ERR("fail to set %s : pid %d",argv[1], pid);
+	return 0;
+}
+
 int ss_process_manager_init(void)
 {
 	ss_action_entry_add_internal(PREDEF_FOREGRD, set_foregrd_action, NULL,
@@ -374,5 +399,6 @@ int ss_process_manager_init(void)
 	ss_action_entry_add_internal(PREDEF_INACTIVE, set_inactive_action, NULL,
 				     NULL);
 	ss_action_entry_add_internal(OOMADJ_SET, set_oomadj_action, NULL, NULL);
+	ss_action_entry_add_internal(PROCESS_GROUP_SET, set_process_group_action, NULL, NULL);
 	return 0;
 }

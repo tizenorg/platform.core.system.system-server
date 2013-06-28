@@ -4,9 +4,11 @@ After=vconf-setup.service
 
 [Service]
 # set DISPLAY for usb_setting launching
+Type=notify
 Environment=DISPLAY=:0
 ExecStart=/usr/bin/system_server
-TimeoutSec=2
+TimeoutStopSec=2
+NotifyAccess=all
 
 [Install]
 WantedBy=multi-user.target

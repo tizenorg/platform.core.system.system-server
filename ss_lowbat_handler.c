@@ -82,6 +82,18 @@ static struct lowbat_process_entry lpe[] = {
 	{BATTERY_NORMAL,		BATTERY_REAL_POWER_OFF,	battery_power_off_act},
 };
 
+/*
+ * TODO: remove this function
+ */
+static void print_lowbat_state(unsigned int bat_percent)
+{
+#if 0
+	int i;
+	for (i = 0; i < BAT_MON_SAMPLES; i++)
+		PRT_TRACE("\t%d", recent_bat_percent[i]);
+#endif
+}
+
 static int battery_warning_low_act(void *data)
 {
 	char lowbat_noti_name[NAME_MAX];
@@ -154,7 +166,7 @@ static int lowbat_process(int bat_percent, void *ad)
 			cur_bat_capacity = new_bat_capacity;
 	}
 
-	if (0 > vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &vconf_state)) {
+	if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &vconf_state) < 0) {
 		PRT_TRACE_ERR("vconf_get_int() failed");
 		return -1;
 	}
@@ -188,9 +200,7 @@ static int lowbat_process(int bat_percent, void *ad)
 	} else {
 		new_bat_state = BATTERY_NORMAL;
 		if (new_bat_capacity == BATTERY_FULL) {
-			if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &bat_full) < 0) {
-				PRT_TRACE_ERR("fail to read charge full from kernel");
-			}
+			device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &bat_full);
 			if (bat_full == 1) {
 				if (vconf_state != VCONFKEY_SYSMAN_BAT_FULL)
 				ret=vconf_set_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, VCONFKEY_SYSMAN_BAT_FULL);
@@ -244,10 +254,7 @@ static int lowbat_read()
 {
 	int bat_percent;
 
-	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent) < 0) {
-		PRT_TRACE_ERR("fail to read power capacity from kernel");
-		return -1;
-	}
+	device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent);
 
 	return bat_percent;
 }
@@ -292,8 +299,9 @@ static int __check_lowbat_percent(void)
 		if (bat_err_count > MAX_BATTERY_ERROR) {
 			PRT_TRACE_ERR
 			    ("[BATMON] Cannot read battery gage. stop read fuel gage");
+			return 0;
 		}
-		return -1;
+		return 1;
 	}
 	if (bat_percent > 100)
 		bat_percent = 100;
@@ -303,10 +311,11 @@ static int __check_lowbat_percent(void)
 
 int ss_lowbat_monitor(void *data)
 {
-	struct ss_main_data *ad = (struct ss_main_data *)data;
 	int bat_percent;
+	struct ss_main_data *ad = (struct ss_main_data *)data;
 
 	bat_percent = __check_lowbat_percent();
+	print_lowbat_state(bat_percent);
 
 	if (lowbat_process(bat_percent, ad) < 0)
 		ecore_timer_interval_set(lowbat_timer, BAT_MON_INTERVAL_MIN);
@@ -347,7 +356,7 @@ int ss_lowbat_init(struct ss_main_data *ad)
 
 	/* need check battery */
 	lowbat_timer =
-	    ecore_timer_add(BAT_MON_INTERVAL_MIN, ss_lowbat_monitor, ad);
+		ecore_timer_add(BAT_MON_INTERVAL_MIN, ss_lowbat_monitor, ad);
 
 	__check_lowbat_percent();
 

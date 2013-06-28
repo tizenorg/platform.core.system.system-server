@@ -9,6 +9,8 @@
 		<filesystem path="/etc/rc.d/rc5.d/S00system-server" label="_" exec_label="none" />
 		<filesystem path="/usr/lib/systemd/system/system-server.service" label="_" exec_label="none" />
 		<filesystem path="/usr/lib/systemd/system/multi-user.target.wants/system-server.service" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/system-server.socket" label="_" exec_label="none" />
+		<filesystem path="/usr/lib/systemd/system/sockets.target.wants/system-server.socket" label="_" exec_label="none" />
 	</assign>
 	<request>
 		<domain name="deviced"/>

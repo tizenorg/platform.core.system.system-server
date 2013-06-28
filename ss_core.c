@@ -33,6 +33,10 @@ struct _internal_msg {
 };
 
 static int core_pipe[2];
+Ecore_Fd_Handler *g_pipe_efd = NULL;
+
+static int __pipe_start(struct ss_main_data *ad);
+static int __pipe_stop(int fd);
 
 static int _ss_core_action_run(void *user_data,
 			       struct ss_run_queue_entry *rq_entry)
@@ -67,14 +71,31 @@ static int core_pipe_cb(void *userdata, Ecore_Fd_Handler * fd_handler)
 {
 	struct ss_main_data *ad = (struct ss_main_data *)userdata;
 	struct _internal_msg p_msg;
-
+	int retry_count = 0;
+	int r = -1;
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
 		PRT_TRACE_ERR
 		    ("ecore_main_fd_handler_active_get error , return\n");
 		return 1;
 	}
 
-	read(core_pipe[0], &p_msg, sizeof(struct _internal_msg));
+	while (retry_count < 5) {
+		r = read(core_pipe[0], &p_msg, sizeof(struct _internal_msg));
+		if (r < 0) {
+			if (errno == EINTR) {
+				PRT_TRACE_ERR("Re-read for error(EINTR)");
+				retry_count++;
+				continue;
+			} else {
+				__pipe_stop(core_pipe[0]);
+				__pipe_stop(core_pipe[1]);
+				PRT_TRACE_ERR("restart pipe fd");
+				__pipe_start(ad);
+			}
+		} else {
+			break;
+		}
+	}
 
 	switch (p_msg.type) {
 	case SS_CORE_ACT_RUN:
@@ -111,12 +132,40 @@ int ss_core_action_clear(int pid)
 
 int ss_core_init(struct ss_main_data *ad)
 {
+	__pipe_stop(core_pipe[0]);
+	__pipe_stop(core_pipe[1]);
+
+	if (__pipe_start(ad) == -1) {
+		PRT_TRACE_ERR("fail pipe control fd init");
+		return -1;
+	}
+	return 0;
+}
+
+static int __pipe_start(struct ss_main_data *ad)
+{
 	if (pipe(core_pipe) < 0) {
 		PRT_TRACE_ERR("pipe cannot create");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
-	ecore_main_fd_handler_add(core_pipe[0], ECORE_FD_READ,
+	g_pipe_efd = ecore_main_fd_handler_add(core_pipe[0], ECORE_FD_READ,
 				  core_pipe_cb, ad, NULL, NULL);
+	if (!g_pipe_efd) {
+		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		return -1;
+	}
+	return 0;
+}
+
+static int __pipe_stop(int fd)
+{
+	if (g_pipe_efd) {
+		ecore_main_fd_handler_del(g_pipe_efd);
+		g_pipe_efd = NULL;
+	}
+	if (fd >=0)
+		close(fd);
+
 	return 0;
 }

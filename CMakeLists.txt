@@ -1,6 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(system_server C)
 
+# deviced
+SET(DEVICED_NAME deviced)
+SET(VERSION 0.1.0)
+
 SET(SRCS
 	ss_main.c
 	ss_sysnoti.c
@@ -22,10 +26,20 @@ SET(SRCS
 	ss_procmgr.c
 	ss_timemgr.c
 	ss_cpu_handler.c
-	ss_vibrator.c
-	)
+	ss_common.c
+	ss_vibrator.c)
+
+# libdeviced
+SET(DEVICED_SRCS
+	src/shared/battery.c)
+
+SET(DEVICED_HEADERS
+	src/deviced/dd-battery.h)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+# libdeviced
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src/deviced)
 
 SET(MOVINAND_FORMAT movi_format.sh)
 
@@ -43,13 +57,16 @@ pkg_check_modules(pkgs REQUIRED
 	dlog
 	syspopup-caller
 	notification
-	devman
 	device-node
-	libsmack)
+	libsmack
+	libsystemd-daemon)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
 ENDFOREACH(flag)
+
+# libdeviced
+SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} -fvisibility=hidden")
 
 SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} -g -fno-omit-frame-pointer -finstrument-functions")
 
@@ -69,16 +86,32 @@ SET(UDEV_RULES udev-rules/91-system-server.rules)
 
 CONFIGURE_FILE(${UDEV_RULES}.in ${UDEV_RULES} @ONLY)
 
-ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} "-ldl" "-lsmack")
+# libdeviced
+ADD_LIBRARY(${DEVICED_NAME} SHARED ${DEVICED_SRCS})
+TARGET_LINK_LIBRARIES(${DEVICED_NAME} ${pkgs_LDFLAGS})
+SET_TARGET_PROPERTIES(${DEVICED_NAME} PROPERTIES VERSION ${VERSION})
+INSTALL(TARGETS ${DEVICED_NAME} DESTINATION lib COMPONENT RuntimeLibraries)
 
+FOREACH(hfile ${DEVICED_HEADERS})
+	INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${hfile} DESTINATION include/${DEVICED_NAME})
+ENDFOREACH(hfile)
+
+CONFIGURE_FILE(${DEVICED_NAME}.pc.in ${DEVICED_NAME}.pc @ONLY)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${DEVICED_NAME}.pc DESTINATION lib/pkgconfig)
+
+ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} "-ldl" "-ludev" "-lsmack")
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
 INSTALL(FILES ${MOVINAND_FORMAT} DESTINATION bin)
 INSTALL(FILES ${UDEV_RULES} DESTINATION ${UDEV_RULES_PATH})
 INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/system_server.sh DESTINATION /etc/rc.d/init.d)
 INSTALL(FILES system-server.conf DESTINATION /etc/dbus-1/system.d)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/packaging/system-server.rule DESTINATION /opt/etc/smack/accesses.d)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/mmc-smack-label DESTINATION bin)
+
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.service DESTINATION /usr/lib/systemd/system)
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.socket  DESTINATION /usr/lib/systemd/system)
 
 ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)

@@ -50,7 +50,7 @@ static int __write_min_cpu_freq(int freq);
 
 int set_max_frequency_action(int argc, char **argv)
 {
-	int r = -1;
+	int r;
 	
 	if (argc < 2)
 		return -1;
@@ -72,7 +72,7 @@ int set_max_frequency_action(int argc, char **argv)
 
 int set_min_frequency_action(int argc, char **argv)
 {
-	int r = -1;
+	int r;
 	
 	if (argc < 2)
 		return -1;
@@ -94,7 +94,7 @@ int set_min_frequency_action(int argc, char **argv)
 
 int release_max_frequency_action(int argc, char **argv)
 {
-	int r = -1;
+	int r;
 	if (argc < 1)
 		return -1;
 	
@@ -118,7 +118,7 @@ int release_max_frequency_action(int argc, char **argv)
 
 int release_min_frequency_action(int argc, char **argv)
 {
-	int r = -1;
+	int r;
 
 	if (argc < 1)
 		return -1;
@@ -235,6 +235,8 @@ int ss_cpu_handler_init(void)
 static void __set_freq_limit()
 {
 	int ret;
+	int power_saving_stat = -1;
+	int power_saving_cpu_stat = -1;
 
 	ret = device_get_property(DEVICE_TYPE_CPU, PROP_CPU_CPUINFO_MAX_FREQ, &max_cpu_freq_limit);
 	if (ret < 0) {
@@ -249,8 +251,6 @@ static void __set_freq_limit()
 	}
 
 	/* check power saving */
-	int power_saving_stat = -1;
-	int power_saving_cpu_stat = -1;
 	if (vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_SYSMODE_STATUS, &power_saving_stat) == 0) {
 		if (power_saving_stat == 1) {
 			if (vconf_get_bool(VCONFKEY_SETAPPL_PWRSV_CUSTMODE_CPU, &power_saving_cpu_stat) == 0) {
@@ -340,7 +340,7 @@ static int __remove_entry_from_min_cpu_freq_list(int pid)
 
 static int __add_entry_to_max_cpu_freq_list(int pid, int freq)
 {
-	int r = -1;
+	int r;
 	struct cpu_freq_entry *entry;
 	
 	r = __remove_entry_from_max_cpu_freq_list(pid);
@@ -372,7 +372,7 @@ static int __add_entry_to_max_cpu_freq_list(int pid, int freq)
 
 static int __add_entry_to_min_cpu_freq_list(int pid, int freq)
 {
-	int r = -1;
+	int r;
 	struct cpu_freq_entry *entry;
 	
 	r = __remove_entry_from_min_cpu_freq_list(pid);

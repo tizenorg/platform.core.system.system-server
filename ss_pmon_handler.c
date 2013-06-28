@@ -26,11 +26,14 @@
 #include "ss_log.h"
 #include "ss_launch.h"
 #include "include/ss_data.h"
+#include "ss_common.h"
 
 #define PMON_PERMANENT_DIR	"/tmp/permanent"
 
-static int pmon_fd = -1;
+static Ecore_Fd_Handler *pmon_efd = NULL;
 
+static int __pmon_start(struct ss_main_data *ad);
+static int __pmon_stop(int fd);
 static int replace_char(int size, char *t)
 {
 	while (size > 0) {
@@ -61,7 +64,6 @@ static char *pmon_get_permanent_pname(int pid)
 		close(fd);
 		return NULL;
 	}
-
 	PRT_TRACE("size = %d", (int)st.st_size);
 
 	cmdline = malloc(st.st_size + 1);
@@ -127,7 +129,6 @@ static int pmon_process(int pid, void *ad)
 					PRT_TRACE("Failed to open");
 					return -1;
 				}
-
 				cnt = read(fd, buf, PATH_MAX);
 				close(fd);
 
@@ -143,14 +144,12 @@ static int pmon_process(int pid, void *ad)
 					PRT_TRACE("Failed to open");
 					return -1;
 				}
-
 				if (write(fd, buf, cnt) == -1) {
 					PRT_TRACE("Failed to write");
 					close(fd);
 					return -1;
 				}
 				close(fd);
-
 				if ( device_set_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_MP_PNP, new_pid) < 0) {
 					PRT_TRACE_ERR("Write new pid failed");
 				}
@@ -161,9 +160,8 @@ static int pmon_process(int pid, void *ad)
 				PRT_TRACE
 				    ("[Process MON] OOMADJ_SET : pid %d, new_oomadj %d",
 				     new_pid, (-17));
-				snprintf(buf, sizeof(buf), "/proc/%d/oom_adj",
-					 new_pid);
-				fp = fopen(buf, "w");
+				
+				fp = open_proc_oom_adj_file(new_pid, "w");
 				if (fp == NULL)
 					return -1;
 				fprintf(fp, "%d", (-17));
@@ -193,22 +191,23 @@ static int pmon_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	int fd;
 	struct ss_main_data *ad = (struct ss_main_data *)data;
 	int dead_pid;
-
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
 		PRT_TRACE_ERR
 		    ("ecore_main_fd_handler_active_get error , return\n");
-		return 1;
+		return -1;
 	}
 
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
 
 	if (fd < 0) {
 		PRT_TRACE_ERR("ecore_main_fd_handler_fd_get error , return");
-		return 1;
+		return -1;
 	}
-	if ((read(fd, &dead_pid, sizeof(dead_pid))) < 0) {
-		PRT_TRACE_ERR("Reading DEAD_PID failed, Return");
-		return 1;
+	if (read(fd, &dead_pid, sizeof(dead_pid)) < 0) {
+		__pmon_stop(fd);
+		PRT_TRACE_ERR("Reading DEAD_PID failed, restart ecore fd");
+		__pmon_start(ad);
+		return -1;
 	}
 		
 	print_pmon_state(dead_pid);
@@ -219,7 +218,23 @@ static int pmon_cb(void *data, Ecore_Fd_Handler * fd_handler)
 
 int ss_pmon_init(struct ss_main_data *ad)
 {
+	int ret = -1;
+	if (pmon_efd) {
+		ecore_main_fd_handler_del(pmon_efd);
+		pmon_efd = NULL;
+	}
+	if (__pmon_start(ad) == -1) {
+		PRT_TRACE_ERR("fail pmon control fd init");
+		return -1;
+	}
+	return 0;
+}
+
+static int __pmon_start(struct ss_main_data *ad)
+{
+	int pmon_fd = -1;
 	char pmon_dev_node[PATH_MAX];
+
 	if (device_get_property(DEVICE_TYPE_PROCESS, PROP_PROCESS_NODE, pmon_dev_node) < 0) {
 		PRT_TRACE_ERR("ss_pmon_init get dev node path failed");
 		return -1;
@@ -230,7 +245,22 @@ int ss_pmon_init(struct ss_main_data *ad)
 		PRT_TRACE_ERR("ss_pmon_init fd open failed");
 		return -1;
 	}
-	ecore_main_fd_handler_add(pmon_fd, ECORE_FD_READ, pmon_cb, ad, NULL,
-				  NULL);
+	pmon_efd = ecore_main_fd_handler_add(pmon_fd, ECORE_FD_READ, pmon_cb, ad, NULL, NULL);
+	if (!pmon_efd) {
+		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		return -1;
+	}
+	return 0;
+}
+static int __pmon_stop(int fd)
+{
+	if (pmon_efd) {
+		ecore_main_fd_handler_del(pmon_efd);
+		pmon_efd = NULL;
+	}
+	if (fd >=0) {
+		close(fd);
+		fd = -1;
+	}
 	return 0;
 }

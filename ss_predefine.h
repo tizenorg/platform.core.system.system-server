@@ -17,8 +17,11 @@
 
 #ifndef __SS_PREDEFINE_H__
 #define __SS_PREDEFINE_H__
+#include <bundle.h>
 
 int call_predefine_action(int argc, char **argv);
 void ss_predefine_internal_init(void);
-
+int is_power_off(void);
+void predefine_pm_change_state(unsigned int s_bits);
+int predefine_control_launch(char *popup_name, bundle *b);
 #endif /* __SS_PREDEFINE_H__ */

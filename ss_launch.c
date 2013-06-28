@@ -51,7 +51,6 @@ static void prepare_exec(void)
 {
 	int i;
 	int maxfd;
-	char buf[MAX_ARGS];
 	FILE *fp;
 
 	maxfd = getdtablesize();
@@ -61,13 +60,6 @@ static void prepare_exec(void)
 	for (i = 0; i < _NSIG; i++)
 		signal(i, SIG_DFL);
 
-	/* RESET oomadj value */
-	sprintf(buf,"/proc/%d/oom_adj",getpid());
-	fp = fopen(buf, "w");          
-	if (fp == NULL)                       
-		return;                               
-	fprintf(fp, "%d", 0);                  
-	fclose(fp);
 }
 
 static int parse_cmd(const char *cmdline, char **argv, int max_args)
@@ -242,9 +234,10 @@ int ss_launch_if_noexist(const char *execpath, const char *arg, ...)
 	}
 
 	snprintf(buf, buf_size, "%s %s", execpath, arg);
+	//pid = launch_app_cmd_with_nice(buf, nice_value, flag);
 	pid = launch_app_cmd_with_nice(buf, nice_value);
 	if (pid == -2)
-		exit(0);
+		exit(EXIT_FAILURE);
 	free(buf);
 
 	return pid;
@@ -280,15 +273,16 @@ int ss_launch_evenif_exist(const char *execpath, const char *arg, ...)
 	buf_size = strlen(execpath) + strlen(arg) + 10;
 	buf = malloc(buf_size);
 	if (buf == NULL) {
-		/* Do something for not enought memory error */
+		// Do something for not enought memory error
 		PRT_TRACE_ERR("Malloc failed");
 		return -1;
 	}
 
 	snprintf(buf, buf_size, "%s %s", execpath, arg);
+	//pid = launch_app_cmd_with_nice(buf, nice_value, flag);
 	pid = launch_app_cmd_with_nice(buf, nice_value);
 	if (pid == -2)
-		exit(0);
+		exit(EXIT_FAILURE);
 	free(buf);
 
 	return pid;
@@ -298,11 +292,11 @@ int ss_launch_after_kill_if_exist(const char *execpath, const char *arg, ...)
 {
 	char *buf;
 	int pid;
-	int nice_value = 0;
-	int flag = 0;
-	int buf_size = -1;
+	int flag;
+	int buf_size;
 	int exist_pid;
 	va_list argptr;
+	int nice_value = 0;
 
 	if (execpath == NULL) {
 		errno = EINVAL;
@@ -333,9 +327,10 @@ int ss_launch_after_kill_if_exist(const char *execpath, const char *arg, ...)
 	}
 
 	snprintf(buf, buf_size, "%s %s", execpath, arg);
+	//pid = launch_app_cmd_with_nice(buf, nice_value, flag);
 	pid = launch_app_cmd_with_nice(buf, nice_value);
-	if (pid == -2)
-		exit(0);
+	if (pid == -2)		/* It means that the 'execvp' return -1 */
+		exit(EXIT_FAILURE);
 	free(buf);
 
 	return pid;

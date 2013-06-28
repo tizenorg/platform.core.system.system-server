@@ -30,6 +30,8 @@
 #include <syspopup_caller.h>
 #include <sys/reboot.h>
 #include <sys/time.h>
+#include <mntent.h>
+#include <sys/mount.h>
 
 #include "ss_log.h"
 #include "ss_launch.h"
@@ -40,34 +42,40 @@
 #include "ss_procmgr.h"
 #include "ss_vibrator.h"
 #include "include/ss_data.h"
+#include "ss_common.h"
 
-#define PREDEFINE_SO_DIR			PREFIX"/lib/ss_predefine/"
+#define PREDEFINE_SO_DIR		PREFIX"/lib/ss_predefine/"
 
-#define CALL_EXEC_PATH				PREFIX"/bin/call"
-#define LOWMEM_EXEC_PATH			PREFIX"/bin/lowmem-popup"
-#define LOWBAT_EXEC_PATH			PREFIX"/bin/lowbatt-popup"
-#define USBCON_EXEC_PATH			PREFIX"/bin/usb-server"
-#define TVOUT_EXEC_PATH				PREFIX"/bin/tvout-selector"
-#define PWROFF_EXEC_PATH			PREFIX"/bin/poweroff-popup"
-#define MEMPS_EXEC_PATH				PREFIX"/bin/memps"
+#define CALL_EXEC_PATH			PREFIX"/bin/call"
+#define LOWMEM_EXEC_PATH		PREFIX"/bin/lowmem-popup"
+#define LOWBAT_EXEC_PATH		PREFIX"/bin/lowbatt-popup"
+#define USBCON_EXEC_PATH		PREFIX"/bin/usb-server"
+#define TVOUT_EXEC_PATH			PREFIX"/bin/tvout-selector"
+#define PWROFF_EXEC_PATH		PREFIX"/bin/poweroff-popup"
+#define MEMPS_EXEC_PATH			PREFIX"/bin/memps"
+#define HDMI_NOTI_EXEC_PATH		PREFIX"/bin/hdmi_connection_noti"
+#define LOWBAT_POPUP_NAME		"lowbat-syspopup"
+#define POWEROFF_POPUP_NAME		"poweroff-syspopup"
+#define HDMI_POPUP_NAME			"hdmi-syspopup"
+#define LOWMEM_POPUP_NAME		"lowmem-syspopup"
 
 /* wait for 5 sec as victim process be dead */
-#define WAITING_INTERVAL			5
+#define WAITING_INTERVAL		5
 
-#define TVOUT_X_BIN				"/usr/bin/xberc"
-#define TVOUT_FLAG				0x00000001
-#define MEMPS_LOG_FILE				"/var/log/memps"
-#define MAX_RETRY				2
+#define TVOUT_X_BIN			"/usr/bin/xberc"
+#define TVOUT_FLAG			0x00000001
+#define MEMPS_LOG_FILE			"/var/log/memps"
+#define MAX_RETRY			2
 
-#define POWEROFF_DURATION			2
-#define POWEROFF_ANIMATION_PATH			"/usr/bin/boot-animation"
-#define POWEROFF_NOTI_NAME			"power_off_start"
+#define POWEROFF_DURATION		2
+#define POWEROFF_ANIMATION_PATH		"/usr/bin/boot-animation"
+#define POWEROFF_NOTI_NAME		"power_off_start"
 
-#define WM_READY_PATH				"/tmp/.wm_ready"
+#define WM_READY_PATH			"/tmp/.wm_ready"
 
 #define LOWBAT_OPT_WARNING		1
 #define LOWBAT_OPT_POWEROFF		2
-#define LOWBAT_OPT_CHARGEERR	3
+#define LOWBAT_OPT_CHARGEERR		3
 #define LOWBAT_OPT_CHECK		4
 
 static Ecore_Timer *lowbat_popup_id = NULL;
@@ -76,6 +84,7 @@ static int lowbat_popup_option = 0;
 static struct timeval tv_start_poweroff;
 static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, void *user_data);
 static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad);
+int internal_poweroff_def_predefine_action(int argc, char **argv);
 
 static int ss_flags = 0;
 
@@ -83,10 +92,56 @@ static Ecore_Timer *poweroff_timer_id = NULL;
 static TapiHandle *tapi_handle = NULL;
 static int power_off = 0;
 
+static int __predefine_get_pid(const char *execpath)
+{
+	DIR *dp;
+	struct dirent *dentry;
+	int pid = -1, fd;
+	char buf[PATH_MAX];
+	char buf2[PATH_MAX];
+
+	dp = opendir("/proc");
+	if (!dp) {
+		PRT_TRACE_ERR("open /proc");
+		return -1;
+	}
+
+	while ((dentry = readdir(dp)) != NULL) {
+		if (!isdigit(dentry->d_name[0]))
+			continue;
+
+		pid = atoi(dentry->d_name);
+
+		snprintf(buf, PATH_MAX, "/proc/%d/cmdline", pid);
+		fd = open(buf, O_RDONLY);
+		if (fd < 0)
+			continue;
+		if (read(fd, buf2, PATH_MAX) < 0) {
+			close(fd);
+			continue;
+		}
+		close(fd);
+
+		if (!strcmp(buf2, execpath)) {
+			closedir(dp);
+			return pid;
+		}
+	}
+
+	errno = ESRCH;
+	closedir(dp);
+	return -1;
+}
+
+int is_power_off(void)
+{
+	return power_off;
+}
+
 static void make_memps_log(char *file, pid_t pid, char *victim_name)
 {
 	time_t now;
-	struct tm cur_tm;
+	struct tm *cur_tm;
 	char params[4096];
 	char new_log[NAME_MAX];
 	static pid_t old_pid = 0;
@@ -97,34 +152,70 @@ static void make_memps_log(char *file, pid_t pid, char *victim_name)
 	old_pid = pid;
 
 	now = time(NULL);
+	cur_tm = (struct tm *)malloc(sizeof(struct tm));
+	if (cur_tm == NULL) {
+		PRT_TRACE_ERR("Fail to memory allocation");
+		return;
+	}
 
-	if (localtime_r(&now, &cur_tm) == NULL) {
+	if (localtime_r(&now, cur_tm) == NULL) {
 		PRT_TRACE_ERR("Fail to get localtime");
+		free(cur_tm);
 		return;
 	}
 
 	PRT_TRACE("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
-		 pid, (1900 + cur_tm.tm_year), 1 + cur_tm.tm_mon,
-		 cur_tm.tm_mday, cur_tm.tm_hour, cur_tm.tm_min,
-		 cur_tm.tm_sec);
+		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
+		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
+		 cur_tm->tm_sec);
 	snprintf(new_log, sizeof(new_log),
 		 "%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
-		 pid, (1900 + cur_tm.tm_year), 1 + cur_tm.tm_mon,
-		 cur_tm.tm_mday, cur_tm.tm_hour, cur_tm.tm_min,
-		 cur_tm.tm_sec);
+		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
+		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
+		 cur_tm->tm_sec);
 
 	snprintf(params, sizeof(params), "-f %s", new_log);
 	ret = ss_launch_evenif_exist(MEMPS_EXEC_PATH, params);
-
+	/* will be removed, just for debugging */
 	if(ret > 0) {
-		char buf[PATH_MAX];
 		FILE *fp;
-		snprintf(buf, sizeof(buf), "/proc/%d/oom_adj", ret);
-		fp = fopen(buf, "w");
+		fp = open_proc_oom_adj_file(ret, "w");
 		if (fp != NULL) {
 			fprintf(fp, "%d", (-17));
 			fclose(fp);
 		}
+	}
+	free(cur_tm);
+}
+
+static void remount_ro()
+{
+	struct mntent* mnt;
+	const char* table = "/etc/mtab";
+	const char mmtpoint[10][64];
+	FILE* fp;
+	int r = -1, foundmount=0;
+	char buf[256];
+	fp = setmntent(table, "r");
+
+	if (!fp)
+		return;
+
+	while (mnt=getmntent(fp)) {
+		if (foundmount >= 10)
+			continue;
+		if (!strcmp(mnt->mnt_type, "ext4") && strstr(mnt->mnt_opts, "rw")) {
+			memset(mmtpoint[foundmount], 0, 64);
+			strncpy(mmtpoint[foundmount], mnt->mnt_dir, 63);
+			foundmount++;
+		}
+	}
+	endmntent(fp);
+	while (foundmount) {
+		foundmount--;
+		snprintf(buf, sizeof(buf), "fuser -c %s -k -15", mmtpoint[foundmount]);
+		sleep(1);
+		umount2(mmtpoint[foundmount], MNT_DETACH);
 	}
 }
 
@@ -162,6 +253,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 
 				if(get_app_oomadj(pid, &oom_adj) < 0) {
 					PRT_TRACE_ERR("Failed to get oom_adj");
+					return -1;
 				}
 				PRT_TRACE("%d will be killed with %d oom_adj value", pid, oom_adj);
 
@@ -206,6 +298,9 @@ int usbcon_def_predefine_action(int argc, char **argv)
 			return 0;
 		}
 
+		if ( vconf_get_int(VCONFKEY_SYSMAN_USB_STATUS, &val) == 0 && val == VCONFKEY_SYSMAN_USB_AVAILABLE)
+			return 0;
+
 		vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
 			      VCONFKEY_SYSMAN_USB_AVAILABLE);
 		pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
@@ -239,7 +334,7 @@ int lowbat_popup(void *data)
 	if (state == 1 || ret != 0) {
 		bundle *b = NULL;
 		b = bundle_create();
-		if(lowbat_popup_option == LOWBAT_OPT_WARNING) {
+		if (lowbat_popup_option == LOWBAT_OPT_WARNING || lowbat_popup_option == LOWBAT_OPT_CHECK) {
 			bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
 		} else if(lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
 			bundle_add(b, "_SYSPOPUP_CONTENT_", "poweroff");
@@ -266,6 +361,58 @@ int lowbat_popup(void *data)
 	return 0;
 }
 
+
+int predefine_control_launch(char *name, bundle *b)
+{
+	int pid;
+	static int launched_poweroff = 0;
+	//lowbat-popup
+	if (strncmp(name, LOWBAT_POPUP_NAME, strlen(LOWBAT_POPUP_NAME)) == 0) {
+		if (launched_poweroff == 1) {
+			PRT_TRACE_ERR("will be foreced power off");
+			internal_poweroff_def_predefine_action(0,NULL);
+			return 0;
+		}
+
+		if (lowbat_popup_option == LOWBAT_OPT_POWEROFF)
+			launched_poweroff = 1;
+
+		pid = __predefine_get_pid(LOWBAT_EXEC_PATH);
+		if (pid > 0) {
+			PRT_TRACE_ERR("pre launched %s destroy", LOWBAT_EXEC_PATH);
+			kill(pid, SIGTERM);
+		}
+		if (syspopup_launch(name, b) < 0)
+			return -1;
+	}
+	//poweroff-popup
+	if (strncmp(name, POWEROFF_POPUP_NAME, strlen(POWEROFF_POPUP_NAME)) == 0) {
+		if (syspopup_launch(name, b) < 0)
+			return -1;
+	}
+	//hdmi-popup
+	if (strncmp(name, HDMI_POPUP_NAME, strlen(HDMI_POPUP_NAME)) == 0) {
+		if (syspopup_launch(name, b) < 0)
+			return -1;
+	}
+	//hdmi-noti
+	if (strncmp(name, HDMI_NOTI_EXEC_PATH, strlen(HDMI_NOTI_EXEC_PATH)) == 0) {
+		if (ss_launch_if_noexist(name, "1") < 0)
+			return -1;
+	}
+	//user mem lowmem-popup
+	if (strncmp(name, LOWMEM_POPUP_NAME, strlen(LOWMEM_POPUP_NAME)) == 0) {
+		if (syspopup_launch(name, b) < 0)
+			return -1;
+	}
+	return 0;
+}
+
+void predefine_pm_change_state(unsigned int s_bits)
+{
+	pm_change_state(s_bits);
+}
+
 int lowbat_def_predefine_action(int argc, char **argv)
 {
 	int ret, state=0;
@@ -275,14 +422,17 @@ int lowbat_def_predefine_action(int argc, char **argv)
 	if (argc < 1)
 		return -1;
 
-	if(lowbat_popup_id != NULL) {
+	if (lowbat_popup_id != NULL) {
 		ecore_timer_del(lowbat_popup_id);
 		lowbat_popup_id = NULL;
 	}
 
 	bundle *b = NULL;
 	b = bundle_create();
-	if(!strcmp(argv[0],WARNING_LOW_BAT_ACT) || !strcmp(argv[0],CRITICAL_LOW_BAT_ACT)) {
+	if (!strcmp(argv[0],CRITICAL_LOW_BAT_ACT)) {
+		bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
+		lowbat_popup_option = LOWBAT_OPT_CHECK;
+	} else if(!strcmp(argv[0],WARNING_LOW_BAT_ACT)) {
 		bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
 		lowbat_popup_option = LOWBAT_OPT_WARNING;
 	} else if(!strcmp(argv[0],POWER_OFF_BAT_ACT)) {
@@ -291,19 +441,15 @@ int lowbat_def_predefine_action(int argc, char **argv)
 	} else if(!strcmp(argv[0],CHARGE_ERROR_ACT)) {
 		bundle_add(b, "_SYSPOPUP_CONTENT_", "chargeerr");
 		lowbat_popup_option = LOWBAT_OPT_CHARGEERR;
-	} else {
-		bundle_add(b, "_SYSPOPUP_CONTENT_", "check");
-		lowbat_popup_option = LOWBAT_OPT_CHECK;
 	}
 
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
-		ret = syspopup_launch("lowbat-syspopup", b);
-		if (ret < 0) {
-			PRT_TRACE_EM("popup lauch failed\n");
-			bundle_free(b);
-			lowbat_popup_option = 0;
-			return -1;
+		if (predefine_control_launch("lowbat-syspopup", b) < 0) {
+				PRT_TRACE_ERR("popup lauch failed\n");
+				bundle_free(b);
+				lowbat_popup_option = 0;
+				return -1;
 		}
 	} else {
 		PRT_TRACE_EM("boot-animation running yet");
@@ -341,8 +487,8 @@ Eina_Bool powerdown_ap_by_force(void *data)
 	PRT_TRACE("Power off by force\n");
 	/* give a chance to be terminated for each process */
 	power_off = 1;
-	sleep(1);
 	sync();
+	remount_ro();
 	reboot(RB_POWER_OFF);
 	return EINA_TRUE;
 }
@@ -380,22 +526,37 @@ static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, vo
 
 	/* give a chance to be terminated for each process */
 	power_off = 1;
-	sleep(1);
 	sync();
+	remount_ro();
 	reboot(RB_POWER_OFF);
 }
 static void powerdown_res_cb(TapiHandle *handle, int result, void *data, void *user_data)
 {
 	PRT_TRACE("poweroff command request : %d",result);
 }
+
 int poweroff_def_predefine_action(int argc, char **argv)
+{
+	int retry_count = 0;
+
+	heynoti_publish(POWEROFF_NOTI_NAME);
+
+	while (retry_count < MAX_RETRY) {
+		if (ss_action_entry_call_internal(PREDEF_INTERNAL_POWEROFF, 0) < 0) {
+			PRT_TRACE_ERR("failed to request poweroff to system_server \n");
+			retry_count++;
+			continue;
+		}
+		vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
+		return 0;
+	}
+	return -1;
+}
+
+int internal_poweroff_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
-	heynoti_publish(POWEROFF_NOTI_NAME);
-	vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
-
-	pm_change_state(LCD_NORMAL);
 	system("/etc/rc.d/rc.shutdown &");
 	sync();
 
@@ -510,6 +671,8 @@ static void restart_ap(TapiHandle *handle, const char *noti_id, void *data, void
 	}
 
 	PRT_INFO("Restart\n");
+	vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
+	power_off = 1;
 	sync();
 
 	buf = getenv("PWROFF_DUR");
@@ -522,6 +685,7 @@ static void restart_ap(TapiHandle *handle, const char *noti_id, void *data, void
 		usleep(100000);
 		gettimeofday(&now, NULL);
 	}
+	remount_ro();
 
 	reboot(RB_AUTOBOOT);
 }
@@ -545,6 +709,7 @@ static void restart_ap_by_force(void *data)
 	}
 
 	PRT_INFO("Restart\n");
+	power_off = 1;
 	sync();
 
 	buf = getenv("PWROFF_DUR");
@@ -557,6 +722,7 @@ static void restart_ap_by_force(void *data)
 		usleep(100000);
 		gettimeofday(&now, NULL);
 	}
+	remount_ro();
 
 	reboot(RB_AUTOBOOT);
 }
@@ -565,6 +731,7 @@ int restart_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
+	heynoti_publish(POWEROFF_NOTI_NAME);
 	pm_change_state(LCD_NORMAL);
 	system("/etc/rc.d/rc.shutdown &");
 	sync();
@@ -600,9 +767,8 @@ int launching_predefine_action(int argc, char **argv)
 		return -1;
 
 	/* current just launching poweroff-popup */
-	ret = syspopup_launch("poweroff-syspopup", NULL);
-	if (ret < 0) {
-		PRT_TRACE_ERR("poweroff popup predefine action failed");
+	if (predefine_control_launch("poweroff-syspopup", NULL) < 0) {
+		PRT_TRACE_ERR("poweroff-syspopup launch failed");
 		return -1;
 	}
 	return 0;
@@ -692,6 +858,9 @@ static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad)
 	case VCONFKEY_SYSMAN_POWER_OFF_POPUP:
 		ss_action_entry_call_internal(PREDEF_PWROFF_POPUP, 0);
 		break;
+	case VCONFKEY_SYSMAN_POWER_OFF_RESTART:
+		ss_action_entry_call_internal(PREDEF_REBOOT, 0);
+		break;
 	}
 }
 
@@ -734,6 +903,8 @@ void ss_predefine_internal_init(void)
 				     restart_def_predefine_action, NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_FLIGHT_MODE,
 				     flight_mode_def_predefine_action, NULL, NULL);
+	ss_action_entry_add_internal(PREDEF_INTERNAL_POWEROFF,
+				     internal_poweroff_def_predefine_action, NULL, NULL);
 	ss_action_entry_add_internal(PREDEF_HAPTIC, haptic_def_predefine_action,
 					NULL, NULL);
 
