@@ -76,7 +76,7 @@ Requires:   %{name} = %{version}-%{release}
 sysman internal devel library.
 
 %package -n libslp-pm
-Summary:    power manager client
+Summary:    Power manager client
 Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
@@ -84,7 +84,7 @@ Requires:   %{name} = %{version}-%{release}
 power-manager library.
 
 %package -n libslp-pm-devel
-Summary:    power manager client (devel)
+Summary:    Power manager client (devel)
 Group:      System/Development
 Requires:   %{name} = %{version}-%{release}
 #Requires:   libslp-pm

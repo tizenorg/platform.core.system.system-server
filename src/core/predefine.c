@@ -21,10 +21,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <vconf.h>
-#include <ITapiModem.h>
-#include <TelPower.h>
-#include <tapi_event.h>
-#include <tapi_common.h>
+
 #include <syspopup_caller.h>
 #include <sys/reboot.h>
 #include <sys/time.h>
@@ -36,21 +33,17 @@
 #include "queue.h"
 #include "device-node.h"
 #include "predefine.h"
-#include "proc/procmgr.h"
-#include "vibrator/vibrator.h"
+#include "proc/proc-handler.h"
 #include "core/data.h"
 #include "common.h"
 #include "display/poll.h"
 #include "setting.h"
-#include "led/led.h"
+#include "devices.h"
 
-#define CALL_EXEC_PATH			PREFIX"/bin/call"
-#define LOWMEM_EXEC_PATH		PREFIX"/bin/lowmem-popup"
+#define PREDEFINE_SO_DIR		PREFIX"/lib/ss_predefine/"
+
 #define LOWBAT_EXEC_PATH		PREFIX"/bin/lowbatt-popup"
-#define USBCON_EXEC_PATH		PREFIX"/bin/usb-server"
-#define TVOUT_EXEC_PATH			PREFIX"/bin/tvout-selector"
-#define PWROFF_EXEC_PATH		PREFIX"/bin/poweroff-popup"
-#define MEMPS_EXEC_PATH			PREFIX"/bin/memps"
+
 #define HDMI_NOTI_EXEC_PATH		PREFIX"/bin/hdmi_connection_noti"
 #define LOWBAT_POPUP_NAME		"lowbat-syspopup"
 #define POWEROFF_POPUP_NAME		"poweroff-syspopup"
@@ -67,7 +60,7 @@ static int __predefine_get_pid(const char *execpath)
 
 	dp = opendir("/proc");
 	if (!dp) {
-		_E("open /proc");
+		PRT_TRACE_ERR("open /proc");
 		return -1;
 	}
 
@@ -105,7 +98,7 @@ int predefine_control_launch(char *name, bundle *b, int option)
 	//lowbat-popup
 	if (strncmp(name, LOWBAT_POPUP_NAME, strlen(LOWBAT_POPUP_NAME)) == 0) {
 		if (launched_poweroff == 1) {
-			_E("will be foreced power off");
+			_E("will be forced power off");
 			internal_poweroff_def_predefine_action(0,NULL);
 			return 0;
 		}
@@ -188,12 +181,11 @@ static void ss_action_entry_load_from_sodir()
 	closedir(dp);
 }
 
-void ss_predefine_internal_init(void)
+static void predefine_init(void *data)
 {
-
-	/* telephony initialize */
-	int ret = 0;
-
 	ss_action_entry_load_from_sodir();
-
 }
+
+const struct device_ops predefine_device_ops = {
+	.init = predefine_init,
+};

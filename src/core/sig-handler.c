@@ -22,6 +22,7 @@
 #include "core.h"
 #include "core/edbus-handler.h"
 #include "display/poll.h"
+#include "devices.h"
 
 #define _E(format, args...) do { \
 	char buf[255];\
@@ -61,38 +62,7 @@ static void sig_pipe_handler(int signo, siginfo_t *info, void *data)
 
 }
 
-static void poweroff_popup_edbus_signal_handler(void *data, DBusMessage *msg)
-{
-	DBusError err;
-	char *str;
-	int val = 0;
-
-	if (dbus_message_is_signal(msg, INTERFACE_NAME, SIGNAL_NAME_POWEROFF_POPUP) == 0) {
-		_D("there is no power off popup signal");
-		return;
-	}
-
-	dbus_error_init(&err);
-
-	if (dbus_message_get_args(msg, &err, DBUS_TYPE_STRING, &str, DBUS_TYPE_INVALID) == 0) {
-		_D("there is no message");
-		return;
-	}
-
-	if (strncmp(str, PREDEF_PWROFF_POPUP, strlen(PREDEF_PWROFF_POPUP)) == 0)
-		val = VCONFKEY_SYSMAN_POWER_OFF_POPUP;
-	else if (strncmp(str, PREDEF_POWEROFF, strlen(PREDEF_POWEROFF)) == 0)
-		val = VCONFKEY_SYSMAN_POWER_OFF_DIRECT;
-	else if (strncmp(str, PREDEF_POWEROFF, strlen(PREDEF_REBOOT)) == 0)
-		val = VCONFKEY_SYSMAN_POWER_OFF_RESTART;
-	if (val == 0) {
-		_D("not supported message : %s", str);
-		return;
-	}
-	vconf_set_int(VCONFKEY_SYSMAN_POWER_OFF_STATUS, val);
-}
-
-void ss_signal_init(void)
+static void signal_init(void *data)
 {
 	struct sigaction sig_act;
 
@@ -107,9 +77,10 @@ void ss_signal_init(void)
 	sig_act.sa_flags = SA_SIGINFO;
 	sigemptyset(&sig_act.sa_mask);
 	sigaction(SIGPIPE, &sig_act, &sig_pipe_old_act);
-	register_edbus_signal_handler(SIGNAL_NAME_POWEROFF_POPUP,
-		    (void *)poweroff_popup_edbus_signal_handler);
 	register_edbus_signal_handler(SIGNAL_NAME_LCD_CONTROL,
 		    (void *)lcd_control_edbus_signal_handler);
-
 }
+
+const struct device_ops signal_device_ops = {
+	.init = signal_init,
+};
