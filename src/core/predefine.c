@@ -37,7 +37,7 @@
 #include "core/data.h"
 #include "common.h"
 #include "display/poll.h"
-#include "setting.h"
+#include "display/setting.h"
 #include "devices.h"
 
 #define PREDEFINE_SO_DIR		PREFIX"/lib/ss_predefine/"

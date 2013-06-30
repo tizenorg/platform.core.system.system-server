@@ -22,6 +22,7 @@
 #include "core/data.h"
 #include "display/poll.h"
 #include "core/devices.h"
+#include "display/poll.h"
 
 #define RETRY	3
 

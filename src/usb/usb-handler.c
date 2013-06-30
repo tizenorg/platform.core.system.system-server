@@ -17,7 +17,6 @@
 
 #include <vconf.h>
 #include <device-node.h>
-#include <poll.h>
 
 #include "core/log.h"
 #include "core/launch.h"
