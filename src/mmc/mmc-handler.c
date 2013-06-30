@@ -120,18 +120,18 @@ static const char *vfat_arg[] = {
 };
 
 static const char *ext4_arg[] = {
-    "/sbin/mkfs.ext4",
-    NULL, NULL,
+	"/sbin/mkfs.ext4",
+	NULL, NULL,
 };
 
 static const char *vfat_check_arg[] = {
-    "/sbin/fsck.vfat",
-    "-a", NULL, NULL,
+	"/sbin/fsck.vfat",
+	"-a", NULL, NULL,
 };
 
 static const char *ext4_check_arg[] = {
-    "/sbin/fsck.ext4",
-    "-f", "-y", NULL, NULL,
+	"/sbin/fsck.ext4",
+	"-f", "-y", NULL, NULL,
 };
 
 

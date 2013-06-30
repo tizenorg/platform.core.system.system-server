@@ -36,8 +36,6 @@
 	write(1, buf, strlen(buf));\
 } while (0);
 
-#define SIGNAL_NAME_POWEROFF_POPUP	"poweroffpopup"
-
 static struct sigaction sig_child_old_act;
 static struct sigaction sig_pipe_old_act;
 
@@ -77,8 +75,6 @@ static void signal_init(void *data)
 	sig_act.sa_flags = SA_SIGINFO;
 	sigemptyset(&sig_act.sa_mask);
 	sigaction(SIGPIPE, &sig_act, &sig_pipe_old_act);
-	register_edbus_signal_handler(SIGNAL_NAME_LCD_CONTROL,
-		    (void *)lcd_control_edbus_signal_handler);
 }
 
 const struct device_ops signal_device_ops = {
