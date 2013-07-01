@@ -43,7 +43,7 @@
 #define _SE(fmt, arg...) \
 	do { SECURE_SLOGE(fmt, ##arg); } while(0)
 #define __LOGD(prio, fmt, arg...) \
-	do { SLOG(prio, LOG_TAG, "%s: %s(%d) > " fmt, __MODULE__, __func__, __LINE__, ##arg); } while (0)
+	do { SLOG(prio, LOG_TAG, fmt, ##arg); } while (0)
 #define __PRT(prio, fmt, arg...) \
 	do { fprintf(((D##prio) == DLOG_ERR ? stderr : stdout), fmt"\n", ##arg); } while (0)
 #else
