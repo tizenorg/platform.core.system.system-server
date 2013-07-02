@@ -166,6 +166,7 @@ static int lowbat_process(int bat_percent, void *ad)
 			cur_bat_capacity = new_bat_capacity;
 	}
 
+
 	if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &vconf_state) < 0) {
 		PRT_TRACE_ERR("vconf_get_int() failed");
 		return -1;
@@ -245,6 +246,10 @@ static int lowbat_process(int bat_percent, void *ad)
 			}
 		}
 	}
+
+	if (new_bat_capacity == cur_bat_capacity)
+		return 0;
+
 	PRT_TRACE("[BATMON] Unknown battery state cur:%d new:%d",cur_bat_state,new_bat_state);
 	cur_bat_state = new_bat_state;
 	return -1;

@@ -36,7 +36,6 @@
 #include "device-node.h"
 #include "ss_noti.h"
 #include "include/ss_data.h"
-#include "sys_device_noti/sys_device_noti.h"
 #include "sys_pci_noti/sys_pci_noti.h"
 #include "ss_predefine.h"
 #define BUFF_MAX		255
@@ -49,6 +48,18 @@
 #include <E_DBus.h>
 static E_DBus_Connection *conn;
 #endif				/* ENABLE_EDBUS_USE */
+
+typedef enum {
+	CB_NOTI_BATT_CHARGE,
+	CB_NOTI_BATT_LOW,
+	CB_NOTI_BATT_FULL,
+	CB_NOTI_MAX
+} cb_noti_type;
+
+typedef enum {
+	CB_NOTI_OFF	= 0,
+	CB_NOTI_ON	= 1
+} cb_noti_onoff_type;
 
 struct input_event {
 	long dummy[2];

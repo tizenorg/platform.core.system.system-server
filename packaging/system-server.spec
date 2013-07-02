@@ -152,16 +152,13 @@ systemctl daemon-reload
 %endif
 %{_bindir}/movi_format.sh
 %{_bindir}/sys_event
-%{_bindir}/sys_device_noti
 %{_bindir}/sys_pci_noti
 %{_bindir}/mmc-smack-label
 %{_libdir}/systemd/system/multi-user.target.wants/system-server.service
 %{_libdir}/systemd/system/sockets.target.wants/system-server.socket
 %{_libdir}/systemd/system/system-server.service
 %{_libdir}/systemd/system/system-server.socket
-%{_datadir}/system-server/sys_device_noti/batt_full_icon.png
 %{_datadir}/system-server/udev-rules/91-system-server.rules
-%{_datadir}/system-server/sys_device_noti/res/locale/*/LC_MESSAGES/*.mo
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 
 %files -n libdeviced
