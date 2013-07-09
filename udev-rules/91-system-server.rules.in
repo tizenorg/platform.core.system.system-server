@@ -21,7 +21,9 @@ ACTION=="remove",	KERNEL=="sd[a-z][0-9]",	SUBSYSTEM=="block",	RUN+="@PREFIX@/bin
 
 #charge
 ACTION=="change"	DEVPATH=="/devices/platform/samsung-battery/power_supply/battery"	RUN+="/usr/bin/sys_event device_charge_chgdet"
-ACTION=="change"	DEVPATH=="/devices/platform/charger-manager.0"						RUN+="@PREFIX@/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/charger-manager.0"				RUN+="@PREFIX@/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/virtual/power_supply/battery"			RUN+="/usr/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/sec-battery/power_supply/battery"		RUN+="/usr/bin/sys_event device_charge_chgdet"
 
 #USB Keyboard
 ACTION=="add"		SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"	ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_keyboard_add"
