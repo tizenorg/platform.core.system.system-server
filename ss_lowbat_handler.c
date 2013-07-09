@@ -247,12 +247,13 @@ static int lowbat_process(int bat_percent, void *ad)
 		}
 	}
 
-	if (new_bat_capacity == cur_bat_capacity)
-		return 0;
-
 	PRT_TRACE("[BATMON] Unknown battery state cur:%d new:%d",cur_bat_state,new_bat_state);
 	cur_bat_state = new_bat_state;
-	return -1;
+
+	if (new_bat_capacity != cur_bat_capacity)
+		return -1;
+
+	return 0;
 }
 
 static int lowbat_read()
