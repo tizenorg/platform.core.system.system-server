@@ -116,6 +116,14 @@ heynotitool set device_usb_host_remove
 heynotitool set device_pci_keyboard_add
 heynotitool set device_pci_keyboard_remove
 
+heynotitool set device_usb_chgdet
+heynotitool set device_ta_chgdet
+heynotitool set device_earjack_chgdet
+heynotitool set device_earkey_chgdet
+heynotitool set device_tvout_chgdet
+heynotitool set device_hdmi_chgdet
+heynotitool set device_keyboard_chgdet
+
 
 mkdir -p /etc/udev/rules.d
 if ! [ -L /etc/udev/rules.d/91-system-server.rules ]; then
