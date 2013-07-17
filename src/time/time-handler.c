@@ -82,6 +82,8 @@ int handle_timezone(char *str)
 {
 	int ret;
 	struct stat sts;
+	time_t now;
+	struct tm *ts;
 	const char *sympath = default_localtime;
 
 	if (str == NULL)
@@ -89,6 +91,16 @@ int handle_timezone(char *str)
 	const char *tzpath = str;
 
 	_D("TZPATH = %s\n", tzpath);
+
+	if (stat(tzpath, &sts) == -1 && errno == ENOENT) {
+		PRT_TRACE_ERR("invalid tzpath(%s)", tzpath);
+		return -EINVAL;
+	}
+
+	/* FIXME for debugging purpose */
+	time(&now);
+	ts = localtime(&now);
+	PRT_TRACE_ERR("cur local time is %s", asctime(ts));
 
 	/* unlink current link
 	 * eg. rm /opt/etc/localtime */
@@ -115,6 +127,10 @@ int handle_timezone(char *str)
 		_D("symlink success\n");
 
 	tzset();
+
+	/* FIXME for debugging purpose */
+	ts = localtime(&now);
+	PRT_TRACE_ERR("new local time is %s", asctime(ts));
 	return 0;
 }
 
