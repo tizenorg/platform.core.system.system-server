@@ -16,6 +16,7 @@
 
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
@@ -272,25 +273,34 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 
 static void mmc_chgdet_cb(void *data)
 {
-	static int inserted;
+	static bool first, inserted;
+	int mmc_status;
 	int ret = -1;
 	int val = -1;
+
+	/* at first time, this part will be judge mmc is already inserted or not. */
+	if (!first) {
+		vconf_get_int(VCONFKEY_SYSMAN_MMC_STATUS, &mmc_status);
+		if (mmc_status == VCONFKEY_SYSMAN_MMC_MOUNTED)
+			inserted = true;
+		first = true;
+	}
 
 	if (data == NULL) {
 		/* when removed mmc, emul kernel notify twice
 		 * So this code ignores second event */
 		if (!inserted)
 			return;
+		inserted = false;
 		PRT_TRACE("mmc removed");
 		ss_mmc_removed();
-		inserted = 0;
 	} else {
 		/* when inserted mmc, emul kernel notify twice(insert, changed)
 		 * So this code ignores second event */
 		if (inserted)
 			return;
+		inserted = true;
 		PRT_TRACE("mmc added");
-		inserted = 1;
 		ret = ss_mmc_inserted();
 		if (ret == -1) {
 			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);
