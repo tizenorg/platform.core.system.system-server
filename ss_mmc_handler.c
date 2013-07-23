@@ -347,11 +347,11 @@ static int get_format_type(const char *path)
 	return 0;
 }
 
-static const char **get_argument(const char *path)
+static const char **get_argument(const char *path, int fs)
 {
 	int argc;
 
-	switch (inserted_type) {
+	switch (fs) {
 	case FS_TYPE_FAT:
 		argc = ARRAY_SIZE(vfat_arg);
 		vfat_arg[argc - 2] = path;
@@ -392,15 +392,18 @@ static int check_mount_state(void)
 static int create_partition(const char *dev_path)
 {
 	int r;
+	char data[256];
 
-	r = system("printf \"n\\n\\n\\n\\n\\nw\" | fdisk /dev/mmcblk1");
+	snprintf(data, sizeof(data), "printf \"n\\n\\n\\n\\n\\nw\" | fdisk %s", dev_path);
+
+	r = system(data);
 	if (WIFSIGNALED(r) && (WTERMSIG(r) == SIGINT || WTERMSIG(r) == SIGQUIT || WEXITSTATUS(r)))
 		return -1;
 
 	return 0;
 }
 
-static int format_mmc(const char *path)
+static int format_mmc(const char *path, int fs)
 {
 	mmc_fs_type type;
 	unsigned int size;
@@ -414,11 +417,7 @@ static int format_mmc(const char *path)
 		return -1;
 	}
 
-	if (get_format_type(path) < 0) {
-		PRT_TRACE_ERR("Invalid parameter");
-		return -1;
-	}
-	argv = get_argument(path);
+	argv = get_argument(path, fs);
 	if (argv == NULL) {
 		PRT_TRACE_ERR("get_argument fail");
 		return -1;
@@ -446,7 +445,7 @@ static int format_exec(int blknum)
 {
 	char dev_mmcblk[NAME_MAX];
 	char dev_mmcblkp[NAME_MAX];
-	int r;
+	int fs, r;
 
 	if (check_mount_state() == 1) {
 		PRT_TRACE_ERR("Mounted, will be unmounted");
@@ -471,9 +470,11 @@ static int format_exec(int blknum)
 		}
 	}
 
-	r = format_mmc(dev_mmcblkp);
+	PRT_TRACE_ERR("insert type : %d", inserted_type);
+
+	r = format_mmc(dev_mmcblkp, inserted_type);
 	if (r < 0) {
-		PRT_TRACE_ERR("format_mmc fail");
+		PRT_TRACE_ERR("%s format fail", dev_mmcblkp);
 		vconf_set_int(VCONFKEY_SYSMAN_MMC_FORMAT, VCONFKEY_SYSMAN_MMC_FORMAT_FAILED);
 		heynoti_publish("mmcblk_remove");
 		return -1;
