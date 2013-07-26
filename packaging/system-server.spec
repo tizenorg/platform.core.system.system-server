@@ -77,7 +77,7 @@ ln -s ../system-server.service %{buildroot}%{_libdir}/systemd/system/sockets.tar
 %post
 
 vconftool set -t int memory/sysman/usbhost_status -1 -i
-vconftool set -t int memory/sysman/mmc -1 -i
+vconftool set -t int memory/sysman/mmc 0 -i
 vconftool set -t int memory/sysman/earjack_key 0 -i
 vconftool set -t int memory/sysman/added_usb_storage 0 -i
 vconftool set -t int memory/sysman/removed_usb_storage 0 -i
