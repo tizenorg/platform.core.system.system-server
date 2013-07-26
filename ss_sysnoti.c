@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdbool.h>
 #include <systemd/sd-daemon.h>
 #include <sysman.h>
 #include <limits.h>
@@ -27,6 +28,11 @@
 
 #define SYSNOTI_SOCKET_PATH "/tmp/sn"
 #define RETRY_READ_COUNT	5
+
+#define POWER_MANAGER_STR	"power_manager"
+#define ACTIVE_STR			"active"
+#define INACTIVE_STR		"inactive"
+
 enum sysnoti_cmd {
 	ADD_SYSMAN_ACTION,
 	CALL_SYSMAN_ACTION
@@ -112,6 +118,7 @@ static inline char *recv_str(int fd)
 		PRT_TRACE_ERR("Not enough memory");
 		return NULL;
 	}
+
 	retry_count = 0;
 	while (retry_count < RETRY_READ_COUNT) {
 		r = read(fd, str, len);
@@ -176,6 +183,21 @@ static inline void free_message(struct sysnoti *msg)
 	free(msg);
 }
 
+static bool check_sync_request(struct sysnoti *msg)
+{
+	char path[PATH_MAX];
+
+	if (sysman_get_cmdline_name(msg->pid, path, PATH_MAX) < 0)
+		return true;
+
+	PRT_TRACE_ERR("path : %s, type : %s", path, msg->type);
+	if (!strcmp(path, POWER_MANAGER_STR) &&
+			(!strcmp(msg->type, INACTIVE_STR) || !strcmp(msg->type, ACTIVE_STR)))
+		return false;
+
+	return true;
+}
+
 static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 {
 	int fd;
@@ -184,6 +206,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	struct sockaddr_un client_address;
 	int client_sockfd;
 	int client_len;
+	bool sync;
 
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
 		PRT_TRACE_ERR
@@ -217,11 +240,14 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 		return -1;
 	}
 
+	sync = check_sync_request(msg);
+
 	print_sysnoti_msg(__FUNCTION__, msg);
 	if (msg->argc > SYSMAN_MAXARG) {
 		PRT_TRACE_ERR("%s : error argument", __FUNCTION__);
 		free_message(msg);
-		write(client_sockfd, &ret, sizeof(int));
+		if (sync)
+			write(client_sockfd, &ret, sizeof(int));
 		close(client_sockfd);
 		return -1;
 	}
@@ -234,8 +260,8 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 		ret = -1;
 	}
 
-
-	write(client_sockfd, &ret, sizeof(int));
+	if (sync)
+		write(client_sockfd, &ret, sizeof(int));
 	close(client_sockfd);
 
 	free_message(msg);
