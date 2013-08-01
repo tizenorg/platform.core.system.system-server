@@ -4,3 +4,4 @@ find $MOUNT_DIRECTORY -type d | xargs chsmack -a 'system::ext_storage' -t
 find $MOUNT_DIRECTORY -type f | xargs chsmack -a 'system::ext_storage'
 find $MOUNT_DIRECTORY -type f | xargs chmod -x
 find $MOUNT_DIRECTORY | xargs chown app:app
+find $MOUNT_DIRECTORY | xargs chmod 777
