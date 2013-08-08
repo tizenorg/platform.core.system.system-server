@@ -256,11 +256,13 @@ static int lowbat_process(int bat_percent, void *ad)
 	return 0;
 }
 
-static int lowbat_read()
+static int lowbat_read(void)
 {
-	int bat_percent;
+	int bat_percent, r;
 
-	device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent);
+	r = device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &bat_percent);
+	if (r < 0)
+		return r;
 
 	return bat_percent;
 }
@@ -294,7 +296,7 @@ static void __ss_change_lowbat_level(int bat_percent)
 		vconf_set_int(VCONFKEY_SYSMAN_BATTERY_LEVEL_STATUS, now);
 }
 
-static int __check_lowbat_percent(void)
+static int __check_lowbat_percent(int *pct)
 {
 	int bat_percent;
 
@@ -305,22 +307,26 @@ static int __check_lowbat_percent(void)
 		if (bat_err_count > MAX_BATTERY_ERROR) {
 			PRT_TRACE_ERR
 			    ("[BATMON] Cannot read battery gage. stop read fuel gage");
-			return 0;
+			return -ENODEV;
 		}
-		return 1;
+		return -ENODEV;
 	}
 	if (bat_percent > 100)
 		bat_percent = 100;
 	__ss_change_lowbat_level(bat_percent);
-	return bat_percent;
+	*pct = bat_percent;
+	return 0;
 }
 
-int ss_lowbat_monitor(void *data)
+Eina_Bool ss_lowbat_monitor(void *data)
 {
-	int bat_percent;
 	struct ss_main_data *ad = (struct ss_main_data *)data;
+	int bat_percent, r;
 
-	bat_percent = __check_lowbat_percent();
+	r = __check_lowbat_percent(&bat_percent);
+	if (r < 0)
+		return ECORE_CALLBACK_RENEW;
+
 	print_lowbat_state(bat_percent);
 
 	if (lowbat_process(bat_percent, ad) < 0)
@@ -328,7 +334,7 @@ int ss_lowbat_monitor(void *data)
 	else
 		ecore_timer_interval_set(lowbat_timer, BAT_MON_INTERVAL);
 
-	return 1;
+	return ECORE_CALLBACK_RENEW;
 }
 
 static int wakeup_cb(keynode_t *key_nodes, void *data)
@@ -358,13 +364,13 @@ static int check_battery()
 
 int ss_lowbat_init(struct ss_main_data *ad)
 {
-	int i;
+	int i, pct;
 
 	/* need check battery */
 	lowbat_timer =
 		ecore_timer_add(BAT_MON_INTERVAL_MIN, ss_lowbat_monitor, ad);
 
-	__check_lowbat_percent();
+	__check_lowbat_percent(&pct);
 
 	ss_lowbat_is_charge_in_now();
 
