@@ -37,6 +37,7 @@ static int core_pipe[2];
 static int _ss_core_action_run(void *user_data,
 			       struct ss_run_queue_entry *rq_entry)
 {
+	int i;
 	struct ss_action_entry *act_entry = rq_entry->action_entry;
 	int ret;
 	char tmp[128];
