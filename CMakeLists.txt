@@ -77,6 +77,7 @@ INSTALL(FILES ${MOVINAND_FORMAT} DESTINATION bin)
 INSTALL(FILES ${UDEV_RULES} DESTINATION ${UDEV_RULES_PATH})
 INSTALL(FILES system-server.conf DESTINATION /etc/dbus-1/system.d)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/packaging/system-server.rule DESTINATION /opt/etc/smack/accesses.d)
+INSTALL(PROGRAMS rc.shutdown DESTINATION /etc/rc.d/)
 
 ADD_SUBDIRECTORY(restarter)
 ADD_SUBDIRECTORY(sys_event)
