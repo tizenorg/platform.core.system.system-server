@@ -1,2 +1,5 @@
+* Thu Aug 22 2013 Maciej Wereski <m.wereski@partner.samsung.com> accepted/tizen/20130710.221248@414edb6
+- Remove initscripts
+
 * Wed May 29 2013 Baptiste DURAND <baptiste.durand@eurogiciel.fr> 2.1b_release@3310617
 - Fix compatibility for x64 arch.
