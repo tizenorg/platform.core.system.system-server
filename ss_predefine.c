@@ -394,7 +394,7 @@ int poweroff_def_predefine_action(int argc, char **argv)
 	vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
 
 	pm_change_state(LCD_NORMAL);
-	system("/etc/rc.d/rc.shutdown &");
+	system("/usr/lib/system-server/shutdown.sh &");
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
@@ -564,7 +564,7 @@ int restart_def_predefine_action(int argc, char **argv)
 	int ret;
 
 	pm_change_state(LCD_NORMAL);
-	system("/etc/rc.d/rc.shutdown &");
+	system("/usr/lib/system-server/shutdown.sh &");
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
