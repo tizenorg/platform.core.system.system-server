@@ -1,0 +1,11 @@
+Code-Review+1: Chengwei Yang <chengwei.yang@intel.com>
+Code-Review+1: william douglas <william.douglas@intel.com>
+Code-Review+1: Jae-young Hwang <j-zero.hwang@samsung.com>
+Verified+1: Jae-young Hwang <j-zero.hwang@samsung.com>
+Code-Review+2: Karol Lewandowski <k.lewandowsk@samsung.com>
+Verified+1: Maciej Wereski <m.wereski@partner.samsung.com>
+Submitted-by: Chengwei Yang <chengwei.yang@intel.com>
+Submitted-at: Thu, 22 Aug 2013 19:06:12 -0700
+Reviewed-on: https://review.tizen.org/gerrit/8537
+Project: platform/core/system/system-server
+Branch: refs/heads/tizen
