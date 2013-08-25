@@ -1,2 +1,5 @@
+* Sun Aug 25 2013 Chengwei Yang <chengwei.yang@intel.com>
+- Remove debian packaging stuff
+
 * Wed May 29 2013 Baptiste DURAND <baptiste.durand@eurogiciel.fr> 2.1b_release@3310617
 - Fix compatibility for x64 arch.
