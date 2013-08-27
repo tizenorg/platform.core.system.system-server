@@ -209,7 +209,6 @@ static int lowbat_process(int bat_percent, void *ad)
 			cur_bat_capacity = new_bat_capacity;
 	}
 
-
 	if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &vconf_state) < 0) {
 		_E("vconf_get_int() failed");
 		return -1;
@@ -365,7 +364,7 @@ static int __check_lowbat_percent(int *pct)
 	return 0;
 }
 
-int ss_lowbat_monitor(void *data)
+Eina_Bool ss_lowbat_monitor(void *data)
 {
 	struct ss_main_data *ad = (struct ss_main_data *)data;
 	int bat_percent, r;
@@ -409,7 +408,7 @@ static int check_battery()
 	return ret;
 }
 
-int lowbat_popup(void *data)
+static Eina_Bool lowbat_popup(void *data)
 {
 	int ret = -1, state = 0;
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
@@ -430,17 +429,15 @@ int lowbat_popup(void *data)
 		if (ret < 0) {
 			_E("popup lauch failed");
 			bundle_free(b);
-			return 1;
+			return EINA_TRUE;
 		}
 		lowbat_popup_id = NULL;
 		lowbat_popup_option = 0;
 		bundle_free(b);
-	} else {
-		_D("boot-animation running yet");
-		return 1;
+		return EINA_TRUE;
 	}
-
-	return 0;
+	_D("boot-animation running yet");
+	return EINA_FALSE;
 }
 
 int lowbat_def_predefine_action(int argc, char **argv)

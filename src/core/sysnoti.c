@@ -197,7 +197,7 @@ static bool check_sync_request(struct sysnoti *msg)
 	return true;
 }
 
-static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
+static Eina_Bool sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 {
 	int fd;
 	struct sysnoti *msg;
@@ -209,14 +209,14 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
 		_E("ecore_main_fd_handler_active_get error , return");
-		return 1;
+		goto out;
 	}
 
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
 	msg = malloc(sizeof(struct sysnoti));
 	if (msg == NULL) {
 		_E("Not enough memory");
-		return 1;
+		goto out;
 	}
 
 	client_len = sizeof(client_address);
@@ -225,7 +225,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	if (client_sockfd == -1) {
 		_E("socket accept error");
 		free(msg);
-		return -1;
+		goto out;
 	}
 	if (read_message(client_sockfd, msg) < 0) {
 		_E("recv error msg");
@@ -235,7 +235,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 		close(client_sockfd);
 		__sysnoti_stop(fd);
 		__sysnoti_start();
-		return -1;
+		goto out;
 	}
 
 	sync = check_sync_request(msg);
@@ -247,7 +247,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 		if (sync)
 			write(client_sockfd, &ret, sizeof(int));
 		close(client_sockfd);
-		return -1;
+		goto out;
 	}
 
 	switch (msg->cmd) {
@@ -263,8 +263,8 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	close(client_sockfd);
 
 	free_message(msg);
-
-	return 1;
+out:
+	return EINA_TRUE;
 }
 
 static int ss_sysnoti_server_init(void)
