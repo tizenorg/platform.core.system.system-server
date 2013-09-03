@@ -23,7 +23,7 @@
 #include "ss_log.h"
 
 #define SS_PREDEFINE_ACT_FUNC_STR		"ss_predefine_action"
-#define SS_IS_ACCESSABLE_FUNC_STR		"ss_is_accessable"
+#define SS_IS_ACCESSIBLE_FUNC_STR		"ss_is_accessible"
 #define SS_UI_VIEWABLE_FUNC_STR			"ss_ui_viewable"
 
 static Eina_List *predef_act_list;
@@ -46,7 +46,7 @@ static struct ss_action_entry *ss_action_entry_find(char *type)
 int ss_action_entry_add_internal(char *type,
 				 int (*predefine_action) (),
 				 int (*ui_viewable) (),
-				 int (*is_accessable) (int))
+				 int (*is_accessible) (int))
 {
 	struct ss_action_entry *data;
 
@@ -66,7 +66,7 @@ int ss_action_entry_add_internal(char *type,
 	if (data->predefine_action == NULL)
 		goto err;
 
-	data->is_accessable = is_accessable;
+	data->is_accessible = is_accessible;
 	data->ui_viewable = ui_viewable;
 	data->owner_pid = getpid();
 	data->type = strdup(type);
@@ -112,7 +112,7 @@ int ss_action_entry_add(struct sysnoti *msg)
 		goto err;
 	}
 
-	data->is_accessable = dlsym(data->handle, SS_IS_ACCESSABLE_FUNC_STR);
+	data->is_accessible = dlsym(data->handle, SS_IS_ACCESSIBLE_FUNC_STR);
 	data->ui_viewable = dlsym(data->handle, SS_UI_VIEWABLE_FUNC_STR);
 	data->owner_pid = msg->pid;
 	data->type = strdup(msg->type);
@@ -166,7 +166,7 @@ int ss_action_entry_call_internal(char *type, int argc, ...)
 	return 0;
 }
 
-int ss_action_entry_call(struct sysnoti *msg, int argc, char **argv)
+int ss_action_entry_call(struct sysnoti *msg, int sockfd)
 {
 	Eina_List *tmp;
 	Eina_List *tmp_next;
@@ -174,15 +174,15 @@ int ss_action_entry_call(struct sysnoti *msg, int argc, char **argv)
 
 	EINA_LIST_FOREACH_SAFE(predef_act_list, tmp, tmp_next, data) {
 		if ((data != NULL) && (!strcmp(data->type, msg->type))) {
-			if (data->is_accessable != NULL
-			    && data->is_accessable(msg->pid) == 0) {
+			if (data->is_accessible != NULL
+			    && data->is_accessible(sockfd) == 0) {
 				PRT_TRACE_ERR
 				    ("%d cannot call that predefine module",
 				     msg->pid);
 				return -1;
 			}
 			int ret;
-			ret=ss_run_queue_add(data, argc, argv);
+			ret=ss_run_queue_add(data, msg->argc, msg->argv);
 			PRT_TRACE_ERR("ss_run_queue_add : %d",ret);
 			ret=ss_core_action_run();
 			PRT_TRACE_ERR("ss_core_action_run : %d",ret);

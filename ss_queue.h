@@ -27,7 +27,7 @@ struct ss_action_entry {
 	char *path;
 	int (*predefine_action) ();
 	int (*ui_viewable) ();
-	int (*is_accessable) (int caller_pid);
+	int (*is_accessible) (int caller_sockfd);
 };
 
 enum ss_run_state {
@@ -47,10 +47,10 @@ struct ss_run_queue_entry {
 int ss_action_entry_add_internal(char *type,
 				 int (*predefine_action) (),
 				 int (*ui_viewable) (),
-				 int (*is_accessable) (int));
+				 int (*is_accessible) (int));
 int ss_action_entry_add(struct sysnoti *msg);
 int ss_action_entry_call_internal(char *type, int argc, ...);
-int ss_action_entry_call(struct sysnoti *msg, int argc, char **argv);
+int ss_action_entry_call(struct sysnoti *msg, int sockfd);
 
 int ss_run_queue_run(enum ss_run_state state,
 		     int (*run_func) (void *, struct ss_run_queue_entry *),

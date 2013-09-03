@@ -71,6 +71,9 @@ enum {
 #define PREDEF_MOUNT_MMC		"mountmmc"
 #define PREDEF_UNMOUNT_MMC		"unmountmmc"
 #define PREDEF_FORMAT_MMC		"formatmmc"
+#define PREDEF_CHECK_SMACK_MMC	"checksmackmmc"
+#define PREDEF_CHECK_MMC		"checkmmc"
+#define PREDEF_CHECK_MMC_PROC	"checkmmcproc"
 
 #define PREDEF_SET_MAX_FREQUENCY	"set_max_frequency"     
 #define PREDEF_SET_MIN_FREQUENCY	"set_min_frequency"     
@@ -78,6 +81,12 @@ enum {
 #define PREDEF_RELEASE_MIN_FREQUENCY	"release_min_frequency" 
 
 #define PREDEF_FLIGHT_MODE		"flightmode"
+
+#define PREDEF_DEVICE_CHANGED	"device_changed"
+#define PREDEF_INTERNAL_POWEROFF	"internal_poweroff"
+
+#define PROCESS_GROUP_SET		"process_group_set"
+
 #define OOMADJ_SU                       (-17)
 #define OOMADJ_INIT                     (-16)
 #define OOMADJ_FOREGRD_LOCKED           (-15)

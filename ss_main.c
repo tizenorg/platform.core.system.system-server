@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-
+#include <systemd/sd-daemon.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <heynoti.h>
+#include <sys/reboot.h>
 
 #include "ss_log.h"
 #include "ss_core.h"
@@ -34,12 +35,8 @@
 #include "ss_cpu_handler.h"
 #include "include/ss_data.h"
 
-#define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
-
 static void fini(struct ss_main_data *ad)
 {
-	// try to remove pid file
-	unlink(SS_PIDFILE_PATH);
 }
 
 static void init_ad(struct ss_main_data *ad)
@@ -82,6 +79,13 @@ static void system_server_init(struct ss_main_data *ad)
 	ss_bs_init();
 }
 
+#define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
+static void sig_quit(int signo)
+{
+	PRT_TRACE_ERR("received SIGTERM signal %d", signo);
+	if (is_power_off() == 1)
+		reboot(RB_POWER_OFF);
+}
 static int system_main(int argc, char **argv)
 {
 	struct ss_main_data ad;
@@ -97,7 +101,13 @@ static int system_main(int argc, char **argv)
 		fini(&ad);
 		return 0;
 	}
+
 	system_server_init(&ad);
+	signal(SIGTERM, sig_quit);
+
+	// Notyfication to systemd
+	if (sd_booted())
+		sd_notify(0, "READY=1");
 
 	ecore_main_loop_begin();
 
@@ -107,14 +117,9 @@ static int system_main(int argc, char **argv)
 	return 0;
 }
 
-static int elm_main(int argc, char **argv)
-{
-	return system_main(argc, argv);
-}
-
 int main(int argc, char **argv)
 {
 	writepid(SS_PIDFILE_PATH);
 	ecore_init();
-	return elm_main(argc, argv);
+	return system_main(argc, argv);
 }

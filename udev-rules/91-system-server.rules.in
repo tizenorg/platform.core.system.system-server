@@ -6,14 +6,7 @@ ACTION=="remove", KERNEL=="mmcblk[0-9]", SUBSYSTEM=="block", RUN+="@PREFIX@/bin/
 #ACTION=="change" SUBSYSTEM=="pmon", RUN+="@PREFIX@/bin/restart"
 
 #Jack
-ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="usb"		RUN+="@PREFIX@/bin/sys_event device_usb_chgdet"
-ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="charger"	RUN+="@PREFIX@/bin/sys_event device_ta_chgdet"
-ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="earjack"	RUN+="@PREFIX@/bin/sys_event device_earjack_chgdet"
-ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="earkey"	RUN+="@PREFIX@/bin/sys_event device_earkey_chgdet"
-ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="tvout"	RUN+="@PREFIX@/bin/sys_event device_tvout_chgdet"
-ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="hdmi"		RUN+="@PREFIX@/bin/sys_event device_hdmi_chgdet"
 ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="cdrom"	RUN+="@PREFIX@/bin/start_composite.sh"
-ACTION=="change"	DEVPATH=="/devices/platform/jack",	ENV{CHGDET}=="keyboard"	RUN+="@PREFIX@/bin/sys_event device_keyboard_chgdet"
 
 #USB Host Device
 ACTION=="add",		SUBSYSTEM=="usb_device",	RUN+="/usr/bin/sys_event device_usb_host_add"
@@ -28,7 +21,9 @@ ACTION=="remove",	KERNEL=="sd[a-z][0-9]",	SUBSYSTEM=="block",	RUN+="@PREFIX@/bin
 
 #charge
 ACTION=="change"	DEVPATH=="/devices/platform/samsung-battery/power_supply/battery"	RUN+="/usr/bin/sys_event device_charge_chgdet"
-ACTION=="change"	DEVPATH=="/devices/platform/charger-manager.0"						RUN+="@PREFIX@/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/charger-manager.0"				RUN+="@PREFIX@/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/virtual/power_supply/battery"			RUN+="/usr/bin/sys_event device_charge_chgdet"
+ACTION=="change"	DEVPATH=="/devices/platform/sec-battery/power_supply/battery"		RUN+="/usr/bin/sys_event device_charge_chgdet"
 
 #USB Keyboard
 ACTION=="add"		SUBSYSTEM=="input"  DEVPATH=="*/input[1-9]*/event[1-9]*"	ENV{ID_BUS}=="usb"	ENV{ID_INPUT_KEYBOARD}=="?*"	RUN+="/usr/bin/sys_event device_keyboard_add"
