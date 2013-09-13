@@ -141,6 +141,7 @@ systemctl daemon-reload
 
 %files
 %manifest %{name}.manifest
+%license LICENSE.APLv2
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_bindir}/system_server
 /opt/etc/smack/accesses.d/system-server.rule
