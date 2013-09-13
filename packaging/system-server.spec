@@ -69,6 +69,9 @@ mkdir -p %{buildroot}%{_unitdir}/sockets.target.wants
 ln -s ../system-server.service %{buildroot}%{_unitdir}/multi-user.target.wants/system-server.service
 ln -s ../system-server.service %{buildroot}%{_unitdir}/sockets.target.wants/system-server.socket
 
+mkdir -p %{buildroot}%{_datadir}/license
+cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
+
 %post
 
 vconftool set -t int memory/sysman/usbhost_status -1 -i
@@ -159,6 +162,7 @@ systemctl daemon-reload
 %{_unitdir}/system-server.socket
 %{_datadir}/system-server/udev-rules/91-system-server.rules
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
+%{_datadir}/license/%{name}
 
 %files -n libdeviced
 %defattr(-,root,root,-)
