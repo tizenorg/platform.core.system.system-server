@@ -109,6 +109,7 @@ INSTALL(FILES ${UDEV_RULES} DESTINATION ${UDEV_RULES_PATH})
 INSTALL(FILES system-server.conf DESTINATION /etc/dbus-1/system.d)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/packaging/system-server.rule DESTINATION /opt/etc/smack/accesses.d)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/mmc-smack-label DESTINATION bin)
+INSTALL(PROGRAMS shutdown.sh DESTINATION /usr/lib/system-server)
 
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.service DESTINATION /usr/lib/systemd/system)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.socket  DESTINATION /usr/lib/systemd/system)

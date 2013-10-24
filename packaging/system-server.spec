@@ -145,6 +145,7 @@ systemctl daemon-reload
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_bindir}/system_server
 /opt/etc/smack/accesses.d/system-server.rule
+/usr/lib/system-server/shutdown.sh
 %if 0%{?simulator}
 %exclude %{_bindir}/restart
 %else

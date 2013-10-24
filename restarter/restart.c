@@ -21,7 +21,7 @@
 
 int main(int argc, char *argv[])
 {
-	system("/etc/rc.d/rc.shutdown &");
+	system("/usr/lib/system-server/shutdown.sh &");
         sleep(1);
         sync();
 	reboot(RB_AUTOBOOT);

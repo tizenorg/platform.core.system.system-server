@@ -557,7 +557,7 @@ int internal_poweroff_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
-	system("/etc/rc.d/rc.shutdown &");
+	system("/usr/lib/system-server/shutdown.sh &");
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
@@ -733,7 +733,7 @@ int restart_def_predefine_action(int argc, char **argv)
 
 	heynoti_publish(POWEROFF_NOTI_NAME);
 	pm_change_state(LCD_NORMAL);
-	system("/etc/rc.d/rc.shutdown &");
+	system("/usr/lib/system-server/shutdown.sh &");
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
