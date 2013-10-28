@@ -1,3 +1,6 @@
+* Mon Oct 27 2013 jy910.yun <jy910.yun@samsung.com> accepted/tizen/20130912.195534@09ee5a9
+- refactoring system-server code structure
+
 * Thu Aug 22 2013 Maciej Wereski <m.wereski@partner.samsung.com> accepted/tizen/20130710.221248@1177917
 - Move rc.shutdown from system-plugin-slp
 
