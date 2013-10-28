@@ -31,7 +31,7 @@ int ss_usb_init()
 {
 	int val = -1, i = 0, pid;
 
-	PRT_TRACE("check usb connection");
+	_D("check usb connection");
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
 		if (val==1) {
 			vconf_set_int(VCONFKEY_SYSMAN_USB_STATUS,
@@ -43,7 +43,7 @@ int ss_usb_init()
 			}
 			pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 			if (pid < 0) {
-				PRT_TRACE_ERR("usb appl launching failed\n");
+				_E("usb appl launching failed\n");
 				return -1;
 			}
 		}

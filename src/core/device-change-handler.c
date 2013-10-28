@@ -128,12 +128,12 @@ static int check_lowbat_charge_device(int bInserted)
 							bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
 						ret = syspopup_launch("lowbat-syspopup", b);
 						if (ret < 0) {
-							PRT_TRACE_EM("popup lauch failed\n");
+							_I("popup lauch failed\n");
 						}
 						bundle_free(b);
 					}
 				} else {
-					PRT_TRACE_ERR("failed to get vconf key");
+					_E("failed to get vconf key");
 					return -1;
 				}
 			}
@@ -156,15 +156,15 @@ static void usb_chgdet_cb(struct ss_main_data *ad)
 	ss_lowbat_monitor(NULL);
 	ss_action_entry_call_internal(PREDEF_USBCON, 0);
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_USB_ONLINE, &val) == 0) {
-		PRT_TRACE("jack - usb changed %d",val);
+		_D("jack - usb changed %d",val);
 		check_lowbat_charge_device(val);
 		if (val==1) {
 			snprintf(params, sizeof(params), "%d", CB_NOTI_BATT_CHARGE);
 			ss_launch_if_noexist("/usr/bin/sys_device_noti", params);
-			PRT_TRACE("usb device notification");
+			_D("usb device notification");
 		}
 	} else {
-		PRT_TRACE_ERR("fail to get usb_online status");
+		_E("fail to get usb_online status");
 	}
 }
 
@@ -195,7 +195,7 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 	ss_lowbat_monitor(NULL);
 
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_TA_ONLINE, &val) == 0) {
-		PRT_TRACE("jack - ta changed %d",val);
+		_D("jack - ta changed %d",val);
 		check_lowbat_charge_device(val);
 		vconf_set_int(VCONFKEY_SYSMAN_CHARGER_STATUS, val);
 		if (val == 0) {
@@ -204,31 +204,31 @@ static void ta_chgdet_cb(struct ss_main_data *ad)
 			pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
 			snprintf(params, sizeof(params), "%d", CB_NOTI_BATT_CHARGE);
 			ss_launch_if_noexist("/usr/bin/sys_device_noti", params);
-			PRT_TRACE("ta device notification");
+			_D("ta device notification");
 		}
 		__sync_usb_status();
 	}
 	else
-		PRT_TRACE_ERR("failed to get ta status\n");
+		_E("failed to get ta status\n");
 }
 
 static void earjack_chgdet_cb(struct ss_main_data *ad)
 {
-	PRT_TRACE("jack - earjack changed\n");
+	_D("jack - earjack changed\n");
 	ss_action_entry_call_internal(PREDEF_EARJACKCON, 0);
 }
 
 static void earkey_chgdet_cb(struct ss_main_data *ad)
 {
 	int val;
-	PRT_TRACE("jack - earkey changed\n");
+	_D("jack - earkey changed\n");
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARKEY_ONLINE, &val) == 0)
 		vconf_set_int(VCONFKEY_SYSMAN_EARJACKKEY, val);
 }
 
 static void tvout_chgdet_cb(struct ss_main_data *ad)
 {
-	PRT_TRACE("jack - tvout changed\n");
+	_D("jack - tvout changed\n");
 	pm_change_state(LCD_NORMAL);
 }
 
@@ -240,20 +240,20 @@ static void hdmi_chgdet_cb(struct ss_main_data *ad)
 	pm_change_state(LCD_NORMAL);
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_SUPPORT, &val) == 0) {
 		if (val!=1) {
-			PRT_TRACE_ERR("target is not support HDMI");
+			_E("target is not support HDMI");
 			vconf_set_int(VCONFKEY_SYSMAN_HDMI, HDMI_NOT_SUPPORTED);
 			return;
 		}
 	}
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_HDMI_ONLINE, &val) == 0) {
-		PRT_TRACE("jack - hdmi changed %d",val);
+		_D("jack - hdmi changed %d",val);
 		vconf_set_int(VCONFKEY_SYSMAN_HDMI,val);
 		if(val == 1)
 			pm_lock_state(LCD_NORMAL, GOTO_STATE_NOW, 0);
 		else
 			pm_unlock_state(LCD_NORMAL, PM_SLEEP_MARGIN);
 	} else {
-		PRT_TRACE_ERR("failed to get hdmi_online status");
+		_E("failed to get hdmi_online status");
 	}
 }
 
@@ -262,7 +262,7 @@ static void keyboard_chgdet_cb(struct ss_main_data *ad)
 	int val = -1;
 
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_KEYBOARD_ONLINE, &val) == 0) {
-		PRT_TRACE("jack - keyboard changed %d",val);
+		_D("jack - keyboard changed %d",val);
 		if(val != 1)
 			val = 0;
 		vconf_set_int(VCONFKEY_SYSMAN_SLIDING_KEYBOARD, val);
@@ -292,7 +292,7 @@ static void mmc_chgdet_cb(void *data)
 		if (!inserted)
 			return;
 		inserted = false;
-		PRT_TRACE("mmc removed");
+		_D("mmc removed");
 		ss_mmc_removed();
 	} else {
 		/* when inserted mmc, emul kernel notify twice(insert, changed)
@@ -300,7 +300,7 @@ static void mmc_chgdet_cb(void *data)
 		if (inserted)
 			return;
 		inserted = true;
-		PRT_TRACE("mmc added");
+		_D("mmc added");
 		ret = ss_mmc_inserted();
 		if (ret == -1) {
 			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);
@@ -308,26 +308,26 @@ static void mmc_chgdet_cb(void *data)
 				bundle *b = NULL;
 				b = bundle_create();
 				if (b == NULL) {
-					PRT_TRACE_ERR("error bundle_create()");
+					_E("error bundle_create()");
 					return;
 				}
 				bundle_add(b, "_SYSPOPUP_CONTENT_", "mounterr");
 				ret = syspopup_launch("mmc-syspopup", b);
 				if (ret < 0) {
-					PRT_TRACE_ERR("popup launch failed");
+					_E("popup launch failed");
 				}
 				bundle_free(b);
 			} else if (val == VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED) {
 				bundle *b = NULL;
 				b = bundle_create();
 				if (b == NULL) {
-					PRT_TRACE_ERR("error bundle_create()");
+					_E("error bundle_create()");
 					return;
 				}
 				bundle_add(b, "_SYSPOPUP_CONTENT_", "mountrdonly");
 				ret = syspopup_launch("mmc-syspopup", b);
 				if (ret < 0) {
-					PRT_TRACE_ERR("popup launch failed");
+					_E("popup launch failed");
 				}
 				bundle_free(b);
 			}
@@ -364,16 +364,16 @@ static void charge_cb(struct ss_main_data *ad)
 
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &charge_now) != 0 ||
 	    device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CAPACITY, &capacity) != 0)
-		PRT_TRACE_ERR("fail to get battery node value");
+		_E("fail to get battery node value");
 	if (charge_now == 0 && capacity == 0) {
-		PRT_TRACE_ERR("target will be shut down");
+		_E("target will be shut down");
 		ss_action_entry_call_internal(PREDEF_LOWBAT, 1, POWER_OFF_BAT_ACT);
 		return;
 	}
 
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_HEALTH, &val) == 0) {
 		if (val==BATTERY_OVERHEAT || val==BATTERY_COLD) {
-			PRT_TRACE_ERR("Battery health status is not good (%d)", val);
+			_E("Battery health status is not good (%d)", val);
 
 			if (__check_abnormal_popup_launch() != 0)
 				return;
@@ -385,7 +385,7 @@ static void charge_cb(struct ss_main_data *ad)
 			return;
 		}
 	} else {
-		PRT_TRACE_ERR("failed to get battery health status");
+		_E("failed to get battery health status");
 	}
 	device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_FULL, &val);
 	if (val==0) {
@@ -397,7 +397,7 @@ static void charge_cb(struct ss_main_data *ad)
 	} else {
 		if (val==1 && bat_full_noti==0) {
 			bat_full_noti = 1;
-			PRT_TRACE("battery full noti");
+			_D("battery full noti");
 			snprintf(params, sizeof(params), "%d %d", CB_NOTI_BATT_FULL, CB_NOTI_ON);
 			ss_launch_if_noexist("/usr/bin/sys_device_noti", params);
 		}
@@ -425,45 +425,45 @@ static void cb_xxxxx_signaled(void *data, DBusMessage * msg)
 
 static void usb_host_chgdet_cb(keynode_t *in_key, struct ss_main_data *ad)
 {
-	PRT_TRACE("ENTER: usb_host_chgdet_cb()");
+	_D("ENTER: usb_host_chgdet_cb()");
 	int status;
 	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
 	if (ret != 0) {
-		PRT_TRACE_ERR("vconf get failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)\n");
+		_E("vconf get failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)\n");
 		return ;
 	}
 
 	if(VCONFKEY_SYSMAN_USB_HOST_CONNECTED == status) {
 		int pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
-			PRT_TRACE("usb-server launching failed\n");
+			_D("usb-server launching failed\n");
 			return;
 		}
 	}
-	PRT_TRACE("EXIT: usb_host_chgdet_cb()");
+	_D("EXIT: usb_host_chgdet_cb()");
 }
 
 static void usb_host_add_cb()
 {
-	PRT_TRACE("ENTER: usb_host_add_cb()\n");
+	_D("ENTER: usb_host_add_cb()\n");
 	int status;
 	int ret = vconf_get_int(VCONFKEY_SYSMAN_USB_HOST_STATUS, &status);
 	if (ret != 0) {
-		PRT_TRACE("vconf get failed ()\n");
+		_D("vconf get failed ()\n");
 		return;
 	}
 
 	if (-1 == status) { /* '-1' means that USB host mode is not loaded yet */
-		PRT_TRACE("This usb device is connected defaultly\n");
+		_D("This usb device is connected defaultly\n");
 
 		ret = system(STORE_DEFAULT_USB_INFO);
-		PRT_TRACE("Return value of usb-devices: %d\n", ret);
+		_D("Return value of usb-devices: %d\n", ret);
 		if (0 != access(DEFAULT_USB_INFO_PATH, F_OK)) {
 			ret = system(STORE_DEFAULT_USB_INFO);
-			PRT_TRACE("Return value of usb-devices: %d\n", ret);
+			_D("Return value of usb-devices: %d\n", ret);
 		}
 	}
-	PRT_TRACE("EXIT: usb_host_add_cb()\n");
+	_D("EXIT: usb_host_add_cb()\n");
 }
 
 static int uevent_control_stop(int ufd)
@@ -493,40 +493,40 @@ static int uevent_control_start(void)
 
 	udev = udev_new();
 	if (!udev) {
-		PRT_TRACE_ERR("error create udev");
+		_E("error create udev");
 		return -1;
 	}
 
 	mon = udev_monitor_new_from_netlink(udev, "kernel");
 	if (mon == NULL) {
-		PRT_TRACE_ERR("error udev_monitor create");
+		_E("error udev_monitor create");
 		uevent_control_stop(-1);
 		return -1;
 	}
 
 	udev_monitor_set_receive_buffer_size(mon, 1024);
 	if (udev_monitor_filter_add_match_subsystem_devtype(mon, "platform", NULL) < 0) {
-		PRT_TRACE_ERR("error apply subsystem filter");
+		_E("error apply subsystem filter");
 		uevent_control_stop(-1);
 		return -1;
 	}
 
 	ufd = udev_monitor_get_fd(mon);
 	if (ufd == -1) {
-		PRT_TRACE_ERR("error udev_monitor_get_fd");
+		_E("error udev_monitor_get_fd");
 		uevent_control_stop(ufd);
 		return -1;
 	}
 
 	ufdh = ecore_main_fd_handler_add(ufd, ECORE_FD_READ, uevent_control_cb, NULL, NULL, NULL);
 	if (!ufdh) {
-		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		_E("error ecore_main_fd_handler_add");
 		uevent_control_stop(ufd);
 		return -1;
 	}
 
 	if (udev_monitor_enable_receiving(mon) < 0) {
-		PRT_TRACE_ERR("error unable to subscribe to udev events");
+		_E("error unable to subscribe to udev events");
 		uevent_control_stop(ufd);
 		return -1;
 	}
@@ -564,7 +564,7 @@ static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler)
 		return -1;
 	}
 
-	PRT_TRACE("UEVENT DETECTED (%s)",env_value);
+	_D("UEVENT DETECTED (%s)",env_value);
 	ss_action_entry_call_internal(PREDEF_DEVICE_CHANGED,1,env_value);
 
 	udev_device_unref(dev);
@@ -577,7 +577,7 @@ static int uevent_control_cb(void *data, Ecore_Fd_Handler *fd_handler)
 int changed_device_def_predefine_action(int argc, char **argv)
 {
 	if (argc != 1 || argv[0] == NULL) {
-		PRT_TRACE_ERR("param is failed");
+		_E("param is failed");
 		return -1;
 	}
 
@@ -602,7 +602,7 @@ int changed_device_def_predefine_action(int argc, char **argv)
 static void pci_keyboard_add_cb(struct ss_main_data *ad)
 {
 	char params[BUFF_MAX];
-	PRT_TRACE("pci- keyboard inserted\n");
+	_D("pci- keyboard inserted\n");
 	pm_change_state(LCD_NORMAL);
 
 	snprintf(params, sizeof(params), "%d", CB_NOTI_PCI_INSERTED);
@@ -612,7 +612,7 @@ static void pci_keyboard_add_cb(struct ss_main_data *ad)
 static void pci_keyboard_remove_cb(struct ss_main_data *ad)
 {
 	char params[BUFF_MAX];
-	PRT_TRACE("pci- keyboard removed\n");
+	_D("pci- keyboard removed\n");
 	pm_change_state(LCD_NORMAL);
 
 	snprintf(params, sizeof(params), "%d", CB_NOTI_PCI_REMOVED);
@@ -623,7 +623,7 @@ int ss_device_change_init(struct ss_main_data *ad)
 	ss_action_entry_add_internal(PREDEF_DEVICE_CHANGED, changed_device_def_predefine_action, NULL, NULL);
 
 	if (uevent_control_start() == -1) {
-		PRT_TRACE_ERR("fail uevent control init");
+		_E("fail uevent control init");
 		return -1;
 	}
 	/* for simple noti change cb */
@@ -646,14 +646,14 @@ int ss_device_change_init(struct ss_main_data *ad)
 	ss_noti_add("device_pci_keyboard_remove", (void *)pci_keyboard_remove_cb, (void *)ad);
 
 	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_USB_HOST_STATUS, usb_host_chgdet_cb, NULL) < 0) {
-		PRT_TRACE_ERR("vconf key notify failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");
+		_E("vconf key notify failed(VCONFKEY_SYSMAN_USB_HOST_STATUS)");
 	}
 	/* dbus noti change cb */
 #ifdef ENABLE_EDBUS_USE
 	e_dbus_init();
 	conn = e_dbus_bus_get(DBUS_BUS_SYSTEM);
 	if (!conn)
-		PRT_TRACE_ERR("check system dbus running!\n");
+		_E("check system dbus running!\n");
 
 	e_dbus_signal_handler_add(conn, NULL, "/system/uevent/xxxxx",
 				  "system.uevent.xxxxx",

@@ -102,7 +102,7 @@ static int __predefine_get_pid(const char *execpath)
 
 	dp = opendir("/proc");
 	if (!dp) {
-		PRT_TRACE_ERR("open /proc");
+		_E("open /proc");
 		return -1;
 	}
 
@@ -154,17 +154,17 @@ static void make_memps_log(char *file, pid_t pid, char *victim_name)
 	now = time(NULL);
 	cur_tm = (struct tm *)malloc(sizeof(struct tm));
 	if (cur_tm == NULL) {
-		PRT_TRACE_ERR("Fail to memory allocation");
+		_E("Fail to memory allocation");
 		return;
 	}
 
 	if (localtime_r(&now, cur_tm) == NULL) {
-		PRT_TRACE_ERR("Fail to get localtime");
+		_E("Fail to get localtime");
 		free(cur_tm);
 		return;
 	}
 
-	PRT_TRACE("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
+	_D("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
 		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
 		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
 		 cur_tm->tm_sec);
@@ -225,7 +225,7 @@ static int lowmem_get_victim_pid()
 	int fd;
 
 	if (device_get_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_VICTIM_TASK, &pid) < 0) {
-		PRT_TRACE_ERR("Get victim task failed");
+		_E("Get victim task failed");
 		return -1;
 	}
 
@@ -245,17 +245,17 @@ int lowmem_def_predefine_action(int argc, char **argv)
 		if (pid > 0 && pid != sysman_get_pid(LOWMEM_EXEC_PATH) && pid != sysman_get_pid(MEMPS_EXEC_PATH)) {
 			if ((sysman_get_cmdline_name(pid, appname, PATH_MAX)) ==
 			    0) {
-				PRT_TRACE_EM
+				_I
 				    ("we will kill, lowmem lv2 = %d (%s)\n",
 				     pid, appname);
 	
 				make_memps_log(MEMPS_LOG_FILE, pid, appname);
 
 				if(get_app_oomadj(pid, &oom_adj) < 0) {
-					PRT_TRACE_ERR("Failed to get oom_adj");
+					_E("Failed to get oom_adj");
 					return -1;
 				}
-				PRT_TRACE("%d will be killed with %d oom_adj value", pid, oom_adj);
+				_D("%d will be killed with %d oom_adj value", pid, oom_adj);
 
 				kill(pid, SIGTERM);
 
@@ -270,12 +270,12 @@ int lowmem_def_predefine_action(int argc, char **argv)
 				ret = syspopup_launch("lowmem-syspopup", b);
 				bundle_free(b);
 				if (ret < 0) {
-					PRT_TRACE_EM("popup lauch failed\n");
+					_I("popup lauch failed\n");
 					return -1;
 				}
 				
 				if (set_app_oomadj(ret, OOMADJ_SU) < 0) {	
-					PRT_TRACE_ERR("Failed to set oom_adj");
+					_E("Failed to set oom_adj");
 				}
 			}
 		}
@@ -306,12 +306,12 @@ int usbcon_def_predefine_action(int argc, char **argv)
 		pm_lock_state(LCD_OFF, STAY_CUR_STATE, 0);
 		pid = ss_launch_if_noexist(USBCON_EXEC_PATH, NULL);
 		if (pid < 0) {
-			PRT_TRACE_ERR("usb predefine action failed\n");
+			_E("usb predefine action failed\n");
 			return -1;
 		}
 		return pid;
 	}
-	PRT_TRACE_ERR("failed to get usb status\n");
+	_E("failed to get usb status\n");
 	return -1;
 }
 
@@ -319,7 +319,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 {
 	int val;
 
-	PRT_TRACE_EM("earjack_normal predefine action\n");
+	_I("earjack_normal predefine action\n");
 	if (device_get_property(DEVICE_TYPE_EXTCON, PROP_EXTCON_EARJACK_ONLINE, &val) == 0) {
 		return vconf_set_int(VCONFKEY_SYSMAN_EARJACK, val);
 	}
@@ -346,7 +346,7 @@ int lowbat_popup(void *data)
 
 		ret = syspopup_launch("lowbat-syspopup", b);
 		if (ret < 0) {
-			PRT_TRACE_EM("popup lauch failed\n");
+			_I("popup lauch failed\n");
 			bundle_free(b);
 			return 1;
 		}
@@ -354,7 +354,7 @@ int lowbat_popup(void *data)
 		lowbat_popup_option = 0;
 		bundle_free(b);
 	} else {
-		PRT_TRACE_EM("boot-animation running yet");
+		_I("boot-animation running yet");
 		return 1;
 	}
 
@@ -369,7 +369,7 @@ int predefine_control_launch(char *name, bundle *b)
 	//lowbat-popup
 	if (strncmp(name, LOWBAT_POPUP_NAME, strlen(LOWBAT_POPUP_NAME)) == 0) {
 		if (launched_poweroff == 1) {
-			PRT_TRACE_ERR("will be foreced power off");
+			_E("will be foreced power off");
 			internal_poweroff_def_predefine_action(0,NULL);
 			return 0;
 		}
@@ -379,7 +379,7 @@ int predefine_control_launch(char *name, bundle *b)
 
 		pid = __predefine_get_pid(LOWBAT_EXEC_PATH);
 		if (pid > 0) {
-			PRT_TRACE_ERR("pre launched %s destroy", LOWBAT_EXEC_PATH);
+			_E("pre launched %s destroy", LOWBAT_EXEC_PATH);
 			kill(pid, SIGTERM);
 		}
 		if (syspopup_launch(name, b) < 0)
@@ -446,13 +446,13 @@ int lowbat_def_predefine_action(int argc, char **argv)
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		if (predefine_control_launch("lowbat-syspopup", b) < 0) {
-				PRT_TRACE_ERR("popup lauch failed\n");
+				_E("popup lauch failed\n");
 				bundle_free(b);
 				lowbat_popup_option = 0;
 				return -1;
 		}
 	} else {
-		PRT_TRACE_EM("boot-animation running yet");
+		_I("boot-animation running yet");
 		lowbat_popup_id = ecore_timer_add(1, lowbat_popup, NULL);
 	}
 	bundle_free(b);
@@ -484,7 +484,7 @@ Eina_Bool powerdown_ap_by_force(void *data)
 		gettimeofday(&now, NULL);
 	}
 
-	PRT_TRACE("Power off by force\n");
+	_D("Power off by force\n");
 	/* give a chance to be terminated for each process */
 	power_off = 1;
 	sync();
@@ -508,7 +508,7 @@ static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, vo
 		tel_deinit(tapi_handle);
 		tapi_handle = NULL;
 	}
-	PRT_TRACE("Power off \n");
+	_D("Power off \n");
 
 	/* Getting poweroff duration */
 	buf = getenv("PWROFF_DUR");
@@ -532,7 +532,7 @@ static void powerdown_ap(TapiHandle *handle, const char *noti_id, void *data, vo
 }
 static void powerdown_res_cb(TapiHandle *handle, int result, void *data, void *user_data)
 {
-	PRT_TRACE("poweroff command request : %d",result);
+	_D("poweroff command request : %d",result);
 }
 
 int poweroff_def_predefine_action(int argc, char **argv)
@@ -543,7 +543,7 @@ int poweroff_def_predefine_action(int argc, char **argv)
 
 	while (retry_count < MAX_RETRY) {
 		if (ss_action_entry_call_internal(PREDEF_INTERNAL_POWEROFF, 0) < 0) {
-			PRT_TRACE_ERR("failed to request poweroff to system_server \n");
+			_E("failed to request poweroff to system_server \n");
 			retry_count++;
 			continue;
 		}
@@ -565,7 +565,7 @@ int internal_poweroff_def_predefine_action(int argc, char **argv)
 		ret = tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, powerdown_ap, NULL);
 
 		if (ret != TAPI_API_SUCCESS) {
-			PRT_TRACE_ERR
+			_E
 			    ("tel_register_event is not subscribed. error %d\n", ret);
 			powerdown_ap_by_force(NULL);
 			return 0;
@@ -573,7 +573,7 @@ int internal_poweroff_def_predefine_action(int argc, char **argv)
 
 		ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
 		if (ret != TAPI_API_SUCCESS) {
-			PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
+			_E("tel_process_power_command() error %d\n", ret);
 			powerdown_ap_by_force(NULL);
 			return 0;
 		}
@@ -588,13 +588,13 @@ static void enter_flight_mode_cb(TapiHandle *handle, int result, void *data, voi
 {
 	int bCurFlightMode = 0;
 	if (result != TAPI_POWER_FLIGHT_MODE_ENTER) {
-		PRT_TRACE_ERR("flight mode enter failed %d",result);
+		_E("flight mode enter failed %d",result);
 	} else {
-		PRT_TRACE("enter flight mode result : %d",result);
+		_D("enter flight mode result : %d",result);
 		if (vconf_get_bool(VCONFKEY_TELEPHONY_FLIGHT_MODE,&bCurFlightMode) == 0) {
-			PRT_TRACE("Flight Mode is %d", bCurFlightMode);
+			_D("Flight Mode is %d", bCurFlightMode);
 		} else {
-			PRT_TRACE_ERR("failed to get vconf key");
+			_E("failed to get vconf key");
 		}
 	}
 }
@@ -603,13 +603,13 @@ static void leave_flight_mode_cb(TapiHandle *handle, int result, void *data, voi
 {
 	int bCurFlightMode = 0;
 	if (result != TAPI_POWER_FLIGHT_MODE_LEAVE) {
-		PRT_TRACE_ERR("flight mode leave failed %d",result);
+		_E("flight mode leave failed %d",result);
 	} else {
-		PRT_TRACE("leave flight mode result : %d",result);
+		_D("leave flight mode result : %d",result);
 		if (vconf_get_bool(VCONFKEY_TELEPHONY_FLIGHT_MODE,&bCurFlightMode) == 0) {
-			PRT_TRACE("Flight Mode is %d", bCurFlightMode);
+			_D("Flight Mode is %d", bCurFlightMode);
 		} else {
-			PRT_TRACE_ERR("failed to get vconf key");
+			_E("failed to get vconf key");
 		}
 	}
 }
@@ -622,7 +622,7 @@ int entersleep_def_predefine_action(int argc, char **argv)
 	sync();
 
 	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_ENTER, enter_flight_mode_cb, NULL);
-	PRT_TRACE_ERR("request for changing into flight mode : %d\n", ret);
+	_E("request for changing into flight mode : %d\n", ret);
 
 	system("/etc/rc.d/rc.entersleep");
 	pm_change_state(POWER_OFF);
@@ -638,7 +638,7 @@ int leavesleep_def_predefine_action(int argc, char **argv)
 	sync();
 
 	ret = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_LEAVE, leave_flight_mode_cb, NULL);
-	PRT_TRACE_ERR("request for changing into flight mode : %d\n", ret);
+	_E("request for changing into flight mode : %d\n", ret);
 
 	return 0;
 }
@@ -670,7 +670,7 @@ static void restart_ap(TapiHandle *handle, const char *noti_id, void *data, void
 		tapi_handle = NULL;
 	}
 
-	PRT_INFO("Restart\n");
+	_I("Restart\n");
 	vconf_ignore_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void*)poweroff_control_cb);
 	power_off = 1;
 	sync();
@@ -708,7 +708,7 @@ static void restart_ap_by_force(void *data)
 		tapi_handle = NULL;
 	}
 
-	PRT_INFO("Restart\n");
+	_I("Restart\n");
 	power_off = 1;
 	sync();
 
@@ -741,7 +741,7 @@ int restart_def_predefine_action(int argc, char **argv)
 	ret =
 	    tel_register_noti_event(tapi_handle, TAPI_NOTI_MODEM_POWER, restart_ap, NULL);
 	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR
+		_E
 		    ("tel_register_event is not subscribed. error %d\n", ret);
 		restart_ap_by_force((void *)-1);
 		return 0;
@@ -750,7 +750,7 @@ int restart_def_predefine_action(int argc, char **argv)
 
 	ret = tel_process_power_command(tapi_handle, TAPI_PHONE_POWER_OFF, powerdown_res_cb, NULL);
 	if (ret != TAPI_API_SUCCESS) {
-		PRT_TRACE_ERR("tel_process_power_command() error %d\n", ret);
+		_E("tel_process_power_command() error %d\n", ret);
 		restart_ap_by_force((void *)-1);
 		return 0;
 	}
@@ -768,7 +768,7 @@ int launching_predefine_action(int argc, char **argv)
 
 	/* current just launching poweroff-popup */
 	if (predefine_control_launch("poweroff-syspopup", NULL) < 0) {
-		PRT_TRACE_ERR("poweroff-syspopup launch failed");
+		_E("poweroff-syspopup launch failed");
 		return -1;
 	}
 	return 0;
@@ -779,7 +779,7 @@ int flight_mode_def_predefine_action(int argc, char **argv)
 	int bCurFlightMode;
 	int err = TAPI_API_SUCCESS;
 	if (argc != 1 || argv[0] == NULL) {
-		PRT_TRACE_ERR("FlightMode Set predefine action failed");
+		_E("FlightMode Set predefine action failed");
 		return -1;
 	}
 	bCurFlightMode = atoi(argv[0]);
@@ -789,7 +789,7 @@ int flight_mode_def_predefine_action(int argc, char **argv)
 		err = tel_set_flight_mode(tapi_handle, TAPI_POWER_FLIGHT_MODE_ENTER, enter_flight_mode_cb, NULL);
 	}
 	if (err != TAPI_API_SUCCESS)
-		PRT_TRACE_ERR("FlightMode tel api action failed %d",err);
+		_E("FlightMode tel api action failed %d",err);
 	return 0;
 
 }
@@ -804,13 +804,13 @@ static void ss_action_entry_load_from_sodir()
 
 	dp = opendir(PREDEFINE_SO_DIR);
 	if (!dp) {
-		ERR("fail open %s", PREDEFINE_SO_DIR);
+		_E("fail open %s", PREDEFINE_SO_DIR);
 		return;
 	}
 
 	msg = malloc(sizeof(struct sysnoti));
 	if (msg == NULL) {
-		ERR("Malloc failed");
+		_E("Malloc failed");
 		closedir(dp);
 		return;
 	}
@@ -840,10 +840,10 @@ static void __tel_init_cb(keynode_t *key_nodes,void *data)
 		vconf_ignore_key_changed(VCONFKEY_TELEPHONY_READY, (void*)__tel_init_cb);
 		tapi_handle = tel_init(NULL);
 		if (tapi_handle == NULL) {
-			PRT_TRACE_ERR("tapi init error");
+			_E("tapi init error");
 		}
 	} else {
-		PRT_TRACE_ERR("tapi is not ready yet");
+		_E("tapi is not ready yet");
 	}
 }
 static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad)
@@ -874,13 +874,13 @@ void ss_predefine_internal_init(void)
 		if (bTelReady == 1) {
 			tapi_handle = tel_init(NULL);
 			if (tapi_handle == NULL) {
-				PRT_TRACE_ERR("tapi init error");
+				_E("tapi init error");
 			}
 		} else {
 			vconf_notify_key_changed(VCONFKEY_TELEPHONY_READY, (void *)__tel_init_cb, NULL);
 		}
 	} else {
-		PRT_TRACE_ERR("failed to get tapi vconf key");
+		_E("failed to get tapi vconf key");
 	}
 #ifdef NOUSE
 	ss_action_entry_add_internal(PREDEF_CALL, call_predefine_action, NULL,
@@ -909,7 +909,7 @@ void ss_predefine_internal_init(void)
 					NULL, NULL);
 
 	if (vconf_notify_key_changed(VCONFKEY_SYSMAN_POWER_OFF_STATUS, (void *)poweroff_control_cb, NULL) < 0) {
-		PRT_TRACE_ERR("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_POWER_OFF_STATUS);
+		_E("Vconf notify key chaneged failed: KEY(%s)", VCONFKEY_SYSMAN_POWER_OFF_STATUS);
 	}
 	ss_action_entry_load_from_sodir();
 

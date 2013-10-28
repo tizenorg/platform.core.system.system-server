@@ -57,13 +57,13 @@ int set_max_frequency_action(int argc, char **argv)
 
 	r = __add_entry_to_max_cpu_freq_list(atoi(argv[0]), atoi(argv[1]));
 	if (r < 0) {
-		PRT_TRACE_ERR("Add entry failed");
+		_E("Add entry failed");
 		return -1;
 	}
 
 	r = __write_max_cpu_freq(cur_max_cpu_freq);
 	if (r < 0) {
-		PRT_TRACE_ERR("Write entry failed");
+		_E("Write entry failed");
 		return -1;
 	}
 
@@ -79,13 +79,13 @@ int set_min_frequency_action(int argc, char **argv)
 
 	r = __add_entry_to_min_cpu_freq_list(atoi(argv[0]), atoi(argv[1]));
 	if (r < 0) {
-		PRT_TRACE_ERR("Add entry failed");
+		_E("Add entry failed");
 		return -1;
 	}
 	
 	r = __write_min_cpu_freq(cur_min_cpu_freq);
 	if (r < 0) {
-		PRT_TRACE_ERR("Write entry failed");
+		_E("Write entry failed");
 		return -1;
 	}
 
@@ -100,7 +100,7 @@ int release_max_frequency_action(int argc, char **argv)
 	
 	r = __remove_entry_from_max_cpu_freq_list(atoi(argv[0]));
 	if (r < 0) {
-		PRT_TRACE_ERR("Remove entry failed");
+		_E("Remove entry failed");
 		return -1;
 	}
 
@@ -109,7 +109,7 @@ int release_max_frequency_action(int argc, char **argv)
 
 	r = __write_max_cpu_freq(cur_max_cpu_freq);
 	if (r < 0) {
-		PRT_TRACE_ERR("Write freq failed");
+		_E("Write freq failed");
 		return -1;
 	}
 
@@ -125,7 +125,7 @@ int release_min_frequency_action(int argc, char **argv)
 
 	r = __remove_entry_from_min_cpu_freq_list(atoi(argv[0]));
 	if (r < 0) {
-		PRT_TRACE_ERR("Remove entry failed");
+		_E("Remove entry failed");
 		return -1;
 	}
 
@@ -134,7 +134,7 @@ int release_min_frequency_action(int argc, char **argv)
 
 	r = __write_min_cpu_freq(cur_min_cpu_freq);
 	if (r < 0) {
-		PRT_TRACE_ERR("Write entry failed");
+		_E("Write entry failed");
 		return -1;
 	}
 
@@ -153,18 +153,18 @@ static int power_saving_cb(keynode_t *key_nodes, void *data)
 			if (power_saving_cpu_stat == 1) {
 				ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
 				if (ret < 0) {
-					PRT_TRACE_ERR("Add entry failed");
+					_E("Add entry failed");
 					return -1;
 				}
 			}
 		} else {
-			PRT_TRACE_ERR("failed to get vconf key");
+			_E("failed to get vconf key");
 			return -1;
 		}
 	} else {
 		ret = __remove_entry_from_max_cpu_freq_list(getpid());
 		if (ret < 0) {
-			PRT_TRACE_ERR("Remove entry failed");
+			_E("Remove entry failed");
 			return -1;
 		}
 		if (cur_max_cpu_freq == INT_MIN)
@@ -172,7 +172,7 @@ static int power_saving_cb(keynode_t *key_nodes, void *data)
 	}
 	ret = __write_max_cpu_freq(cur_max_cpu_freq);
 	if (ret < 0) {
-		PRT_TRACE_ERR("Write failed");
+		_E("Write failed");
 		return -1;
 	}
 
@@ -191,13 +191,13 @@ static int power_saving_cpu_cb(keynode_t *key_nodes, void *data)
 			if (power_saving_cpu_stat == 1) {
 				ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
 				if (ret < 0) {
-					PRT_TRACE_ERR("Add entry failed");
+					_E("Add entry failed");
 					return -1;
 				}
 			} else {
 				ret = __remove_entry_from_max_cpu_freq_list(getpid());
 				if (ret < 0) {
-					PRT_TRACE_ERR("Remove entry failed");
+					_E("Remove entry failed");
 					return -1;
 				}
 				if (cur_max_cpu_freq == INT_MAX)
@@ -205,12 +205,12 @@ static int power_saving_cpu_cb(keynode_t *key_nodes, void *data)
 			}
 			ret = __write_max_cpu_freq(cur_max_cpu_freq);
 			if (ret < 0) {
-				PRT_TRACE_ERR("Write failed");
+				_E("Write failed");
 				return -1;
 			}
 		}
 	} else {
-		PRT_TRACE_ERR("failed to get vconf key");
+		_E("failed to get vconf key");
 		return -1;
 	}
 
@@ -240,13 +240,13 @@ static void __set_freq_limit()
 
 	ret = device_get_property(DEVICE_TYPE_CPU, PROP_CPU_CPUINFO_MAX_FREQ, &max_cpu_freq_limit);
 	if (ret < 0) {
-		PRT_TRACE_ERR("get cpufreq cpuinfo max readerror: %s", strerror(errno));
+		_E("get cpufreq cpuinfo max readerror: %s", strerror(errno));
 		max_cpu_freq_limit = DEFAULT_MAX_CPU_FREQ;
 	}
 
 	ret = device_get_property(DEVICE_TYPE_CPU, PROP_CPU_CPUINFO_MIN_FREQ, &min_cpu_freq_limit);
 	if (ret < 0) {
-		PRT_TRACE_ERR("get cpufreq cpuinfo min readerror: %s", strerror(errno));
+		_E("get cpufreq cpuinfo min readerror: %s", strerror(errno));
 		min_cpu_freq_limit = DEFAULT_MIN_CPU_FREQ;
 	}
 
@@ -257,21 +257,21 @@ static void __set_freq_limit()
 				if (power_saving_cpu_stat == 1) {
 					ret = __add_entry_to_max_cpu_freq_list(getpid(), POWER_SAVING_CPUFREQ);
 					if (ret < 0) {
-						PRT_TRACE_ERR("Add entry failed");
+						_E("Add entry failed");
 						return;
 					}
 					ret = __write_max_cpu_freq(cur_max_cpu_freq);
 					if (ret < 0) {
-						PRT_TRACE_ERR("Write entry failed");
+						_E("Write entry failed");
 						return;
 					}
 				}
 			} else {
-				PRT_TRACE_ERR("failed to get vconf key");
+				_E("failed to get vconf key");
 			}
 		}
 	} else {
-		PRT_TRACE_ERR("failed to get vconf key");
+		_E("failed to get vconf key");
 	}
 }
 
@@ -345,7 +345,7 @@ static int __add_entry_to_max_cpu_freq_list(int pid, int freq)
 	
 	r = __remove_entry_from_max_cpu_freq_list(pid);
 	if (r < 0) {
-		PRT_TRACE_ERR("Remove duplicated entry failed");
+		_E("Remove duplicated entry failed");
 	}
 
 	if (freq < cur_max_cpu_freq) {
@@ -354,7 +354,7 @@ static int __add_entry_to_max_cpu_freq_list(int pid, int freq)
 
 	entry = malloc(sizeof(struct cpu_freq_entry));
 	if (!entry) {
-		PRT_TRACE_ERR("Malloc failed");
+		_E("Malloc failed");
 		return -1;
 	}
 	
@@ -363,7 +363,7 @@ static int __add_entry_to_max_cpu_freq_list(int pid, int freq)
 
 	max_cpu_freq_list = eina_list_prepend(max_cpu_freq_list, entry);
 	if (!max_cpu_freq_list) {
-		PRT_TRACE_ERR("eina_list_prepend failed");
+		_E("eina_list_prepend failed");
 		return -1;
 	}
 
@@ -377,7 +377,7 @@ static int __add_entry_to_min_cpu_freq_list(int pid, int freq)
 	
 	r = __remove_entry_from_min_cpu_freq_list(pid);
 	if (r < 0) {
-		PRT_TRACE_ERR("Remove duplicated entry failed");
+		_E("Remove duplicated entry failed");
 	}
 
 	if (freq > cur_min_cpu_freq) {
@@ -386,7 +386,7 @@ static int __add_entry_to_min_cpu_freq_list(int pid, int freq)
 
 	entry = malloc(sizeof(struct cpu_freq_entry));
 	if (!entry) {
-		PRT_TRACE_ERR("Malloc failed");
+		_E("Malloc failed");
 		return -1;
 	}
 	
@@ -395,7 +395,7 @@ static int __add_entry_to_min_cpu_freq_list(int pid, int freq)
 
 	min_cpu_freq_list = eina_list_prepend(min_cpu_freq_list, entry);
 	if (!min_cpu_freq_list) {
-		PRT_TRACE_ERR("eina_list_prepend failed");
+		_E("eina_list_prepend failed");
 		return -1;
 	}
 	
@@ -408,7 +408,7 @@ static int __write_max_cpu_freq(int freq)
 
 	ret = device_set_property(DEVICE_TYPE_CPU, PROP_CPU_SCALING_MAX_FREQ, freq);
 	if (ret < 0) {
-		PRT_TRACE_ERR("set cpufreq max freq write error: %s", strerror(errno));
+		_E("set cpufreq max freq write error: %s", strerror(errno));
 		return -1;
 	}
 	
@@ -421,7 +421,7 @@ static int __write_min_cpu_freq(int freq)
 
 	ret = device_set_property(DEVICE_TYPE_CPU, PROP_CPU_SCALING_MIN_FREQ, freq);
 	if (ret < 0) {
-		PRT_TRACE_ERR("set cpufreq min freq write error: %s", strerror(errno));
+		_E("set cpufreq min freq write error: %s", strerror(errno));
 		return -1;
 	}
 	

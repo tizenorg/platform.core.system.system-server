@@ -134,7 +134,7 @@ int launch_app_with_nice(const char *file, char *const argv[], pid_t *pid, int _
 	int _pid;
 
 	if (file == NULL || access(file, X_OK) != 0) {
-		PRT_TRACE_ERR("launch app error: Invalid input");
+		_E("launch app error: Invalid input");
 		errno = EINVAL;
 		return -1;
 	}
@@ -145,7 +145,7 @@ int launch_app_with_nice(const char *file, char *const argv[], pid_t *pid, int _
 	_pid = fork();
 
 	if (_pid == -1) {
-		PRT_TRACE_ERR("fork error: %s", strerror(errno));
+		_E("fork error: %s", strerror(errno));
 		/* keep errno */
 		return -1;
 	}
@@ -162,12 +162,12 @@ int launch_app_with_nice(const char *file, char *const argv[], pid_t *pid, int _
 	ret = nice(_nice);
 
 	if (ret == -1 && errno != 0)
-		PRT_TRACE_ERR("nice error: %s", strerror(errno));
+		_E("nice error: %s", strerror(errno));
 
 	ret = execvp(file, argv);
 
 	/* If failed... */
-	PRT_TRACE_ERR("exec. error: %s", strerror(errno));
+	_E("exec. error: %s", strerror(errno));
 	return -2;
 }
 
@@ -180,7 +180,7 @@ int launch_app_cmd_with_nice(const char *cmdline, int _nice)
 
 	nargs = parse_cmd(cmdline, argv, MAX_ARGS + 1);
 	if (nargs == -1) {
-		PRT_TRACE_ERR("launch app error: Invalid input");
+		_E("launch app error: Invalid input");
 		errno = EINVAL;
 		return -1;
 	}
@@ -229,7 +229,7 @@ int ss_launch_if_noexist(const char *execpath, const char *arg, ...)
 	buf = malloc(buf_size);
 	if (buf == NULL) {
 		/* Do something for not enought memory error */
-		PRT_TRACE_ERR("Malloc failed");
+		_E("Malloc failed");
 		return -1;
 	}
 
@@ -274,7 +274,7 @@ int ss_launch_evenif_exist(const char *execpath, const char *arg, ...)
 	buf = malloc(buf_size);
 	if (buf == NULL) {
 		// Do something for not enought memory error
-		PRT_TRACE_ERR("Malloc failed");
+		_E("Malloc failed");
 		return -1;
 	}
 
@@ -322,7 +322,7 @@ int ss_launch_after_kill_if_exist(const char *execpath, const char *arg, ...)
 	buf = malloc(buf_size);
 	if (buf == NULL) {
 		/* Do something for not enought memory error */
-		PRT_TRACE_ERR("Malloc Failed");
+		_E("Malloc Failed");
 		return -1;
 	}
 

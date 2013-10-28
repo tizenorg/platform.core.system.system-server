@@ -90,7 +90,7 @@ static void print_lowbat_state(unsigned int bat_percent)
 #if 0
 	int i;
 	for (i = 0; i < BAT_MON_SAMPLES; i++)
-		PRT_TRACE("\t%d", recent_bat_percent[i]);
+		_D("\t%d", recent_bat_percent[i]);
 #endif
 }
 
@@ -125,7 +125,7 @@ static int battery_charge_act(void *data)
 int ss_lowbat_set_charge_on(int onoff)
 {
 	if(vconf_set_int(VCONFKEY_SYSMAN_BATTERY_CHARGE_NOW, onoff)!=0) {
-		PRT_TRACE_ERR("fail to set charge vconf value");
+		_E("fail to set charge vconf value");
 		return -1;
 	}
 	return 0;
@@ -135,7 +135,7 @@ int ss_lowbat_is_charge_in_now()
 {
 	int val = 0;
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
-		PRT_TRACE_ERR("fail to read charge now from kernel");
+		_E("fail to read charge now from kernel");
 		ss_lowbat_set_charge_on(0);
 		return 0;
 	}
@@ -161,22 +161,22 @@ static int lowbat_process(int bat_percent, void *ad)
 	if (new_bat_capacity < 0)
 		return -1;
 	if (new_bat_capacity != cur_bat_capacity) {
-		PRT_TRACE("[BAT_MON] cur = %d new = %d", cur_bat_capacity, new_bat_capacity);
+		_D("[BAT_MON] cur = %d new = %d", cur_bat_capacity, new_bat_capacity);
 		if (vconf_set_int(VCONFKEY_SYSMAN_BATTERY_CAPACITY, new_bat_capacity) == 0)
 			cur_bat_capacity = new_bat_capacity;
 	}
 
 
 	if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &vconf_state) < 0) {
-		PRT_TRACE_ERR("vconf_get_int() failed");
+		_E("vconf_get_int() failed");
 		return -1;
 	}
 
 	if (new_bat_capacity <= BATTERY_REAL_POWER_OFF) {
 		if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_CHARGE_NOW, &val) < 0) {
-			PRT_TRACE_ERR("fail to read charge now from kernel");
+			_E("fail to read charge now from kernel");
 		}
-		PRT_TRACE("charge_now status %d",val);
+		_D("charge_now status %d",val);
 		if (val == 1) {
 			new_bat_state = BATTERY_POWER_OFF;
 			if (vconf_state != VCONFKEY_SYSMAN_BAT_POWER_OFF)
@@ -247,7 +247,7 @@ static int lowbat_process(int bat_percent, void *ad)
 		}
 	}
 
-	PRT_TRACE("[BATMON] Unknown battery state cur:%d new:%d",cur_bat_state,new_bat_state);
+	_D("[BATMON] Unknown battery state cur:%d new:%d",cur_bat_state,new_bat_state);
 	cur_bat_state = new_bat_state;
 
 	if (new_bat_capacity != cur_bat_capacity)
@@ -275,7 +275,7 @@ static void __ss_change_lowbat_level(int bat_percent)
 		return;
 
 	if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_LEVEL_STATUS, &prev) < 0) {
-		PRT_TRACE_ERR("vconf_get_int() failed");
+		_E("vconf_get_int() failed");
 		return;
 	}
 
@@ -305,7 +305,7 @@ static int __check_lowbat_percent(int *pct)
 		ecore_timer_interval_set(lowbat_timer, BAT_MON_INTERVAL_MIN);
 		bat_err_count++;
 		if (bat_err_count > MAX_BATTERY_ERROR) {
-			PRT_TRACE_ERR
+			_E
 			    ("[BATMON] Cannot read battery gage. stop read fuel gage");
 			return -ENODEV;
 		}
@@ -355,9 +355,9 @@ static int check_battery()
 	int ret = -1;
 
 	if (device_get_property(DEVICE_TYPE_POWER, PROP_POWER_PRESENT, &ret) < 0) {
-		PRT_TRACE_ERR("[BATMON] battery check : %d", ret);
+		_E("[BATMON] battery check : %d", ret);
 	}
-	PRT_TRACE("[BATMON] battery check : %d", ret);
+	_D("[BATMON] battery check : %d", ret);
 
 	return ret;
 }
