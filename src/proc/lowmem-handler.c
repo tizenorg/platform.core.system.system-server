@@ -80,7 +80,7 @@ static int remove_shm()
 
 	maxid = shmctl(0, SHM_INFO, (struct shmid_ds *)(void *)&shm_info);
 	if (maxid < 0) {
-		PRT_TRACE_ERR("shared mem error\n");
+		_E("shared mem error\n");
 		return -1;
 	}
 
@@ -89,7 +89,7 @@ static int remove_shm()
 		if (shmid < 0)
 			continue;
 		if (shmseg.shm_nattch == 0) {
-			PRT_TRACE("shared memory killer ==> %d killed\n",
+			_D("shared memory killer ==> %d killed\n",
 				  shmid);
 			shmctl(shmid, IPC_RMID, NULL);
 		}
@@ -121,7 +121,7 @@ static char *convert_to_str(unsigned int mem_state)
 
 static void print_lowmem_state(unsigned int mem_state)
 {
-	PRT_TRACE("[LOW MEM STATE] %s ==> %s", convert_to_str(cur_mem_state),
+	_D("[LOW MEM STATE] %s ==> %s", convert_to_str(cur_mem_state),
 		  convert_to_str(mem_state));
 }
 #define BUF_MAX 1024
@@ -136,13 +136,13 @@ static int get_lowmemnotify_info(FILE *output_fp)
 	fp = fopen("/sys/class/memnotify/meminfo", "r");
 	if (fp == NULL)
 		return -1;
-	PRT_TRACE("make LOWMEM_LOG");
+	_D("make LOWMEM_LOG");
 	fprintf(output_fp,
 		"====================================================================\n");
 	fprintf(output_fp, "MEMORY INFO by lowmemnotify\n");
 
 	while (fgets(line, BUF_MAX, fp) != NULL) {
-		PRT_TRACE("%s",line);
+		_D("%s",line);
 		fputs(line, output_fp);
 	}
 	fclose(fp);
@@ -166,17 +166,17 @@ static void make_LMM_log(char *file, pid_t pid, char *victim_name)
 	now = time(NULL);
 	cur_tm = (struct tm *)malloc(sizeof(struct tm));
 	if (cur_tm == NULL) {
-		PRT_TRACE_ERR("Fail to memory allocation");
+		_E("Fail to memory allocation");
 		return;
 	}
 
 	if (localtime_r(&now, cur_tm) == NULL) {
-		PRT_TRACE_ERR("Fail to get localtime");
+		_E("Fail to get localtime");
 		free(cur_tm);
 		return;
 	}
 
-	PRT_TRACE("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
+	_D("%s_%s_%d_%.4d%.2d%.2d_%.2d%.2d%.2d.log", file, victim_name,
 		 pid, (1900 + cur_tm->tm_year), 1 + cur_tm->tm_mon,
 		 cur_tm->tm_mday, cur_tm->tm_hour, cur_tm->tm_min,
 		 cur_tm->tm_sec);
@@ -188,7 +188,7 @@ static void make_LMM_log(char *file, pid_t pid, char *victim_name)
 
 	output_file = fopen(new_log, "w+");
 	if(!output_file) {
-		PRT_TRACE_ERR("cannot open output file(%s)",new_log);
+		_E("cannot open output file(%s)",new_log);
 		free(cur_tm);
 		return;
 	}
@@ -203,7 +203,7 @@ static int memory_low_act(void *data)
 {
 	char lowmem_noti_name[NAME_MAX];
 
-	PRT_TRACE("[LOW MEM STATE] memory low state");
+	_D("[LOW MEM STATE] memory low state");
 	make_LMM_log("/var/log/memps", 1, "LOWMEM_WARNING");
 	remove_shm();
 
@@ -220,9 +220,9 @@ static int memory_oom_act(void *data)
 	unsigned int cur_time;
 	char lowmem_noti_name[NAME_MAX];
 
-	PRT_TRACE("[LOW MEM STATE] memory oom state");
+	_D("[LOW MEM STATE] memory oom state");
 	cur_time = time(NULL);
-	PRT_TRACE("cur=%d, old=%d, cur-old=%d", cur_time, oom_delete_sm_time,
+	_D("cur=%d, old=%d, cur-old=%d", cur_time, oom_delete_sm_time,
 		  cur_time - oom_delete_sm_time);
 	if (cur_time - oom_delete_sm_time > 15) {
 		remove_shm();
@@ -243,7 +243,7 @@ static int memory_oom_act(void *data)
 
 static int memory_normal_act(void *data)
 {
-	PRT_TRACE("[LOW MEM STATE] memory normal state");
+	_D("[LOW MEM STATE] memory normal state");
 	vconf_set_int(VCONFKEY_SYSMAN_LOW_MEMORY,
 		      VCONFKEY_SYSMAN_LOW_MEMORY_NORMAL);
 	return 0;
@@ -283,14 +283,14 @@ static int lowmem_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	unsigned int mem_state;
 
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
-		PRT_TRACE_ERR
+		_E
 		    ("ecore_main_fd_handler_active_get error , return\n");
 		return 1;
 	}
 
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
 	if (fd < 0) {
-		PRT_TRACE_ERR("ecore_main_fd_handler_fd_get error , return");
+		_E("ecore_main_fd_handler_fd_get error , return");
 		return 1;
 	}
 	mem_state = lowmem_read(fd);
@@ -304,12 +304,12 @@ static int lowmem_cb(void *data, Ecore_Fd_Handler * fd_handler)
 static int set_threshold()
 {
 	if (device_set_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_THRESHOLD_LV1, MEM_THRESHOLD_LV1) < 0) {
-		PRT_TRACE_ERR("Set memnorify threshold lv1 failed");
+		_E("Set memnorify threshold lv1 failed");
 		return -1;
 	}
 
 	if (device_set_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_THRESHOLD_LV2, MEM_THRESHOLD_LV2) < 0) {
-		PRT_TRACE_ERR("Set memnorify threshold lv2 failed");
+		_E("Set memnorify threshold lv2 failed");
 		return -1;
 	}
 
@@ -321,13 +321,13 @@ int ss_lowmem_init(struct ss_main_data *ad)
 	char lowmem_dev_node[PATH_MAX];
 
 	if (device_get_property(DEVICE_TYPE_MEMORY, PROP_MEMORY_NODE, lowmem_dev_node) < 0) {
-		PRT_TRACE_ERR("Low memory handler fd init failed");
+		_E("Low memory handler fd init failed");
 		return -1;
 	}
 
 	lowmem_fd = open(lowmem_dev_node, O_RDONLY);
 	if (lowmem_fd < 0) {
-		PRT_TRACE_ERR("ss_lowmem_init fd open failed");
+		_E("ss_lowmem_init fd open failed");
 		return -1;
 	}
 
@@ -335,7 +335,7 @@ int ss_lowmem_init(struct ss_main_data *ad)
 	ecore_main_fd_handler_add(lowmem_fd, ECORE_FD_READ, lowmem_cb, ad, NULL,
 				  NULL);
 	if (set_threshold() < 0) {
-		PRT_TRACE_ERR("Setting lowmem threshold is failed");
+		_E("Setting lowmem threshold is failed");
 		return -1;
 	}
 

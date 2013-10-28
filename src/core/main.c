@@ -59,7 +59,7 @@ static void system_server_init(struct ss_main_data *ad)
 {
 	ad->sysnoti_fd = ss_sysnoti_init();
 	if (ss_noti_init() < 0)
-		PRT_TRACE_ERR("init noti error");
+		_E("init noti error");
 
 	ss_queue_init();
 	ss_core_init(ad);
@@ -82,7 +82,7 @@ static void system_server_init(struct ss_main_data *ad)
 #define SS_PIDFILE_PATH		"/var/run/.system_server.pid"
 static void sig_quit(int signo)
 {
-	PRT_TRACE_ERR("received SIGTERM signal %d", signo);
+	_E("received SIGTERM signal %d", signo);
 	if (is_power_off() == 1)
 		reboot(RB_POWER_OFF);
 }
@@ -92,12 +92,12 @@ static int system_main(int argc, char **argv)
 
 	init_ad(&ad);
 	if ((ad.noti_fd = heynoti_init()) < 0) {
-		PRT_TRACE_ERR("Hey Notification Initialize failed");
+		_E("Hey Notification Initialize failed");
 		fini(&ad);
 		return 0;
 	}
 	if (heynoti_attach_handler(ad.noti_fd) != 0) {
-		PRT_TRACE_ERR("fail to attach hey noti handler");
+		_E("fail to attach hey noti handler");
 		fini(&ad);
 		return 0;
 	}

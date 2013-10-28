@@ -83,7 +83,7 @@ int handle_timezone(char *str)
 		return -1;
 	const char *tzpath = str;
 
-	PRT_TRACE("TZPATH = %s\n", tzpath);
+	_D("TZPATH = %s\n", tzpath);
 
 	/* unlink current link
 	 * eg. rm /opt/etc/localtime */
@@ -92,11 +92,11 @@ int handle_timezone(char *str)
 	} else {
 		ret = unlink(sympath);
 		if (ret < 0) {
-			PRT_TRACE("unlink error : [%d]%s\n", ret,
+			_D("unlink error : [%d]%s\n", ret,
 				  strerror(errno));
 			return -1;
 		} else
-			PRT_TRACE("unlink success\n");
+			_D("unlink success\n");
 
 	}
 
@@ -104,10 +104,10 @@ int handle_timezone(char *str)
 	 * eg. ln -s /usr/share/zoneinfo/Asia/Seoul /opt/etc/localtime */
 	ret = symlink(tzpath, sympath);
 	if (ret < 0) {
-		PRT_TRACE("symlink error : [%d]%s\n", ret, strerror(errno));
+		_D("symlink error : [%d]%s\n", ret, strerror(errno));
 		return -1;
 	} else
-		PRT_TRACE("symlink success\n");
+		_D("symlink success\n");
 
 	tzset();
 	return 0;
@@ -128,7 +128,7 @@ int handle_date(char *str)
 	tmp = (long int)atoi(str);
 	timet = (time_t) tmp;
 
-	PRT_TRACE("ctime = %s", ctime(&timet));
+	_D("ctime = %s", ctime(&timet));
 	vconf_set_int(VCONFKEY_SYSTEM_TIMECHANGE, timet);
 
 	return 0;
@@ -141,7 +141,7 @@ int set_datetime_action(int argc, char **argv)
 	if (argc < 1)
 		return -1;
 	if (vconf_get_int(VCONFKEY_PM_STATE, &ret) != 0)
-		PRT_TRACE("Fail to get vconf value for pm state\n");
+		_D("Fail to get vconf value for pm state\n");
 	if (ret == 1)
 		pm_state = 0x1;
 	else if (ret == 2)
@@ -162,7 +162,7 @@ int set_timezone_action(int argc, char **argv)
 	if (argc < 1)
 		return -1;
 	if (vconf_get_int(VCONFKEY_PM_STATE, &ret) != 0)
-		PRT_TRACE("Fail to get vconf value for pm state\n");
+		_D("Fail to get vconf value for pm state\n");
 	if (ret == 1)
 		pm_state = 0x1;
 	else if (ret == 2)
@@ -182,21 +182,21 @@ static int timerfd_check_start(void)
 	struct itimerspec tmr;
 
 	if ((tfd = timerfd_create(CLOCK_REALTIME,TFD_NONBLOCK|TFD_CLOEXEC)) == -1) {
-		PRT_TRACE_ERR("error timerfd_create() %d",errno);
+		_E("error timerfd_create() %d",errno);
 		tfdh = NULL;
 		return -1;
 	}
 
 	tfdh = ecore_main_fd_handler_add(tfd,ECORE_FD_READ,tfd_cb,NULL,NULL,NULL);
 	if (!tfdh) {
-		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		_E("error ecore_main_fd_handler_add");
 		return -1;
 	}
 	memset(&tmr, 0, sizeof(tmr));
 	tmr.it_value.tv_sec = default_time;
 
 	if (timerfd_settime(tfd,TFD_TIMER_ABSTIME|TFD_TIMER_CANCELON_SET,&tmr,NULL) < 0) {
-		PRT_TRACE_ERR("error timerfd_settime() %d",errno);
+		_E("error timerfd_settime() %d",errno);
 		return -1;
 	}
 	return 0;
@@ -222,12 +222,12 @@ static int tfd_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	int ret = -1;
 
 	if (!ecore_main_fd_handler_active_get(fd_handler,ECORE_FD_READ)) {
-		PRT_TRACE_ERR("error ecore_main_fd_handler_get()");
+		_E("error ecore_main_fd_handler_get()");
 		return -1;
 	}
 
 	if((tfd = ecore_main_fd_handler_fd_get(fd_handler)) == -1) {
-		PRT_TRACE_ERR("error ecore_main_fd_handler_fd_get()");
+		_E("error ecore_main_fd_handler_fd_get()");
 		return -1;
 	}
 
@@ -236,10 +236,10 @@ static int tfd_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	if (ret < 0 && errno == ECANCELED) {
 		vconf_set_int(VCONFKEY_SYSMAN_STIME, VCONFKEY_SYSMAN_STIME_CHANGED);
 		timerfd_check_stop(tfd);
-		PRT_TRACE("NOTIFICATION here");
+		_D("NOTIFICATION here");
 		timerfd_check_start();
 	} else {
-		PRT_TRACE("unexpected read (err:%d)",errno);
+		_D("unexpected read (err:%d)",errno);
 	}
 	return 0;
 }
@@ -251,7 +251,7 @@ int ss_time_manager_init(void)
 	ss_action_entry_add_internal(PREDEF_SET_TIMEZONE, set_timezone_action,
 				     NULL, NULL);
 	if (timerfd_check_start() == -1) {
-		PRT_TRACE_ERR("fail system time change detector init");
+		_E("fail system time change detector init");
 		return -1;
 	}
 	return 0;

@@ -51,7 +51,7 @@ static void print_sysnoti_msg(const char *title, struct sysnoti *msg)
 	if (sysman_get_cmdline_name(msg->pid, exe_name, PATH_MAX) < 0)
 		snprintf(exe_name, sizeof(exe_name), "Unknown (maybe dead)");
 
-	PRT_TRACE_ERR("pid : %d name: %s cmd : %d type : %s path : %s",
+	_E("pid : %d name: %s cmd : %d type : %s path : %s",
 			msg->pid, exe_name, msg->cmd, msg->type, msg->path);
 }
 
@@ -63,12 +63,12 @@ static inline int recv_int(int fd)
 		r = read(fd, &val, sizeof(int));
 		if (r < 0) {
 			if(errno == EINTR) {
-				PRT_TRACE_ERR("Re-read for error(EINTR)");
+				_E("Re-read for error(EINTR)");
 				retry_count++;
 				continue;
 			}
 			else {
-				PRT_TRACE_ERR("Read fail for int");
+				_E("Read fail for int");
 				return -1;
 			}
 		} else {
@@ -88,34 +88,34 @@ static inline char *recv_str(int fd)
 		r = read(fd, &len, sizeof(int));
 		if (r < 0) {
 			if(errno == EINTR) {
-				PRT_TRACE_ERR("Re-read for error(EINTR)");
+				_E("Re-read for error(EINTR)");
 				retry_count++;
 				continue;
 			}
 			else {
-				PRT_TRACE_ERR("Read fail for str length");
+				_E("Read fail for str length");
 				return NULL;
 			}
 		} else
 			break;
 	}
 	if (retry_count == RETRY_READ_COUNT) {
-		PRT_TRACE_ERR("Read retry failed");
+		_E("Read retry failed");
 		return NULL;
 	}
 	if (len <= 0) {
-		PRT_TRACE_ERR("str is null");
+		_E("str is null");
 		return NULL;
 	}
 
 	if (len >= INT_MAX) {
-		PRT_TRACE_ERR("size is over INT_MAX");
+		_E("size is over INT_MAX");
 		return NULL;
 	}
 
 	str = (char *)malloc(len + 1);
 	if (str == NULL) {
-		PRT_TRACE_ERR("Not enough memory");
+		_E("Not enough memory");
 		return NULL;
 	}
 
@@ -124,12 +124,12 @@ static inline char *recv_str(int fd)
 		r = read(fd, str, len);
 		if(r < 0) {
 			if(errno == EINTR) {
-				PRT_TRACE_ERR("Re-read for error(EINTR)");
+				_E("Re-read for error(EINTR)");
 				retry_count++;
 				continue;                       
 			}                                               
 			else {      
-				PRT_TRACE_ERR("Read fail for str");
+				_E("Read fail for str");
 				free(str);
 				str = NULL;
 				return NULL;
@@ -138,7 +138,7 @@ static inline char *recv_str(int fd)
 			break;
 	}
 	if (retry_count == RETRY_READ_COUNT) {
-		PRT_TRACE_ERR("Read retry failed");
+		_E("Read retry failed");
 		free(str);
 		str = NULL;
 		return NULL;
@@ -190,7 +190,7 @@ static bool check_sync_request(struct sysnoti *msg)
 	if (sysman_get_cmdline_name(msg->pid, path, PATH_MAX) < 0)
 		return true;
 
-	PRT_TRACE_ERR("path : %s, type : %s", path, msg->type);
+	_E("path : %s, type : %s", path, msg->type);
 	if (!strcmp(path, POWER_MANAGER_STR) &&
 			(!strcmp(msg->type, INACTIVE_STR) || !strcmp(msg->type, ACTIVE_STR)))
 		return false;
@@ -209,7 +209,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	bool sync;
 
 	if (!ecore_main_fd_handler_active_get(fd_handler, ECORE_FD_READ)) {
-		PRT_TRACE_ERR
+		_E
 		    ("ecore_main_fd_handler_active_get error , return\n");
 		return 1;
 	}
@@ -217,7 +217,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	fd = ecore_main_fd_handler_fd_get(fd_handler);
 	msg = malloc(sizeof(struct sysnoti));
 	if (msg == NULL) {
-		PRT_TRACE_ERR("%s : Not enough memory", __FUNCTION__);
+		_E("%s : Not enough memory", __FUNCTION__);
 		return 1;
 	}
 
@@ -225,12 +225,12 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 	client_sockfd = accept(fd, (struct sockaddr *)&client_address, (socklen_t *)&client_len);
 
 	if (client_sockfd == -1) {
-		PRT_TRACE_ERR("socket accept error");
+		_E("socket accept error");
 		free(msg);
 		return -1;
 	}
 	if (read_message(client_sockfd, msg) < 0) {
-		PRT_TRACE_ERR("%s : recv error msg", __FUNCTION__);
+		_E("%s : recv error msg", __FUNCTION__);
 		print_sysnoti_msg(__FUNCTION__, msg);
 		free_message(msg);
 		write(client_sockfd, &ret, sizeof(int));
@@ -244,7 +244,7 @@ static int sysnoti_cb(void *data, Ecore_Fd_Handler * fd_handler)
 
 	print_sysnoti_msg(__FUNCTION__, msg);
 	if (msg->argc > SYSMAN_MAXARG) {
-		PRT_TRACE_ERR("%s : error argument", __FUNCTION__);
+		_E("%s : error argument", __FUNCTION__);
 		free_message(msg);
 		if (sync)
 			write(client_sockfd, &ret, sizeof(int));
@@ -314,11 +314,11 @@ static int ss_sysnoti_server_init(void)
 
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd < 0) {
-		PRT_ERR("%s: socket create failed\n", __FUNCTION__);
+		_E("%s: socket create failed\n", __FUNCTION__);
 		return -1;
 	}
 	if((fsetxattr(fd, "security.SMACK64IPOUT", "@", 2, 0)) < 0 ) {
-		PRT_ERR("%s: Socket SMACK labeling failed\n", __FUNCTION__);
+		_E("%s: Socket SMACK labeling failed\n", __FUNCTION__);
 		if(errno != EOPNOTSUPP) {
 			close(fd);
 			return -1;
@@ -326,7 +326,7 @@ static int ss_sysnoti_server_init(void)
 	}
 
 	if((fsetxattr(fd, "security.SMACK64IPIN", "*", 2, 0)) < 0 ) {
-		PRT_ERR("%s: Socket SMACK labeling failed\n", __FUNCTION__);
+		_E("%s: Socket SMACK labeling failed\n", __FUNCTION__);
 		if(errno != EOPNOTSUPP) {
 			close(fd);
 			return -1;
@@ -339,20 +339,20 @@ static int ss_sysnoti_server_init(void)
 		sizeof(serveraddr.sun_path));
 
 	if (bind(fd, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr)) < 0) {
-		PRT_ERR("%s: socket bind failed\n", __FUNCTION__);
+		_E("%s: socket bind failed\n", __FUNCTION__);
 		close(fd);
 		return -1;
 	}
 
 	if (chmod(SYSNOTI_SOCKET_PATH, (S_IRWXU | S_IRWXG | S_IRWXO)) < 0)	/* 0777 */
-		PRT_ERR("failed to change the socket permission");
+		_E("failed to change the socket permission");
 
 	if (listen(fd, 5) < 0) {
-		PRT_ERR("failed to listen");
+		_E("failed to listen");
 		close(fd);
 		return -1;
 	}
-	PRT_INFO("socket create & listen ok\n");
+	_I("socket create & listen ok\n");
 
 	return fd;
 }
@@ -371,7 +371,7 @@ static int __sysnoti_start(void)
 	sysnoti_efd = ecore_main_fd_handler_add(fd, ECORE_FD_READ, sysnoti_cb, NULL, NULL,
 				  NULL);
 	if (!sysnoti_efd) {
-		PRT_TRACE_ERR("error ecore_main_fd_handler_add");
+		_E("error ecore_main_fd_handler_add");
 		return -1;
 	}
 	return fd;
