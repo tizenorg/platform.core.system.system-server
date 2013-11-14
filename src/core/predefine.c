@@ -44,8 +44,6 @@
 #include "data.h"
 #include "common.h"
 
-#define PREDEFINE_SO_DIR		PREFIX"/lib/ss_predefine/"
-
 #define CALL_EXEC_PATH			PREFIX"/bin/call"
 #define LOWMEM_EXEC_PATH		PREFIX"/bin/lowmem-popup"
 #define LOWBAT_EXEC_PATH		PREFIX"/bin/lowbatt-popup"
@@ -557,7 +555,7 @@ int internal_poweroff_def_predefine_action(int argc, char **argv)
 {
 	int ret;
 
-	system("/usr/lib/system-server/shutdown.sh &");
+	system( LIBPATH"/system-server/shutdown.sh &");
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
@@ -733,7 +731,7 @@ int restart_def_predefine_action(int argc, char **argv)
 
 	heynoti_publish(POWEROFF_NOTI_NAME);
 	pm_change_state(LCD_NORMAL);
-	system("/usr/lib/system-server/shutdown.sh &");
+	system(LIBPATH"/system-server/shutdown.sh &");
 	sync();
 
 	gettimeofday(&tv_start_poweroff, NULL);
