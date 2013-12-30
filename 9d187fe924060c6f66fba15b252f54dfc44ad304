@@ -1,0 +1,9 @@
+Code-Review+2: Casey Schaufler <casey.schaufler@intel.com>
+Code-Review+2: MyungJoo Ham <myungjoo.ham@samsung.com>
+Code-Review+2: Lukasz Stelmach <l.stelmach@samsung.com>
+Verified+1: Krzysztof Sasiak <k.sasiak@samsung.com>
+Submitted-by: MyungJoo Ham <myungjoo.ham@samsung.com>
+Submitted-at: Mon, 30 Dec 2013 01:55:56 -0800
+Reviewed-on: https://review.tizen.org/gerrit/13704
+Project: platform/core/system/system-server
+Branch: refs/heads/tizen
