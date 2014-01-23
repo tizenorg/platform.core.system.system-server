@@ -44,10 +44,40 @@ export PM_INPUT=$DEV_INPUT
 PMD=@PREFIX@/bin/@EXEC@
 
 echo "Input Event: $PM_INPUT"
+
 OPT_X_DPMS="-x"
 echo "LCD Power: X-DPMS enabled"
 
-/usr/bin/system_server &
+case "$1" in
+	start)
+		if [ -e /var/run/.system_server.pid ] ; then
+			echo "System server is already running"
+			echo "If it isn't, delete /var/run/.system_server.pid and retry."
+		else
+			/usr/bin/system_server &
+		fi
+			;;
+
+	stop)
+		if [ -e /var/run/.system_server.pid ] ; then
+			kill -USR1 `cat /var/run/.system_server.pid`
+			rm /var/run/.system_server.pid
+		fi
+			;;
+	restart)
+		if [ -e /var/run/.system_server.pid ] ; then
+			kill -USR1 `cat /var/run/.system_server.pid`
+		fi
+		/usr/bin/system_server &
+		;;
+	log)
+		if [ -e /var/run/.system_server.pid ] ; then
+			kill -HUP `cat /var/run/.system_server.pid`
+		fi
+		;;
+	*)
+		echo "Usage: system_server {start | stop | restart}"
+		exit 1
+esac
 
 exit 0
-
