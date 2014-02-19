@@ -6,7 +6,6 @@ SET(EXEC_PREFIX "${PREFIX}/bin")
 SET(LIBDIR "\${prefix}/lib")
 SET(INCLUDEDIR "${PREFIX}/include/${PROJECT_NAME}")
 
-# deviced
 SET(DEVICED_NAME deviced)
 SET(VERSION 0.1.0)
 
