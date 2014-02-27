@@ -104,10 +104,10 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
 SET(MOVINAND_FORMAT scripts/movi_format.sh)
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs REQUIRED
+
+SET( local_pkgs
 	ecore
 	ecore-file
-	ecore-x
 	edbus
 	eina
 	vconf
@@ -119,7 +119,15 @@ pkg_check_modules(pkgs REQUIRED
 	sensor
 	notification
 	libsmack
-	libsystemd-daemon)
+	libsystemd-daemon
+)
+
+IF(X11_SUPPORT)
+SET( local_pkgs ecore-x ${local_pkgs} )
+ENDIF(X11_SUPPORT)
+
+pkg_check_modules(pkgs REQUIRED ${local_pkgs} )
+
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
