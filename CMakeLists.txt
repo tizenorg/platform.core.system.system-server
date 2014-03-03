@@ -120,6 +120,7 @@ SET( local_pkgs
 	notification
 	libsmack
 	libsystemd-daemon
+	libtzplatform-config
 )
 
 IF(X11_SUPPORT)
@@ -176,7 +177,7 @@ INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 INSTALL(FILES ${MOVINAND_FORMAT} DESTINATION bin)
 INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/device-daemon DESTINATION bin)
 INSTALL(FILES system-server.conf DESTINATION /etc/dbus-1/system.d)
-INSTALL(FILES ${CMAKE_SOURCE_DIR}/packaging/system-server.rule DESTINATION /opt/etc/smack/accesses.d)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/packaging/system-server.rule DESTINATION ${TZ_SYS_ETC}/smack/accesses.d)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/mmc-smack-label DESTINATION bin)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/shutdown.sh DESTINATION ${LIB_INSTALL_DIR}/system-server)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/utils/set_pmon DESTINATION bin)
