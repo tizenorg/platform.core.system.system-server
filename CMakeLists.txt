@@ -120,6 +120,7 @@ SET( local_pkgs
 	notification
 	libsmack
 	libsystemd-daemon
+	libtzplatform-config
 )
 
 IF(X11_SUPPORT)
