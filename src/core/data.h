@@ -21,6 +21,7 @@
 
 #include <Ecore.h>
 #include <unistd.h>
+#include <tzplatform_config.h>
 
 enum {
 	WIN_CREATE = 0,
@@ -100,8 +101,8 @@ enum {
 
 #define OOMADJ_APP_LIMIT		(-16)
 
-#define MOVINAND_MOUNT_POINT		"/opt/media"
-#define MMC_MOUNT_POINT			"/opt/storage/sdcard"
+#define MOVINAND_MOUNT_POINT		 "/opt/media"
+#define MMC_MOUNT_POINT			tzplatform_mkpath(TZ_SYS_STORAGE,"sdcard")
 
 struct ui_contention_info {
 

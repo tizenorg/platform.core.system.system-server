@@ -38,6 +38,7 @@ BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(capi-base-common)
 BuildRequires:  systemd
+BuildRequires:  pkgconfig(libtzplatform-config)
 %{?systemd_requires}
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl
@@ -180,7 +181,7 @@ cp %{SOURCE3} .
 cp %{SOURCE4} .
 cp %{SOURCE5} .
 cp %{SOURCE6} .
-%cmake .
+%cmake . -DTZ_SYS_ETC=%TZ_SYS_ETC
 
 %install
 rm -rf %{buildroot}
@@ -197,6 +198,8 @@ install -m 0644 %{SOURCE9} %{buildroot}%{_unitdir}/zbooting-done.service
 
 %post
 #memory type vconf key init
+users_gid=$(getent group $TZ_SYS_USER_GROUP | cut -f3 -d':') _GRP="-g $users_gid"
+
 vconftool set -t int memory/sysman/usbhost_status -1 -i
 vconftool set -t int memory/sysman/mmc 0 -i
 vconftool set -t int memory/sysman/earjack_key 0 -i
@@ -215,10 +218,10 @@ vconftool set -t int memory/sysman/mmc_unmount -1 -i
 vconftool set -t int memory/sysman/mmc_format -1 -i
 vconftool set -t int memory/sysman/mmc_format_progress 0 -i
 vconftool set -t int memory/sysman/mmc_err_status 0 -i
-vconftool set -t int memory/sysman/power_off 0 -u 5000 -i -f
+vconftool set -t int memory/sysman/power_off 0 -g $users_gid -i -f
 vconftool set -t int memory/sysman/battery_level_status -1 -i
 vconftool set -t string memory/private/sysman/added_storage_uevent "" -i
-vconftool set -t string memory/private/sysman/removed_storage_uevent "" -u 5000 -i
+vconftool set -t string memory/private/sysman/removed_storage_uevent "" -g $users_gid -i
 
 vconftool set -t int memory/sysman/hdmi 0 -i
 
@@ -227,13 +230,13 @@ vconftool set -t int memory/sysman/stime_changed 0 -i
 #db type vconf key init
 vconftool set -t int db/sysman/mmc_dev_changed 0 -i
 
-vconftool set -t int memory/pm/state 0 -i -g 5000
+vconftool set -t int memory/pm/state 0 -i -g $users_gid
 vconftool set -t int memory/pm/battery_timetofull -1 -i
 vconftool set -t int memory/pm/battery_timetoempty -1 -i
-vconftool set -t int memory/pm/sip_status 0 -i -g 5000
-vconftool set -t int memory/pm/custom_brightness_status 0 -i -g 5000
+vconftool set -t int memory/pm/sip_status 0 -i -g $users_gid
+vconftool set -t int memory/pm/custom_brightness_status 0 -i -g $users_gid
 vconftool set -t bool memory/pm/brt_changed_lpm 0 -i
-vconftool set -t int memory/pm/current_brt 60 -i -g 5000
+vconftool set -t int memory/pm/current_brt 60 -i -g $users_gid
 
 heynotitool set system_wakeup
 heynotitool set pm_event
@@ -281,7 +284,7 @@ systemctl daemon-reload
 %license LICENSE.APLv2
 %config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_bindir}/system_server
-/opt/etc/smack/accesses.d/system-server.rule
+%{TZ_SYS_ETC}/smack/accesses.d/system-server.rule
 %{_libdir}/system-server/shutdown.sh
 %if 0%{?simulator}
 %exclude %{_bindir}/restart
