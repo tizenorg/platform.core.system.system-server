@@ -1,6 +1,5 @@
 %bcond_with x
 
-#sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
 Version:    2.0.0
@@ -37,7 +36,6 @@ BuildRequires:  gettext
 BuildRequires:  pkgconfig(sensor)
 BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(capi-base-common)
-BuildRequires:  systemd
 %{?systemd_requires}
 Requires(preun): /usr/bin/systemctl
 Requires(post): /usr/bin/systemctl
@@ -258,18 +256,18 @@ heynotitool set device_keyboard_chgdet
 
 
 systemctl daemon-reload
-if [ $1 == 1 ]; then
+if [ 1 == $1 ]; then
     systemctl restart system-server.service
     systemctl restart regpmon.service
-	systemctl restart zbooting-done.service
+    systemctl restart zbooting-done.service
 fi
 /sbin/ldconfig
 
 %preun
-if [ $1 == 0 ]; then
+if [ 0 == $1 ]; then
     systemctl stop system-server.service
     systemctl stop regpmon.service
-	systemctl stop zbooting-done.service
+    systemctl stop zbooting-done.service
 fi
 
 %postun
