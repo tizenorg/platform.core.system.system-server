@@ -198,7 +198,7 @@ install -m 0644 %{SOURCE9} %{buildroot}%{_unitdir}/zbooting-done.service
 
 %post
 #memory type vconf key init
-users_gid=$(getent group $TZ_SYS_USER_GROUP | cut -f3 -d':') _GRP="-g $users_gid"
+users_gid=$(getent group $TZ_SYS_USER_GROUP | cut -f3 -d':')
 
 vconftool set -t int memory/sysman/usbhost_status -1 -i
 vconftool set -t int memory/sysman/mmc 0 -i
