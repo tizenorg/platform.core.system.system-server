@@ -257,7 +257,7 @@ heynotitool set device_keyboard_chgdet
 
 
 systemctl daemon-reload
-if [ $1 == 1 ]; then
+if [ "$1" = "1" ]; then
     systemctl restart system-server.service
     systemctl restart regpmon.service
 	systemctl restart zbooting-done.service
@@ -265,7 +265,7 @@ fi
 /sbin/ldconfig
 
 %preun
-if [ $1 == 0 ]; then
+if [ "$1" = "0" ]; then
     systemctl stop system-server.service
     systemctl stop regpmon.service
 	systemctl stop zbooting-done.service
