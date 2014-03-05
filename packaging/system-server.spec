@@ -92,8 +92,7 @@ power-manager library.
 %package -n libslp-pm-devel
 Summary:    Power manager client (devel)
 Group:      System/Development
-Requires:   %{name} = %{version}-%{release}
-#Requires:   libslp-pm
+Requires:   libslp-pm = %{version}-%{release}
 
 %description -n libslp-pm-devel
 power-manager devel library.
