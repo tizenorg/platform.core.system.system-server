@@ -24,6 +24,7 @@
 
 #include <vconf.h>
 #include <Ecore.h>
+#include <devman.h>
 
 #include "util.h"
 #include "core.h"

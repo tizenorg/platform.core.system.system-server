@@ -124,6 +124,7 @@ typedef enum {
 	enum {
 		LED_PROP_BRIGHTNESS,
 		LED_PROP_MAX_BRIGHTNESS,
+		LED_PROP_HARDKEY,
 	};
 
 /**
