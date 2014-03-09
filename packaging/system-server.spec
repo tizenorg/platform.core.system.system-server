@@ -69,6 +69,10 @@ mkdir -p %{buildroot}%{_unitdir}/sockets.target.wants
 ln -s ../system-server.service %{buildroot}%{_unitdir}/multi-user.target.wants/system-server.service
 ln -s ../system-server.service %{buildroot}%{_unitdir}/sockets.target.wants/system-server.socket
 
+%if 0%{?simulator}
+rm -f %{buildroot}%{_bindir}/restart
+%endif
+
 %post
 
 vconftool set -t int memory/sysman/usbhost_status -1 -i
@@ -146,9 +150,7 @@ systemctl daemon-reload
 %{_bindir}/system_server
 /opt/etc/smack/accesses.d/system-server.rule
 %{_libdir}/system-server/shutdown.sh
-%if 0%{?simulator}
-%exclude %{_bindir}/restart
-%else
+%if %{undefined simulator}
 %{_bindir}/restart
 %endif
 %{_bindir}/movi_format.sh
