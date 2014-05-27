@@ -40,45 +40,31 @@ BuildRequires:  pkgconfig(capi-base-common)
 BuildRequires:  pkgconfig(libtzplatform-config)
 
 %{?systemd_requires}
-Requires(preun): /usr/bin/systemctl
-Requires(post): /usr/bin/systemctl
 Requires(post): /usr/bin/vconftool
-Requires(postun): /usr/bin/systemctl
 
 %description
 system server
 
-%package system-server
-Summary:    System-server daemon
-Group:      System/Service
-Requires:   %{name} = %{version}-%{release}
-
-%description system-server
-system server daemon.
-
 %package -n sysman
 Summary:    Sysman library
-License:    Apache-2.0
 Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description -n sysman
-sysman library.
+System manager interface library.
 
 %package -n sysman-devel
 Summary:    Sysman devel library
-License:    Apache-2.0
 Group:      System/Development
-Requires:   %{name} = %{version}-%{release}
+Requires:   sysman = %{version}-%{release}
 
 %description -n sysman-devel
 sysman devel library.
 
 %package -n sysman-internal-devel
 Summary:    Sysman internal devel library
-License:    Apache-2.0
 Group:      System/Development
-Requires:   %{name} = %{version}-%{release}
+Requires:   sysman = %{version}-%{release}
 
 %description -n sysman-internal-devel
 sysman internal devel library.
@@ -118,6 +104,7 @@ Haptic library for device control (devel)
 %package -n libhaptic-plugin-devel
 Summary:    Haptic plugin library for (devel)
 Group:      Development/Libraries
+Requires:   libhaptic = %{version}-%{release}
 
 %description -n libhaptic-plugin-devel
 Haptic plugin library for device control (devel)
@@ -149,6 +136,7 @@ Haptic Device manager library for device control (devel)
 %package -n libdeviced
 Summary:    Deviced library
 Group:      System/Libraries
+Requires:   %{name} = %{version}-%{release}
 
 %description -n libdeviced
 Deviced library for device control
@@ -183,11 +171,10 @@ cp %{SOURCE6} .
 %cmake . -DTZ_SYS_ETC=%TZ_SYS_ETC
 
 %install
-rm -rf %{buildroot}
 %make_install
 
 %install_service multi-user.target.wants system-server.service
-%install_service sockets.target.wants system-server.service
+%install_service sockets.target.wants system-server.socket
 
 %install_service graphical.target.wants regpmon.service
 install -m 0644 %{SOURCE8} %{buildroot}%{_unitdir}/regpmon.service
@@ -282,10 +269,30 @@ fi
 systemctl daemon-reload
 /sbin/ldconfig
 
-%files -n system-server
+%post -n sysman -p /sbin/ldconfig
+
+%postun -n sysman -p /sbin/ldconfig
+
+%post -n libslp-pm -p /sbin/ldconfig
+
+%postun -n libslp-pm -p /sbin/ldconfig
+
+%post -n libhaptic -p /sbin/ldconfig
+
+%postun -n libhaptic -p /sbin/ldconfig
+
+%post -n libdevman -p /sbin/ldconfig
+
+%postun -n libdevman -p /sbin/ldconfig
+
+%post -n libdeviced -p /sbin/ldconfig
+
+%postun -n libdeviced -p /sbin/ldconfig
+
+%files
 %manifest %{name}.manifest
 %license LICENSE.APLv2
-%config %{_sysconfdir}/dbus-1/system.d/system-server.conf
+%config %{_sysconfdir}/dbus-1/system.d/deviced.conf
 %{_bindir}/system_server
 %{_libdir}/system-server/shutdown.sh
 %if %{undefined simulator}
@@ -296,35 +303,25 @@ systemctl daemon-reload
 %{_bindir}/pm_event
 %{_bindir}/regpmon
 %{_bindir}/set_pmon
-%{_bindir}/pmon
 %{_bindir}/sys_pci_noti
 %{_bindir}/mmc-smack-label
 %{_bindir}/device-daemon
 %{_bindir}/fsck_msdosfs
 %{_unitdir}/multi-user.target.wants/system-server.service
 %{_unitdir}/graphical.target.wants/regpmon.service
-%{_unitdir}/sockets.target.wants/system-server.service
+%{_unitdir}/sockets.target.wants/system-server.socket
 %{_unitdir}/system-server.service
 %{_unitdir}/system-server.socket
 %{_unitdir}/regpmon.service
 %{_unitdir}/graphical.target.wants/zbooting-done.service
 %{_unitdir}/zbooting-done.service
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
-%config %{_sysconfdir}/dbus-1/system.d/system-server.conf
 %{_datadir}/license/fsck_msdosfs
 
 %files -n sysman
 %manifest sysman.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libsysman.so.*
-%{_bindir}/regpmon
-%{_bindir}/set_pmon
-
-%post -n sysman
-/sbin/ldconfig
-
-%postun -n sysman
-/sbin/ldconfig
 
 %files -n sysman-devel
 %defattr(-,root,root,-)
@@ -343,12 +340,6 @@ systemctl daemon-reload
 %manifest libslp-pm.manifest
 %{_libdir}/libpmapi.so.*
 
-%post -n libslp-pm
-/sbin/ldconfig
-
-%postun -n libslp-pm
-/sbin/ldconfig
-
 %files -n libslp-pm-devel
 %defattr(-,root,root,-)
 %{_includedir}/pmapi/pmapi.h
@@ -357,35 +348,16 @@ systemctl daemon-reload
 %{_libdir}/pkgconfig/pmapi.pc
 %{_libdir}/libpmapi.so
 
-%post -n libslp-pm-devel
-/sbin/ldconfig
-
-%postun -n libslp-pm-devel
-/sbin/ldconfig
-
 %files -n libhaptic
 %defattr(-,root,root,-)
 %{_libdir}/libhaptic.so.*
 %manifest haptic.manifest
-
-%post -n libhaptic
-/sbin/ldconfig
-
-%postun -n libhaptic
-/sbin/ldconfig
-
 
 %files -n libhaptic-devel
 %defattr(-,root,root,-)
 %{_includedir}/haptic/haptic.h
 %{_libdir}/libhaptic.so
 %{_libdir}/pkgconfig/haptic.pc
-
-%post -n libhaptic-devel
-/sbin/ldconfig
-
-%postun -n libhaptic-devel
-/sbin/ldconfig
 
 %files -n libhaptic-plugin-devel
 %defattr(-,root,root,-)
@@ -399,13 +371,6 @@ systemctl daemon-reload
 %{_libdir}/libdevman.so.*
 %manifest devman.manifest
 
-
-%post -n libdevman
-/sbin/ldconfig
-
-%postun -n libdevman
-/sbin/ldconfig
-
 %files -n libdevman-devel
 %{_includedir}/devman/devman.h
 %{_includedir}/devman/devman_image.h
@@ -414,12 +379,6 @@ systemctl daemon-reload
 %{_includedir}/devman/devman_PG.h
 %{_libdir}/pkgconfig/devman.pc
 %{_libdir}/libdevman.so
-
-%post -n libdevman-devel
-/sbin/ldconfig
-
-%postun -n libdevman-devel
-/sbin/ldconfig
 
 %files -n libdevman-haptic-devel
 %{_includedir}/devman/devman_haptic_ext.h
@@ -430,12 +389,6 @@ systemctl daemon-reload
 %defattr(-,root,root,-)
 %{_libdir}/libdeviced.so.*
 %manifest deviced.manifest
-
-%post -n libdeviced
-/sbin/ldconfig
-
-%postun -n libdeviced
-/sbin/ldconfig
 
 %files -n libdeviced-devel
 %defattr(-,root,root,-)
@@ -451,8 +404,3 @@ systemctl daemon-reload
 %{_libdir}/libdeviced.so
 %{_libdir}/pkgconfig/deviced.pc
 
-%post -n libdeviced-devel
-/sbin/ldconfig
-
-%postun -n libdeviced-devel
-/sbin/ldconfig
