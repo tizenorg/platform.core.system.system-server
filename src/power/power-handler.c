@@ -150,10 +150,15 @@ static void poweroff_control_cb(keynode_t *in_key, struct ss_main_data *ad)
 /* umount usr data partition */
 static void unmount_rw_partition()
 {
-	char buf[256];
-	int ret;
-	ret =  umount2("/opt/usr", MNT_DETACH);
-	_D("/opt/usr unmount : %d", ret);
+	char *buf;
+	int ret,len;
+
+	len = snprintf(NULL,0,"%s",tzplatform_getenv(TZ_SYS_HOME));
+	buf = malloc(len +1);
+	snprintf(buf,len,"%s",tzplatform_getenv(TZ_SYS_HOME));
+	ret =  umount2(buf, MNT_DETACH);
+	_D("%s unmount : %d",buf, ret);
+	free(buf);
 	sleep(1);
 }
 
