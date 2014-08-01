@@ -29,6 +29,7 @@
 #include <sys/statfs.h>
 #include <bundle.h>
 #include <signal.h>
+#include <sys/wait.h>
 #include <stdbool.h>
 #include <mntent.h>
 
