@@ -1,11 +1,11 @@
 [Unit]
-Description=Start the system server service
+Description=System server
 After=vconf-setup.service
 
 [Service]
 # set DISPLAY for usb_setting launching
 Type=forking
-Environment=DISPLAY=:0
+PIDFile=/var/run/.system_server.pid
 ExecStart=/usr/bin/device-daemon
 TimeoutStopSec=2
 NotifyAccess=all
