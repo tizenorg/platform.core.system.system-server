@@ -1,0 +1,11 @@
+Code-Review+2: Mikko Ylinen <mikko.ylinen@intel.com>
+Verified+1: Mikko Ylinen <mikko.ylinen@intel.com>
+Code-Review+1: Brian Jones <brian.j.jones@intel.com>
+Verified+1: Brian Jones <brian.j.jones@intel.com>
+Code-Review+1: José Bollo <jose.bollo@open.eurogiciel.org>
+Code-Review+1: Corentin Lecouvey <corentin.lecouvey@open.eurogiciel.org>
+Submitted-by: Mikko Ylinen <mikko.ylinen@intel.com>
+Submitted-at: Wed, 17 Sep 2014 07:57:06 -0700
+Reviewed-on: https://review.tizen.org/gerrit/27102
+Project: platform/core/system/system-server
+Branch: refs/heads/tizen
