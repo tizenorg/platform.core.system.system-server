@@ -160,7 +160,9 @@ cp %{SOURCE5} .
 cp %{SOURCE6} .
 
 %build
-%cmake . -DTZ_SYS_ETC=%TZ_SYS_ETC
+%cmake . \
+       -DTZ_SYS_ETC=%TZ_SYS_ETC \
+       -DSYSTEMD_DIR=%{_unitdir}
 
 %install
 %make_install
