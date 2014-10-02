@@ -31,7 +31,6 @@
 #include <TelPower.h>
 #include <tapi_event.h>
 #include <tapi_common.h>
-#include <syspopup_caller.h>
 #include <sys/reboot.h>
 #include <sys/time.h>
 #include <mntent.h>

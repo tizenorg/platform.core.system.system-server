@@ -114,7 +114,6 @@ SET( local_pkgs
 	heynoti
 	tapi
 	dlog
-	syspopup-caller
 	device-node
 	sensor
 	notification

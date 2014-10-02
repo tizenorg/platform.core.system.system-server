@@ -441,20 +441,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 				if (check_oomadj(oom_adj) == 0)
 					return 0;
 
-				bundle *b = NULL;
-
-				b = bundle_create();
-				bundle_add(b, "_APP_NAME_", appname);
-				ret = syspopup_launch("lowmem-syspopup", b);
-				bundle_free(b);
-				if (ret < 0) {
-					_E("popup lauch failed");
-					return -1;
-				}
-
-				if (set_su_oomadj(ret) < 0) {
-					_E("Failed to set oom_adj");
-				}
+				// TODO : display a popup
 			}
 		}
 	}

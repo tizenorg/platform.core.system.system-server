@@ -21,7 +21,6 @@
 #include <libintl.h>
 #include <locale.h>
 #include <vconf.h>
-#include <syspopup_caller.h>
 #include <notification.h>
 #include "core/log.h"
 #include "sys_pci_noti.h"

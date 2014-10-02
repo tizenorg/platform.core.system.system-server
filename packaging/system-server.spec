@@ -24,7 +24,6 @@ BuildRequires:  pkgconfig(vconf)
 BuildRequires:  pkgconfig(tapi)
 BuildRequires:  pkgconfig(edbus)
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(syspopup-caller)
 %if %{with x}
 BuildRequires:  pkgconfig(x11)
 %endif

@@ -55,19 +55,8 @@ static int mmc_check_smack(void)
 
 static int check_smack_popup(void)
 {
-	bundle *b = NULL;
-	int ret = -1;
-	int val = -1;
-
-	b = bundle_create();
-	bundle_add(b, "_SYSPOPUP_CONTENT_", "checksmack");
-	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &val);
-	if (val == 1 || ret != 0) {
-		if ((mmc_popup_pid = syspopup_launch("mmc-syspopup", b)) < 0) {
-			_E("popup launch failed\n");
-		}
-	}
-	bundle_free(b);
+	mmc_popup_pid = -1;
+	// TODO : display a popup
 
 	mmc_check_smack();
 	return 0;
