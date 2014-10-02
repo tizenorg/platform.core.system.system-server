@@ -36,7 +36,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <heynoti.h>
-#include <aul.h>
 #include <vconf-keys.h>
 #include <Ecore.h>
 

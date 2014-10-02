@@ -24,7 +24,6 @@
 #include <dirent.h>
 #include <vconf.h>
 
-#include <syspopup_caller.h>
 #include <sys/reboot.h>
 #include <sys/time.h>
 #include <mntent.h>
@@ -113,29 +112,17 @@ int predefine_control_launch(char *name, bundle *b, int option)
 			_E("pre launched %s destroy", LOWBAT_EXEC_PATH);
 			kill(pid, SIGTERM);
 		}
-		if (syspopup_launch(name, b) < 0)
-			return -1;
+	// TODO : display a popup
 	}
 	//poweroff-popup
-	if (strncmp(name, POWEROFF_POPUP_NAME, strlen(POWEROFF_POPUP_NAME)) == 0) {
-		if (syspopup_launch(name, b) < 0)
-			return -1;
-	}
-	//hdmi-popup
-	if (strncmp(name, HDMI_POPUP_NAME, strlen(HDMI_POPUP_NAME)) == 0) {
-		if (syspopup_launch(name, b) < 0)
-			return -1;
-	}
+	// TODO : display a popup
 	//hdmi-noti
 	if (strncmp(name, HDMI_NOTI_EXEC_PATH, strlen(HDMI_NOTI_EXEC_PATH)) == 0) {
 		if (ss_launch_if_noexist(name, "1") < 0)
 			return -1;
 	}
 	//user mem lowmem-popup
-	if (strncmp(name, LOWMEM_POPUP_NAME, strlen(LOWMEM_POPUP_NAME)) == 0) {
-		if (syspopup_launch(name, b) < 0)
-			return -1;
-	}
+	// TODO : display a popup
 	return 0;
 }
 

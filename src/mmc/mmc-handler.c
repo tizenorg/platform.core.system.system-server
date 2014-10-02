@@ -351,18 +351,7 @@ static int kill_app_accessing_mmc(void)
 
 static void launch_syspopup(const char *str)
 {
-	bundle *b;
-	int ret;
-	b = bundle_create();
-	if (!b) {
-		_E("error bundle_create()");
-		return;
-	}
-	bundle_add(b, "_SYSPOPUP_CONTENT_", str);
-	ret = syspopup_launch("mmc-syspopup", b);
-	if (ret < 0)
-		_E("popup launch failed");
-	bundle_free(b);
+	// TODO : display a popup
 }
 
 static int mmc_check(char* path)

@@ -412,36 +412,7 @@ static int check_battery()
 
 static Eina_Bool lowbat_popup(void *data)
 {
-	int ret = -1, state = 0;
-	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
-	if (state == 1 || ret != 0) {
-		bundle *b = NULL;
-		b = bundle_create();
-		if (lowbat_popup_option == LOWBAT_OPT_WARNING || lowbat_popup_option == LOWBAT_OPT_CHECK) {
-			bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
-		} else if(lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
-			bundle_add(b, "_SYSPOPUP_CONTENT_", "poweroff");
-		} else if(lowbat_popup_option == LOWBAT_OPT_CHARGEERR) {
-			bundle_add(b, "_SYSPOPUP_CONTENT_", "chargeerr");
-		} else
-			goto out;
-
-		ret = syspopup_launch("lowbat-syspopup", b);
-		if (ret < 0) {
-			_E("popup lauch failed");
-			bundle_free(b);
-			return EINA_TRUE;
-		}
-out:
-		if (lowbat_popup_id != NULL) {
-			ecore_timer_del(lowbat_popup_id);
-			lowbat_popup_id = NULL;
-		}
-		lowbat_popup_option = 0;
-		bundle_free(b);
-		return EINA_FALSE;
-	}
-	_D("boot-animation running yet");
+	// TODO : display a popup
 	return EINA_FALSE;
 }
 

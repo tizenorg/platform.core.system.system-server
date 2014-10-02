@@ -26,8 +26,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <syspopup_caller.h>
-#include <aul.h>
 #include <bundle.h>
 #include <dirent.h>
 #include <libudev.h>
@@ -150,25 +148,7 @@ static int check_lowbat_charge_device(int bInserted)
 			if (val == 0 && bChargeDeviceInserted == 1) {
 				bChargeDeviceInserted = 0;
 				//low bat popup during charging device removing
-				if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state) == 0) {
-					if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL
-					|| bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
-						bundle *b = NULL;
-						b = bundle_create();
-						if(bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF)
-							bundle_add(b,"_SYSPOPUP_CONTENT_", "poweroff");
-						else
-							bundle_add(b, "_SYSPOPUP_CONTENT_", "warning");
-						ret = syspopup_launch("lowbat-syspopup", b);
-						if (ret < 0) {
-							_I("popup launch failed");
-						}
-						bundle_free(b);
-					}
-				} else {
-					_E("failed to get vconf key");
-					return -1;
-				}
+				// TODO : display a popup
 			}
 			return 0;
 		}
@@ -430,33 +410,7 @@ static void mmc_chgdet_cb(void *data)
 		ret = ss_mmc_inserted();
 		if (ret == -1) {
 			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);
-			if (val == VCONFKEY_SYSMAN_MMC_MOUNT_FAILED) {
-				bundle *b = NULL;
-				b = bundle_create();
-				if (b == NULL) {
-					_E("error bundle_create()");
-					return;
-				}
-				bundle_add(b, "_SYSPOPUP_CONTENT_", "mounterr");
-				ret = syspopup_launch("mmc-syspopup", b);
-				if (ret < 0) {
-					_E("popup launch failed");
-				}
-				bundle_free(b);
-			} else if (val == VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED) {
-				bundle *b = NULL;
-				b = bundle_create();
-				if (b == NULL) {
-					_E("error bundle_create()");
-					return;
-				}
-				bundle_add(b, "_SYSPOPUP_CONTENT_", "mountrdonly");
-				ret = syspopup_launch("mmc-syspopup", b);
-				if (ret < 0) {
-					_E("popup launch failed");
-				}
-				bundle_free(b);
-			}
+			// TODO : display a popup
 		}
 	}
 }
@@ -825,29 +779,9 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 
 static int battery_def_cf_opened_actioin(int argc, char **argv)
 {
-	int ret;
-	static int present_status = 1;
-	bundle *b;
-
-	b = bundle_create();
-	if (!b) {
-		_E("fail to create bundle");
-		return -EINVAL;
-	}
-
-	ret = bundle_add(b, "_SYSPOPUP_CONTENT_", "battdisconnect");
-	if (ret != 0) {
-		_E("fail to add bundle");
-		goto out;
-	}
-
-	ret = syspopup_launch("lowbat-syspopup", b);
-	if (ret < 0)
-		_E("popup launch failed");
-
+	// TODO : display a popup
 out:
-	bundle_free(b);
-	return ret;
+	return -EINVAL;
 }
 
 static void pci_keyboard_add_cb(struct ss_main_data *ad)
