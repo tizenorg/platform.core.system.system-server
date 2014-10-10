@@ -44,5 +44,7 @@ int get_exec_pid(const char *execpath);
 int get_cmdline_name(pid_t pid, char *cmdline, size_t cmdline_size);
 int is_vip(int pid);
 
+#define SYSTEM_SERVER_APP_NAME          "system-server"
+
 #endif	/* __COMMON_H__ */
 

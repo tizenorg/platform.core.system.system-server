@@ -55,6 +55,8 @@ static int mmc_check_smack(void)
 
 static int check_smack_popup(void)
 {
+	notification_system_server("checksmack");
+
 	mmc_popup_pid = -1;
 	// TODO : display a popup
 

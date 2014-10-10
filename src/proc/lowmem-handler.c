@@ -442,6 +442,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 					return 0;
 
 				// TODO : display a popup
+				notification_system_server(appname);
 			}
 		}
 	}

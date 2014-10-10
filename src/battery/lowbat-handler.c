@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <device-node.h>
 #include <bundle.h>
+#include <notification.h>
 
 #include "core/log.h"
 #include "core/launch.h"
@@ -35,6 +36,7 @@
 #include "core/device-handler.h"
 #include "device-node.h"
 #include "display/setting.h"
+#include "core/common.h"
 
 #define PREDEF_LOWBAT			"lowbat"
 
@@ -410,19 +412,64 @@ static int check_battery()
 	return ret;
 }
 
+
+void notification_system_server(char *str) 
+{
+	notification_error_e err = NOTIFICATION_ERROR_NONE;
+	notification_h noti = NULL;	
+	noti = notification_create(NOTIFICATION_TYPE_NOTI);
+	if (noti == NULL) {
+		_E("Failed to create notification \n");
+		return;
+	}
+
+	err = notification_set_pkgname(noti, SYSTEM_SERVER_APP_NAME);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set pkgname \n");
+		return;
+	}
+
+	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, str , NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set notification content \n");
+		return;
+	}
+
+	err = notification_insert(noti, NULL);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to insert notification \n");
+		return;
+	}
+}
+
 static Eina_Bool lowbat_popup(void *data)
 {
 	int ret = -1, state = 0;
+	char *str;
+	int len;
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		if (lowbat_popup_option == LOWBAT_OPT_WARNING || lowbat_popup_option == LOWBAT_OPT_CHECK) {
 			// TODO : display a popup "warning"
+			len = strlen("warning") + 1;
+			str = (char*) malloc(len);
+			strncpy(str, "warning", len);
 		} else if(lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
 			// TODO : display a popup "poweroff"
+			len = strlen("poweroff") + 1;
+			str = (char*) malloc(len);
+			strncpy(str, "poweroff", len);
 		} else if(lowbat_popup_option == LOWBAT_OPT_CHARGEERR) {
 			// TODO : display a popup "chargeerr"
+			len = strlen("chargeerr") + 1;
+			str = (char*) malloc(len);
+			strncpy(str, "chargeerr", len);
 		} else
 			goto out;
+
+		notification_system_server(str);
+		free(str);
+
 out:
 		if (lowbat_popup_id != NULL) {
 			ecore_timer_del(lowbat_popup_id);

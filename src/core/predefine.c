@@ -113,14 +113,17 @@ int predefine_control_launch(char *name, bundle *b, int option)
 			kill(pid, SIGTERM);
 		}
 		// TODO : display a popup
+		notification_system_server(name);
 	}
 	//poweroff-popup
 	if (strncmp(name, POWEROFF_POPUP_NAME, strlen(POWEROFF_POPUP_NAME)) == 0) {
 		// TODO : display a popup poweroff-popup
+		notification_system_server(name);
 	}
 	//hdmi-popup
 	if (strncmp(name, HDMI_POPUP_NAME, strlen(HDMI_POPUP_NAME)) == 0) {
 		// TODO : display a popup hdmi-popup
+		notification_system_server(name);
 	}
 	//hdmi-noti
 	if (strncmp(name, HDMI_NOTI_EXEC_PATH, strlen(HDMI_NOTI_EXEC_PATH)) == 0) {
@@ -130,6 +133,7 @@ int predefine_control_launch(char *name, bundle *b, int option)
 	//user mem lowmem-popup
 	if (strncmp(name, LOWMEM_POPUP_NAME, strlen(LOWMEM_POPUP_NAME)) == 0) {
 		// TODO : display a popup lowmem-popup
+		notification_system_server(name);
 	}
 	return 0;
 }
