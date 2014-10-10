@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <E_DBus.h>
 
 #include <stdbool.h>
 #include <assert.h>
@@ -25,6 +26,7 @@
 #include <fcntl.h>
 #include <device-node.h>
 #include <bundle.h>
+#include <notification.h>
 
 #include "core/log.h"
 #include "core/launch.h"
@@ -35,6 +37,7 @@
 #include "core/device-handler.h"
 #include "device-node.h"
 #include "display/setting.h"
+#include "core/common.h"
 
 #define PREDEF_LOWBAT			"lowbat"
 
@@ -73,6 +76,14 @@
 #define _SYS_LOW_POWER "LOW_POWER"
 
 #define WAITING_INTERVAL	10
+
+#define SYSPOPUP_EVENT_LEN_MAX	50
+
+#define DEVICED_PATH_SYSNOTI        "/Org/Tizen/System/DeviceD/SysNoti"
+#define DEVICED_INTERFACE_SYSNOTI   "org.tizen.system.deviced.SysNoti"
+#define SIGNAL_CHARGEERR_RESPONSE   "ChargeErrResponse"
+
+#define RETRY_MAX 10
 
 struct lowbat_process_entry {
 	unsigned cur_bat_state;
@@ -410,19 +421,172 @@ static int check_battery()
 	return ret;
 }
 
+
+void notification_system_server(char *title, char *str, char *event_str) 
+{
+	notification_error_e err = NOTIFICATION_ERROR_NONE;
+	notification_h noti = NULL;
+	bundle *b = NULL;
+
+	b = bundle_create();
+	if(b == NULL)
+		return -1;
+
+	noti = notification_create(NOTIFICATION_TYPE_NOTI);
+	if (noti == NULL) {
+		_E("Failed to create notification \n");
+		return;
+	}
+
+	err = notification_set_pkgname(noti, SYSTEM_SERVER_APP_NAME);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set pkgname \n");
+		return;
+	}
+
+	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE, title , NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set notification title \n");
+		return;
+	}
+
+	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, str , NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set notification content \n");
+		return;
+	}
+
+	bundle_add(b, "event-type", event_str);
+	/*
+	* Pass the full bundle to the notification
+	*/
+	err  = notification_set_execute_option(noti, NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, NULL, NULL, b);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set notification execute_option");
+		return -1;
+	}
+
+	err = notification_insert(noti, NULL);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to insert notification \n");
+		return;
+	}
+}
+
+static int append_variant(DBusMessageIter *iter, const char *sig, char *param[])
+{
+	char *ch;
+	int i;
+	int iValue;
+
+	if (!sig || !param)
+		return 0;
+
+	for (ch = (char*)sig, i = 0; *ch != '\0'; ++i, ++ch) {
+		switch (*ch) {
+		case 'i':
+			iValue = atoi(param[i]);
+			dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &iValue);
+			break;
+		case 's':
+			dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param[i]);
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
+
+int broadcast_dbus_signal(const char *path, const char *interface,
+		const char *name, const char *sig, char *param[])
+{
+	E_DBus_Connection *conn = NULL;
+	DBusPendingCall *pc;
+	DBusMessageIter iter;
+	DBusMessage *msg;
+	int ret, retry;
+
+	retry = 0;
+	do {
+
+		ret = e_dbus_init();
+		if (ret > 0)
+			break;
+		if (retry == RETRY_MAX) {
+			_E("FAIL: e_dbus_init()");
+			return -ENOMEM;
+		}
+		retry++;
+	} while (retry < RETRY_MAX);
+
+	if (!path || !interface || !name)
+		return -EINVAL;
+
+
+	conn = e_dbus_bus_get(DBUS_BUS_SYSTEM);
+	if (!conn) {
+		_E("FAIL: e_dbus_bus_get()");
+		return -ENOENT;
+	}
+
+	msg = dbus_message_new_signal(path, interface, name);
+	if (!msg) {
+		_E("FAIL: dbus_message_new_signal()");
+		ret = -ENOMEM;
+		goto out_conn;
+	}
+
+	dbus_message_iter_init_append(msg, &iter);
+	ret = append_variant(&iter, sig, param);
+	if (ret < 0) {
+		_E("append_variant error(%d)", ret);
+		goto out_msg_conn;
+	}
+
+	pc = e_dbus_message_send(conn, msg, NULL, -1, NULL);
+	if (!pc) {
+		_E("FAIL: e_dbus_message_send()");
+		ret = -ECONNREFUSED;
+		goto out_msg_conn;
+	}
+
+	ret = 0;
+
+out_msg_conn:
+	dbus_message_unref(msg);
+out_conn:
+
+	e_dbus_connection_close(conn);
+
+	e_dbus_shutdown();
+	return ret;
+}
+
+
 static Eina_Bool lowbat_popup(void *data)
 {
 	int ret = -1, state = 0;
+
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		if (lowbat_popup_option == LOWBAT_OPT_WARNING || lowbat_popup_option == LOWBAT_OPT_CHECK) {
-			// TODO : display a popup "warning"
+			notification_system_server("Low battery", "Low battery. Charge your phone.", "warning");
 		} else if(lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
-			// TODO : display a popup "poweroff"
+			notification_system_server("Low battery", "Low battery. Phone will shut down.", "poweroff");
 		} else if(lowbat_popup_option == LOWBAT_OPT_CHARGEERR) {
-			// TODO : display a popup "chargeerr"
+			notification_system_server("Warning message", "Charging paused due to extreme temperature", "chargeerr");
+
+			if (broadcast_dbus_signal(DEVICED_PATH_SYSNOTI,
+				DEVICED_INTERFACE_SYSNOTI,
+				SIGNAL_CHARGEERR_RESPONSE,
+				NULL, NULL) < 0)
+				_E("Failed to send signal for error popup button");
+
+
 		} else
 			goto out;
+
 out:
 		if (lowbat_popup_id != NULL) {
 			ecore_timer_del(lowbat_popup_id);

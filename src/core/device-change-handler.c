@@ -46,6 +46,8 @@
 #include "common.h"
 #include "proc/proc-handler.h"
 
+#define SYSPOPUP_EVENT_LEN_MAX	50
+
 #define PREDEF_USBCON			"usbcon"
 #define PREDEF_EARJACKCON		"earjack_predef_internal"
 #define PREDEF_DEVICE_CHANGED		"device_changed"
@@ -150,16 +152,16 @@ static int check_lowbat_charge_device(int bInserted)
 				//low bat popup during charging device removing
 
 				if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state) == 0) {
-	
+
 					if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL || bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
 						if(bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
-							// TODO : display a popup "poweroff"
+							notification_system_server("Low battery", "Low battery. Phone will shut down.", "poweroff");
 						}
 						else {
-							// TODO : display a popup "warning"
+							notification_system_server("Low battery", "Low battery. Charge your phone.", "warning");
 						}
-					}
 
+					}
 				} else {
 					_E("failed to get vconf key");
 					return -1;
@@ -426,9 +428,9 @@ static void mmc_chgdet_cb(void *data)
 		if (ret == -1) {
 			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);
 			if (val == VCONFKEY_SYSMAN_MMC_MOUNT_FAILED) {
-				// TODO : display a popup mounterr
+				notification_system_server("System info", "Failed to mount SD card. Reinsert or format SD card.", "mounterr");
 			} else if (val == VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED) {
-				// TODO : display a popup mountrdonly
+				notification_system_server("System info", "SD card mounted read-only.", "mountrdonly");
 			}
 		}
 	}
@@ -798,7 +800,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 
 static int battery_def_cf_opened_actioin(int argc, char **argv)
 {
-	// TODO : display a popup
+	notification_system_server("System Server - battery popup", "battdisconnect", "");
 out:
 	return -EINVAL;
 }
