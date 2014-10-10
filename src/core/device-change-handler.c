@@ -150,16 +150,16 @@ static int check_lowbat_charge_device(int bInserted)
 				//low bat popup during charging device removing
 
 				if (vconf_get_int(VCONFKEY_SYSMAN_BATTERY_STATUS_LOW, &bat_state) == 0) {
-	
+
 					if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL || bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
 						if(bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
-							// TODO : display a popup "poweroff"
+							notification_system_server("poweroff");
 						}
 						else {
-							// TODO : display a popup "warning"
+							notification_system_server("warning");
 						}
-					}
 
+					}
 				} else {
 					_E("failed to get vconf key");
 					return -1;
@@ -426,9 +426,9 @@ static void mmc_chgdet_cb(void *data)
 		if (ret == -1) {
 			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);
 			if (val == VCONFKEY_SYSMAN_MMC_MOUNT_FAILED) {
-				// TODO : display a popup mounterr
+				notification_system_server("mounterr");
 			} else if (val == VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED) {
-				// TODO : display a popup mountrdonly
+				notification_system_server("mountrdonly");
 			}
 		}
 	}
@@ -798,7 +798,7 @@ int earjackcon_def_predefine_action(int argc, char **argv)
 
 static int battery_def_cf_opened_actioin(int argc, char **argv)
 {
-	// TODO : display a popup
+	notification_system_server("battdisconnect");
 out:
 	return -EINVAL;
 }

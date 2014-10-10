@@ -352,6 +352,7 @@ static int kill_app_accessing_mmc(void)
 static void launch_syspopup(const char *str)
 {
 	// TODO : display a popup
+	notification_system_server(str);
 }
 
 static int mmc_check(char* path)
