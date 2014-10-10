@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <device-node.h>
 #include <bundle.h>
+#include <notification.h>
 
 #include "core/log.h"
 #include "core/launch.h"
@@ -35,6 +36,7 @@
 #include "core/device-handler.h"
 #include "device-node.h"
 #include "display/setting.h"
+#include "core/common.h"
 
 #define PREDEF_LOWBAT			"lowbat"
 
@@ -73,6 +75,8 @@
 #define _SYS_LOW_POWER "LOW_POWER"
 
 #define WAITING_INTERVAL	10
+
+#define SYSPOPUP_EVENT_LEN_MAX	50
 
 struct lowbat_process_entry {
 	unsigned cur_bat_state;
@@ -410,19 +414,73 @@ static int check_battery()
 	return ret;
 }
 
+
+void notification_system_server(char *title, char *str, char *event_str) 
+{
+	notification_error_e err = NOTIFICATION_ERROR_NONE;
+	notification_h noti = NULL;
+	bundle *b = NULL;
+
+	b = bundle_create();
+	if(b == NULL)
+		return -1;
+
+	noti = notification_create(NOTIFICATION_TYPE_NOTI);
+	if (noti == NULL) {
+		_E("Failed to create notification \n");
+		return;
+	}
+
+	err = notification_set_pkgname(noti, SYSTEM_SERVER_APP_NAME);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set pkgname \n");
+		return;
+	}
+
+	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_TITLE, title , NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set notification title \n");
+		return;
+	}
+
+	err = notification_set_text(noti, NOTIFICATION_TEXT_TYPE_CONTENT, str , NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set notification content \n");
+		return;
+	}
+
+	bundle_add(b, "event-type", event_str);
+	/*
+	* Pass the full bundle to the notification
+	*/
+	err  = notification_set_execute_option(noti, NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH, NULL, NULL, b);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to set notification execute_option");
+		return -1;
+	}
+
+	err = notification_insert(noti, NULL);
+	if (err != NOTIFICATION_ERROR_NONE) {
+		_E("Unable to insert notification \n");
+		return;
+	}
+}
+
 static Eina_Bool lowbat_popup(void *data)
 {
 	int ret = -1, state = 0;
+
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		if (lowbat_popup_option == LOWBAT_OPT_WARNING || lowbat_popup_option == LOWBAT_OPT_CHECK) {
-			// TODO : display a popup "warning"
+			notification_system_server("Low battery", "Low battery. Charge your phone.", "warning");
 		} else if(lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
-			// TODO : display a popup "poweroff"
+			notification_system_server("Low battery", "Low battery. Phone will shut down.", "poweroff");
 		} else if(lowbat_popup_option == LOWBAT_OPT_CHARGEERR) {
-			// TODO : display a popup "chargeerr"
+			notification_system_server("Warning message", "Charging paused due to extreme temperature", "chargeerr");
 		} else
 			goto out;
+
 out:
 		if (lowbat_popup_id != NULL) {
 			ecore_timer_del(lowbat_popup_id);
