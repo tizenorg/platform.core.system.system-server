@@ -8,4 +8,4 @@ Type=forking
 ExecStart=/usr/bin/regpmon
 
 [Install]
-WantedBy=graphical.target
+WantedBy=default.target

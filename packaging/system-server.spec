@@ -175,10 +175,10 @@ cp %{SOURCE6} .
 %install_service multi-user.target.wants system-server.service
 %install_service sockets.target.wants system-server.socket
 
-%install_service graphical.target.wants regpmon.service
+%install_service default.target.wants regpmon.service
 install -m 0644 %{SOURCE8} %{buildroot}%{_unitdir}/regpmon.service
 
-%install_service graphical.target.wants zbooting-done.service
+%install_service default.target.wants zbooting-done.service
 install -m 0644 %{SOURCE9} %{buildroot}%{_unitdir}/zbooting-done.service
 
 %if 0%{?simulator}
@@ -307,12 +307,12 @@ systemctl daemon-reload
 %{_bindir}/device-daemon
 %{_bindir}/fsck_msdosfs
 %{_unitdir}/multi-user.target.wants/system-server.service
-%{_unitdir}/graphical.target.wants/regpmon.service
+%{_unitdir}/default.target.wants/regpmon.service
 %{_unitdir}/sockets.target.wants/system-server.socket
 %{_unitdir}/system-server.service
 %{_unitdir}/system-server.socket
 %{_unitdir}/regpmon.service
-%{_unitdir}/graphical.target.wants/zbooting-done.service
+%{_unitdir}/default.target.wants/zbooting-done.service
 %{_unitdir}/zbooting-done.service
 %{_datadir}/system-server/sys_pci_noti/res/locale/*/LC_MESSAGES/*.mo
 %{_datadir}/license/fsck_msdosfs
