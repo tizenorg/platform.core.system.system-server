@@ -39,6 +39,8 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
+#define SYSTEM_SERVER_APP_NAME "system-server"
+
 FILE * open_proc_oom_adj_file(int pid, const char *mode);
 int get_exec_pid(const char *execpath);
 int get_cmdline_name(pid_t pid, char *cmdline, size_t cmdline_size);

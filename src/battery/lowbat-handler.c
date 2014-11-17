@@ -17,6 +17,8 @@
  */
 
 
+#include <E_DBus.h>
+
 #include <stdbool.h>
 #include <assert.h>
 #include <limits.h>
@@ -73,6 +75,12 @@
 #define _SYS_LOW_POWER "LOW_POWER"
 
 #define WAITING_INTERVAL	10
+
+#define DEVICED_PATH_SYSNOTI "/Org/Tizen/System/DeviceD/SysNoti"
+#define DEVICED_INTERFACE_SYSNOTI "org.tizen.system.deviced.SysNoti"
+#define SIGNAL_CHARGEERR_RESPONSE "ChargeErrResponse"
+
+#define RETRY_MAX 10
 
 struct lowbat_process_entry {
 	unsigned cur_bat_state;
@@ -410,17 +418,114 @@ static int check_battery()
 	return ret;
 }
 
+static int append_variant(DBusMessageIter *iter, const char *sig, char *param[])
+{
+	char *ch;
+	int i;
+	int iValue;
+
+	if (!sig || !param)
+		return 0;
+
+	for (ch = (char*)sig, i = 0; *ch != '\0'; ++i, ++ch) {
+		switch (*ch) {
+			case 'i':
+				iValue = atoi(param[i]);
+				dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &iValue);
+				break;
+			case 's':
+				dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &param[i]);
+				break;
+			default:
+				return -EINVAL;
+			}
+	}
+	return 0;
+}
+
+int broadcast_dbus_signal(const char *path, const char *interface,
+		const char *name, const char *sig, char *param[])
+{
+	E_DBus_Connection *conn = NULL;
+	DBusPendingCall *pc;
+	DBusMessageIter iter;
+	DBusMessage *msg;
+	int ret, retry;
+
+	retry = 0;
+	do {
+		ret = e_dbus_init();
+		if (ret > 0)
+			break;
+		if (retry == RETRY_MAX) {
+			_E("FAIL: e_dbus_init()");
+			return -ENOMEM;
+		}
+		retry++;
+	} while (retry < RETRY_MAX);
+
+	if (!path || !interface || !name)
+		return -EINVAL;
+
+	conn = e_dbus_bus_get(DBUS_BUS_SYSTEM);
+	if (!conn) {
+		_E("FAIL: e_dbus_bus_get()");
+		return -ENOENT;
+	}
+
+	msg = dbus_message_new_signal(path, interface, name);
+	if (!msg) {
+		_E("FAIL: dbus_message_new_signal()");
+		ret = -ENOMEM;
+		goto out_conn;
+	}
+
+	dbus_message_iter_init_append(msg, &iter);
+	ret = append_variant(&iter, sig, param);
+	if (ret < 0) {
+		_E("append_variant error(%d)", ret);
+		goto out_msg_conn;
+	}
+
+	pc = e_dbus_message_send(conn, msg, NULL, -1, NULL);
+	if (!pc) {
+		_E("FAIL: e_dbus_message_send()");
+		ret = -ECONNREFUSED;
+		goto out_msg_conn;
+	}
+
+	ret = 0;
+
+out_msg_conn:
+	dbus_message_unref(msg);
+out_conn:
+
+	e_dbus_connection_close(conn);
+
+	e_dbus_shutdown();
+	return ret;
+}
+
 static Eina_Bool lowbat_popup(void *data)
 {
 	int ret = -1, state = 0;
 	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &state);
 	if (state == 1 || ret != 0) {
 		if (lowbat_popup_option == LOWBAT_OPT_WARNING || lowbat_popup_option == LOWBAT_OPT_CHECK) {
-			// TODO : display a popup "warning"
+			notification_send("Low battery", "Low battery. Charge your phone.", "warning", 0);
 		} else if(lowbat_popup_option == LOWBAT_OPT_POWEROFF) {
-			// TODO : display a popup "poweroff"
+			ret = notification_send("Low battery", "Low battery. Phone will shut down.", "poweroff", 1);
+			if (ret == 1)
+				battery_power_off_act(NULL);
 		} else if(lowbat_popup_option == LOWBAT_OPT_CHARGEERR) {
-			// TODO : display a popup "chargeerr"
+			notification_send("Warning message", "Charging paused due to extreme temperature", "chargeerr", 0);
+
+			if (broadcast_dbus_signal(DEVICED_PATH_SYSNOTI,
+				DEVICED_INTERFACE_SYSNOTI,
+				SIGNAL_CHARGEERR_RESPONSE,
+				NULL, NULL) < 0)
+				_E("Failed to send signal for error popup button");
+
 		} else
 			goto out;
 out:

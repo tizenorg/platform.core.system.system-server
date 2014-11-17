@@ -55,8 +55,15 @@ static int mmc_check_smack(void)
 
 static int check_smack_popup(void)
 {
+	int ret = -1;
+	int val = -1;
+
+	ret = vconf_get_int(VCONFKEY_STARTER_SEQUENCE, &val);
+	if (val == 1 || ret != 0) {
+		notification_send("mmc check smack popup", "checksmack", "", 0);
+	}
+
 	mmc_popup_pid = -1;
-	// TODO : display a popup
 
 	mmc_check_smack();
 	return 0;
