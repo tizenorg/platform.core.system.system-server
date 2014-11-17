@@ -441,7 +441,7 @@ int lowmem_def_predefine_action(int argc, char **argv)
 				if (check_oomadj(oom_adj) == 0)
 					return 0;
 
-				// TODO : display a popup
+				notification_send("lowmem syspopup", appname, "", 0);
 			}
 		}
 	}

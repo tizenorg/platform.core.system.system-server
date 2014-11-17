@@ -153,10 +153,12 @@ static int check_lowbat_charge_device(int bInserted)
 	
 					if(bat_state < VCONFKEY_SYSMAN_BAT_NORMAL || bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
 						if(bat_state == VCONFKEY_SYSMAN_BAT_REAL_POWER_OFF) {
-							// TODO : display a popup "poweroff"
+							ret = notification_send("Low battery", "Low battery. Phone will shut down.", "poweroff", 1);
+							if (ret == 1)
+								battery_power_off_act(NULL);
 						}
 						else {
-							// TODO : display a popup "warning"
+							notification_send("Low battery", "Low battery. Phone will shut down.", "warning", 0);
 						}
 					}
 
@@ -426,9 +428,9 @@ static void mmc_chgdet_cb(void *data)
 		if (ret == -1) {
 			vconf_get_int(VCONFKEY_SYSMAN_MMC_MOUNT,&val);
 			if (val == VCONFKEY_SYSMAN_MMC_MOUNT_FAILED) {
-				// TODO : display a popup mounterr
+				notification_send("System info", "Failed to mount SD card. Reinsert or format SD card.", "mounterr", 0);
 			} else if (val == VCONFKEY_SYSMAN_MMC_MOUNT_COMPLETED) {
-				// TODO : display a popup mountrdonly
+				notification_send("System info", "SD card mounted read-only.", "mountrdonly", 0);
 			}
 		}
 	}
