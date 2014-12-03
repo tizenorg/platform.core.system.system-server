@@ -181,8 +181,8 @@ INSTALL(FILES deviced.conf DESTINATION /etc/dbus-1/system.d)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/mmc-smack-label DESTINATION bin)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/shutdown.sh DESTINATION ${LIB_INSTALL_DIR}/system-server)
 
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.service DESTINATION lib/systemd/system)
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.socket  DESTINATION lib/systemd/system)
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.service DESTINATION ${SYSTEMD_DIR})
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/systemd/system-server.socket  DESTINATION ${SYSTEMD_DIR})
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/fsck-msdos/LICENSE DESTINATION share/license RENAME fsck_msdosfs)
 
 ADD_SUBDIRECTORY(restarter)
