@@ -1,6 +1,5 @@
 %bcond_with x
 
-#sbs-git:slp/pkgs/s/system-server system-server 0.1.51 56e16bca39f96d6c8aed9ed3df2fea9b393801be
 Name:       system-server
 Summary:    System server
 Version:    2.0.0
@@ -38,35 +37,37 @@ BuildRequires:  pkgconfig(libsystemd-daemon)
 BuildRequires:  pkgconfig(capi-base-common)
 BuildRequires:  pkgconfig(libtzplatform-config)
 
+BuildRequires:  fdupes
+
 %{?systemd_requires}
 Requires(post): /usr/bin/vconftool
 
 %description
-system server
+system server files
 
 %package -n sysman
-Summary:    Sysman library
+Summary:    System manager interface library
 Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description -n sysman
-System manager interface library.
+system manager internal library files
 
 %package -n sysman-devel
-Summary:    Sysman devel library
+Summary:    System Manager base (devel)
 Group:      System/Development
 Requires:   sysman = %{version}-%{release}
 
 %description -n sysman-devel
-sysman devel library.
+System Manager base library (devel) files
 
 %package -n sysman-internal-devel
-Summary:    Sysman internal devel library
+Summary:    System Manager base (devel)
 Group:      System/Development
 Requires:   sysman = %{version}-%{release}
 
 %description -n sysman-internal-devel
-sysman internal devel library.
+System Manager base library (devel) files
 
 %package -n libslp-pm
 Summary:    Power manager client
@@ -74,7 +75,7 @@ Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description -n libslp-pm
-power-manager library.
+power-manager library files.
 
 %package -n libslp-pm-devel
 Summary:    Power manager client (devel)
@@ -82,7 +83,7 @@ Group:      System/Development
 Requires:   libslp-pm = %{version}-%{release}
 
 %description -n libslp-pm-devel
-power-manager devel library.
+power-manager devel library files.
 
 %package -n libhaptic
 Summary:    Haptic library
@@ -150,23 +151,14 @@ Deviced library for device control (devel)
 
 %prep
 %setup -q
-
-%cmake . \
-    -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-%if %{with x}
-    -DX11_SUPPORT=On \
-%else
-    -DX11_SUPPORT=Off \
-%endif
-    #eol
-
-%build
 cp %{SOURCE1} .
 cp %{SOURCE2} .
 cp %{SOURCE3} .
 cp %{SOURCE4} .
 cp %{SOURCE5} .
 cp %{SOURCE6} .
+
+%build
 %cmake . -DTZ_SYS_ETC=%TZ_SYS_ETC
 
 %install
@@ -184,6 +176,9 @@ install -m 0644 %{SOURCE9} %{buildroot}%{_unitdir}/zbooting-done.service
 %if 0%{?simulator}
 rm -f %{buildroot}%{_bindir}/restart
 %endif
+
+%fdupes %{buildroot}
+
 
 %post
 #memory type vconf key init
@@ -253,7 +248,7 @@ systemctl daemon-reload
 if [ "$1" = "1" ]; then
     systemctl restart system-server.service
     systemctl restart regpmon.service
-	systemctl restart zbooting-done.service
+    systemctl restart zbooting-done.service
 fi
 /sbin/ldconfig
 
@@ -261,7 +256,7 @@ fi
 if [ "$1" = "0" ]; then
     systemctl stop system-server.service
     systemctl stop regpmon.service
-	systemctl stop zbooting-done.service
+    systemctl stop zbooting-done.service
 fi
 
 %postun
@@ -402,4 +397,3 @@ systemctl daemon-reload
 %{_includedir}/deviced/haptic-plugin-intf.h
 %{_libdir}/libdeviced.so
 %{_libdir}/pkgconfig/deviced.pc
-
