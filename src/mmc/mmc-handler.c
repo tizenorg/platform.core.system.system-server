@@ -500,14 +500,17 @@ static int mmc_format(int blknum)
 int mount_fs(char *path, const char *fs_name, const char *mount_data)
 {
 	int ret, retry = 0;
+    unsigned long mount_flags = 0;
 
 	do {
-		if ((ret = mount(path, MMC_MOUNT_POINT, fs_name, 0, mount_data)) == 0) {
+		if ((ret = mount(path, MMC_MOUNT_POINT, fs_name, mount_flags, mount_data)) == 0) {
 			_I("Mounted mmc card %s", fs_name);
 			return 0;
 		}
+        if (errno == EROFS)
+            mount_flags = MS_RDONLY;
 		usleep(100000);
-	} while (ret == -1 && errno == ENOENT && retry++ < 10);
+	} while (ret == -1 && (errno == ENOENT || errno == EROFS) && retry++ < 10);
 
 	return errno;
 }
